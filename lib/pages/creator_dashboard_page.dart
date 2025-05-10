@@ -2,503 +2,695 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:virtual_queue/providers/room_provider.dart' show RoomProvider;
+import '../providers/room_provider.dart';
+import '../models/room.dart';
+import '../models/membership.dart';
+import 'join_requests_page.dart';
 
 class CreatorDashboardPage extends StatefulWidget {
   final String roomId;
-  const CreatorDashboardPage({required this.roomId, super.key});
+
+  CreatorDashboardPage({required this.roomId});
 
   @override
-  State<CreatorDashboardPage> createState() => _CreatorDashboardPageState();
+  _CreatorDashboardPageState createState() => _CreatorDashboardPageState();
 }
 
 class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
-  bool _loading = false;
+  bool _isLoading = false;
+  Room? _room;
+  List<Membership> _activeMembers = [];
+  int _pendingRequestsCount = 0;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRoomData();
+  }
+
+  Future<void> _loadRoomData() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Get room data
+      final roomDoc = await firestore.collection('rooms').doc(widget.roomId).get();
+      
+      if (!roomDoc.exists) {
+        throw Exception('Room not found');
+      }
+      
+      _room = Room.fromMap(widget.roomId, roomDoc.data()!);
+      
+      // Get active members
+      final membersSnapshot = await firestore
+          .collection('memberships')
+          .where('roomId', isEqualTo: widget.roomId)
+          .where('status', isEqualTo: 'active')
+          .get();
+      
+      _activeMembers = membersSnapshot.docs
+          .map((doc) => Membership.fromMap(doc.id, doc.data()))
+          .toList();
+      
+      // Sort members by position
+      _activeMembers.sort((a, b) => a.position.compareTo(b.position));
+      
+      // Get pending requests count
+      final requestsSnapshot = await firestore
+          .collection('memberships')
+          .where('roomId', isEqualTo: widget.roomId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      
+      _pendingRequestsCount = requestsSnapshot.docs.length;
+      
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _advanceQueue() async {
+    if (_room == null) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+      await roomProvider.advanceQueue(widget.roomId);
+      await _loadRoomData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _decreaseQueue() async {
+    if (_room == null || _room!.currentPosition <= 0) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+      await roomProvider.decreaseQueue(widget.roomId);
+      await _loadRoomData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _resetQueue() async {
+    if (_room == null) return;
+    
+    // Ask for confirmation
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Reset Queue'),
+        content: Text('Are you sure you want to reset the queue to position 1? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: Text('Reset'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirmed != true) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+      await roomProvider.resetQueue(widget.roomId);
+      await _loadRoomData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _updateNotice() async {
+    if (_room == null) return;
+    
+    final noticeController = TextEditingController(text: _room!.notice);
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Update Notice'),
+        content: TextField(
+          controller: noticeController,
+          decoration: InputDecoration(
+            hintText: 'Enter notice for members',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, noticeController.text),
+            child: Text('Update'),
+          ),
+        ],
+      ),
+    );
+    
+    if (result != null && result.isNotEmpty) {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      try {
+        final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+        await roomProvider.updateNotice(widget.roomId, result);
+        await _loadRoomData();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final roomDoc = FirebaseFirestore.instance
-        .collection('rooms')
-        .doc(widget.roomId);
+    if (_isLoading && _room == null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Dashboard')),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-    return ChangeNotifierProvider(
-      create:
-          (_) => RoomProvider(userId: FirebaseAuth.instance.currentUser!.uid),
-      child: Consumer<RoomProvider>(
-        builder: (context, roomProvider, _) {
-          return Scaffold(
-            appBar: AppBar(title: Text('Creator Dashboard')),
-            body: StreamBuilder<DocumentSnapshot>(
-              stream: roomDoc.snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData)
-                  return Center(child: CircularProgressIndicator());
-                final data = snapshot.data!.data() as Map<String, dynamic>;
-                final currentPosition = data['currentPosition'] ?? 1;
-                final notice = data['notice'] ?? '';
-                final status = data['status'] ?? 'open';
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: Text('Dashboard')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 48, color: Colors.red),
+              SizedBox(height: 16),
+              Text(
+                'Error loading room',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              SizedBox(height: 8),
+              Text(
+                _error!,
+                style: TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadRoomData,
+                child: Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-                return ListView(
-                  padding: const EdgeInsets.all(20),
+    final room = _room!;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Room Dashboard'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _isLoading ? null : _loadRoomData,
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadRoomData,
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Card(
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.verified_user,
-                                  color: Colors.green,
-                                  size: 32,
-                                ),
-                                SizedBox(width: 12),
-                                Text(
-                                  'Room: ${data['name']}',
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                                Spacer(),
-                                Chip(
-                                  label: Text(status.toUpperCase()),
-                                  backgroundColor:
-                                      status == 'open'
-                                          ? Colors.green[100]
-                                          : Colors.red[100],
-                                  labelStyle: TextStyle(
-                                    color:
-                                        status == 'open'
-                                            ? Colors.green[900]
-                                            : Colors.red[900],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Divider(height: 32),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.format_list_numbered,
-                                  color: Colors.deepPurple,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Current Position: ',
-                                  style: TextStyle(fontWeight: FontWeight.w500),
-                                ),
-                                Text(
-                                  '$currentPosition',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(Icons.announcement, color: Colors.orange),
-                                SizedBox(width: 8),
-                                Expanded(child: Text('Notice: $notice')),
-                              ],
-                            ),
-                            SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    icon: Icon(Icons.arrow_forward),
-                                    label: Text('Progress'),
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed:
-                                        _loading
-                                            ? null
-                                            : () async {
-                                              setState(() => _loading = true);
-                                              try {
-                                                await roomDoc.update({
-                                                  'currentPosition':
-                                                      currentPosition + 1,
-                                                });
-                                              } catch (e) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('Failed: $e'),
-                                                  ),
-                                                );
-                                              } finally {
-                                                setState(
-                                                  () => _loading = false,
-                                                );
-                                              }
-                                            },
-                                  ),
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    icon: Icon(Icons.arrow_back),
-                                    label: Text('Decrease'),
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed:
-                                        _loading
-                                            ? null
-                                            : () async {
-                                              setState(() => _loading = true);
-                                              try {
-                                                await roomDoc.update({
-                                                  'currentPosition':
-                                                      currentPosition > 1
-                                                          ? currentPosition - 1
-                                                          : 1,
-                                                });
-                                              } catch (e) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('Failed: $e'),
-                                                  ),
-                                                );
-                                              } finally {
-                                                setState(
-                                                  () => _loading = false,
-                                                );
-                                              }
-                                            },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    icon: Icon(Icons.edit),
-                                    label: Text('Edit Notice'),
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed:
-                                        _loading
-                                            ? null
-                                            : () async {
-                                              final controller =
-                                                  TextEditingController(
-                                                    text: notice,
-                                                  );
-                                              final result = await showDialog<
-                                                String
-                                              >(
-                                                context: context,
-                                                builder:
-                                                    (context) => AlertDialog(
-                                                      title: Text(
-                                                        'Edit Notice',
-                                                      ),
-                                                      content: TextField(
-                                                        controller: controller,
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed:
-                                                              () =>
-                                                                  Navigator.pop(
-                                                                    context,
-                                                                  ),
-                                                          child: Text('Cancel'),
-                                                        ),
-                                                        ElevatedButton(
-                                                          onPressed:
-                                                              () =>
-                                                                  Navigator.pop(
-                                                                    context,
-                                                                    controller
-                                                                        .text,
-                                                                  ),
-                                                          child: Text('Save'),
-                                                        ),
-                                                      ],
-                                                    ),
-                                              );
-                                              if (result != null) {
-                                                setState(() => _loading = true);
-                                                try {
-                                                  await roomDoc.update({
-                                                    'notice': result,
-                                                  });
-                                                } catch (e) {
-                                                  ScaffoldMessenger.of(
-                                                    context,
-                                                  ).showSnackBar(
-                                                    SnackBar(
-                                                      content: Text(
-                                                        'Failed: $e',
-                                                      ),
-                                                    ),
-                                                  );
-                                                } finally {
-                                                  setState(
-                                                    () => _loading = false,
-                                                  );
-                                                }
-                                              }
-                                            },
-                                  ),
-                                ),
-                                SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    icon: Icon(Icons.refresh),
-                                    label: Text('Reset Position'),
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed:
-                                        _loading
-                                            ? null
-                                            : () async {
-                                              setState(() => _loading = true);
-                                              try {
-                                                await roomDoc.update({
-                                                  'currentPosition': 1,
-                                                });
-                                              } catch (e) {
-                                                ScaffoldMessenger.of(
-                                                  context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('Failed: $e'),
-                                                  ),
-                                                );
-                                              } finally {
-                                                setState(
-                                                  () => _loading = false,
-                                                );
-                                              }
-                                            },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              icon: Icon(
-                                Icons.stop_circle,
-                                color: Colors.white,
-                              ),
-                              label: Text('End Room'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              onPressed:
-                                  _loading
-                                      ? null
-                                      : () async {
-                                        final confirm = await showDialog<bool>(
-                                          context: context,
-                                          builder:
-                                              (context) => AlertDialog(
-                                                title: Text('End Room'),
-                                                content: Text(
-                                                  'Are you sure you want to end this room? This cannot be undone.',
-                                                ),
-                                                actions: [
-                                                  TextButton(
-                                                    onPressed:
-                                                        () => Navigator.pop(
-                                                          context,
-                                                          false,
-                                                        ),
-                                                    child: Text('Cancel'),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed:
-                                                        () => Navigator.pop(
-                                                          context,
-                                                          true,
-                                                        ),
-                                                    child: Text('End Room'),
-                                                    style:
-                                                        ElevatedButton.styleFrom(
-                                                          backgroundColor:
-                                                              Colors.red,
-                                                        ),
-                                                  ),
-                                                ],
-                                              ),
-                                        );
-                                        if (confirm == true) {
-                                          setState(() => _loading = true);
-                                          try {
-                                            await roomDoc.update({
-                                              'status': 'closed',
-                                            });
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text('Room ended.'),
-                                              ),
-                                            );
-                                          } catch (e) {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text('Failed: $e'),
-                                              ),
-                                            );
-                                          } finally {
-                                            setState(() => _loading = false);
-                                          }
-                                        }
-                                      },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    _buildRoomHeader(room),
                     SizedBox(height: 24),
-                    Text(
-                      'Pending Join Requests',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    SizedBox(height: 8),
-                    JoinRequestsList(roomId: widget.roomId),
+                    _buildStatsSection(room),
+                    SizedBox(height: 24),
+                    _buildQueueControls(room),
+                    SizedBox(height: 24),
+                    _buildMembersList(),
+                    SizedBox(height: 24),
+                    _buildPendingRequests(),
+                    SizedBox(height: 24),
+                    _buildNoticeBoard(room),
                   ],
-                );
-              },
+                ),
+              ),
             ),
-          );
-        },
+    );
+  }
+
+  Widget _buildRoomHeader(Room room) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.meeting_room, color: Colors.deepPurple),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    room.name,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'CODE: ${room.code}',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Divider(),
+            SizedBox(height: 8),
+            Text(
+              'Room Capacity: ${room.capacity}',
+              style: TextStyle(fontSize: 16),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Created on: ${_formatDate(room.createdAt)}',
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+          ],
+        ),
       ),
     );
   }
-}
 
-class JoinRequestsList extends StatelessWidget {
-  final String roomId;
-  const JoinRequestsList({required this.roomId, super.key});
+  Widget _buildStatsSection(Room room) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            'Members',
+            '${room.memberCount}',
+            Icons.people,
+            Colors.blue,
+          ),
+        ),
+        SizedBox(width: 16),
+        Expanded(
+          child: _buildStatCard(
+            'Current Position',
+            '${room.currentPosition}',
+            Icons.queue,
+            Colors.green,
+          ),
+        ),
+        SizedBox(width: 16),
+        Expanded(
+          child: _buildStatCard(
+            'Pending Requests',
+            '$_pendingRequestsCount',
+            Icons.person_add,
+            Colors.orange,
+          ),
+        ),
+      ],
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final joinRequests =
-        FirebaseFirestore.instance
-            .collection('rooms')
-            .doc(roomId)
-            .collection('joinRequests')
-            .where('status', isEqualTo: 'pending')
-            .snapshots();
-
-    return StreamBuilder<QuerySnapshot>(
-      stream: joinRequests,
-      builder: (context, snapshot) {
-        if (!snapshot.hasData)
-          return Center(child: CircularProgressIndicator());
-        final docs = snapshot.data!.docs;
-        if (docs.isEmpty)
-          return Center(child: Text('No pending join requests.'));
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: docs.length,
-          itemBuilder: (context, index) {
-            final data = docs[index].data() as Map<String, dynamic>;
-            final formData = data['formData'] as Map<String, dynamic>;
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 6, horizontal: 0),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+  Widget _buildStatCard(
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 28),
+            SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: color,
               ),
-              child: ListTile(
-                leading: Icon(Icons.person, color: Colors.deepPurple),
-                title: Text(
-                  formData['name'] ?? '',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            SizedBox(height: 4),
+            Text(
+              title,
+              style: TextStyle(
+                color: Colors.grey[700],
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQueueControls(Room room) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Queue Management',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildControlButton(
+                  'Decrease',
+                  Icons.remove_circle,
+                  Colors.orange,
+                  onPressed: room.currentPosition > 0 ? _decreaseQueue : null,
                 ),
-                subtitle: Column(
+                _buildControlButton(
+                  'Next',
+                  Icons.play_circle_filled,
+                  Colors.green,
+                  onPressed: _advanceQueue,
+                ),
+                _buildControlButton(
+                  'Reset',
+                  Icons.restart_alt,
+                  Colors.red,
+                  onPressed: _resetQueue,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMembersList() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Active Members',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 16),
+            if (_activeMembers.isEmpty)
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    'No active members in this room',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
+                itemCount: _activeMembers.length,
+                itemBuilder: (context, index) {
+                  final member = _activeMembers[index];
+                  final isBeingServed = member.position == _room!.currentPosition;
+                  
+                  return ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isBeingServed ? Colors.green[100] : Colors.blue[100],
+                      child: Icon(
+                        Icons.person,
+                        color: isBeingServed ? Colors.green : Colors.blue,
+                      ),
+                    ),
+                    title: Text(
+                      member.formData['name'] ?? 'Unknown Member',
+                      style: TextStyle(
+                        fontWeight: isBeingServed ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    subtitle: Text('Position: ${member.position}'),
+                    trailing: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: isBeingServed ? Colors.green[50] : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isBeingServed ? Colors.green : Colors.grey,
+                        ),
+                      ),
+                      child: Text(
+                        isBeingServed ? 'Current' : 'Waiting',
+                        style: TextStyle(
+                          color: isBeingServed ? Colors.green[800] : Colors.grey[800],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPendingRequests() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => JoinRequestsPage(roomId: widget.roomId),
+            ),
+          ).then((_) => _loadRoomData());
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(
+                Icons.person_add,
+                color: Colors.orange,
+                size: 24,
+              ),
+              SizedBox(width: 16),
+              Expanded(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Contact: ${formData['contact'] ?? ''}'),
-                    Text('Address: ${formData['address'] ?? ''}'),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Tooltip(
-                      message: 'Accept',
-                      child: IconButton(
-                        icon: Icon(Icons.check, color: Colors.green),
-                        onPressed: () async {
-                          try {
-                            await FirebaseFirestore.instance
-                                .collection('rooms')
-                                .doc(roomId)
-                                .collection('members')
-                                .doc(data['userId'])
-                                .set({
-                                  'userId': data['userId'],
-                                  'joinData': formData,
-                                  'joinedAt': FieldValue.serverTimestamp(),
-                                });
-                            await docs[index].reference.update({
-                              'status': 'accepted',
-                            });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Request accepted!')),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed: $e')),
-                            );
-                          }
-                        },
+                    Text(
+                      'Pending Join Requests',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Tooltip(
-                      message: 'Decline',
-                      child: IconButton(
-                        icon: Icon(Icons.close, color: Colors.red),
-                        onPressed: () async {
-                          await docs[index].reference.update({
-                            'status': 'declined',
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Request declined.')),
-                          );
-                        },
-                      ),
+                    SizedBox(height: 4),
+                    Text(
+                      _pendingRequestsCount > 0
+                          ? '$_pendingRequestsCount people waiting for approval'
+                          : 'No pending requests',
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
                   ],
                 ),
               ),
-            );
-          },
-        );
-      },
+              Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  Widget _buildNoticeBoard(Room room) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Notice Board',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit, color: Colors.blue),
+                  onPressed: _updateNotice,
+                  tooltip: 'Edit Notice',
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.amber[50],
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber[200]!),
+              ),
+              child: Text(
+                room.notice.isNotEmpty
+                    ? room.notice
+                    : 'No notice available',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.amber[900],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControlButton(
+    String label,
+    IconData icon,
+    Color color, {
+    VoidCallback? onPressed,
+  }) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: _isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            shape: CircleBorder(),
+            padding: EdgeInsets.all(16),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 32,
+          ),
+        ),
+        SizedBox(height: 8),
+        Text(label),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 }
