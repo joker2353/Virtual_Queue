@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/loading_indicator.dart';
 import 'home_page.dart';
 
 class LoginPage extends StatelessWidget {
+  const LoginPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
@@ -15,7 +18,7 @@ class LoginPage extends StatelessWidget {
           MaterialPageRoute(builder: (_) => HomePage()),
         );
       });
-      return Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(body: Center(child: LoadingIndicator()));
     }
     return Scaffold(
       backgroundColor: Colors.blue[600],

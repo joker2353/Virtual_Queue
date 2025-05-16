@@ -11,7 +11,7 @@ import '../providers/room_provider.dart';
 class MemberDetailsPage extends StatefulWidget {
   final String roomId;
 
-  const MemberDetailsPage({required this.roomId, Key? key}) : super(key: key);
+  const MemberDetailsPage({required this.roomId, super.key});
 
   @override
   _MemberDetailsPageState createState() => _MemberDetailsPageState();

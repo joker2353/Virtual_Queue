@@ -3,11 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/membership.dart';
 import '../providers/room_provider.dart';
+import '../widgets/loading_indicator.dart';
 
 class JoinRequestsPage extends StatefulWidget {
   final String roomId;
 
-  JoinRequestsPage({required this.roomId});
+  const JoinRequestsPage({super.key, required this.roomId});
 
   @override
   _JoinRequestsPageState createState() => _JoinRequestsPageState();
@@ -15,10 +16,10 @@ class JoinRequestsPage extends StatefulWidget {
 
 class _JoinRequestsPageState extends State<JoinRequestsPage> {
   bool _isLoading = false;
-  bool _isProcessingRequest = false; // New flag for individual request processing
+  final bool _isProcessingRequest = false; // New flag for individual request processing
   List<Membership> _pendingRequests = [];
   String? _error;
-  Set<String> _processingRequests = {}; // Track which requests are being processed
+  final Set<String> _processingRequests = {}; // Track which requests are being processed
 
   @override
   void initState() {
@@ -225,39 +226,59 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
   }
 
   Widget _buildRequestCard(Membership request) {
-    final bool isProcessing = _processingRequests.contains(request.id);
+    final isProcessing = _processingRequests.contains(request.id);
     
     return Card(
       margin: EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
+      elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.orange[100],
-                  child: Icon(Icons.person, color: Colors.orange),
+                  backgroundColor: Colors.blue[100],
+                  child: Icon(Icons.person, color: Colors.blue),
                 ),
-                SizedBox(width: 12),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        request.formData['name'] ?? 'Unknown User',
+                        request.formData['name'] ?? 'Unknown',
                         style: TextStyle(
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      if (request.formData['email'] != null) ...[
+                        SizedBox(height: 4),
+                        Text(
+                          request.formData['email'],
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                      if (request.formData['phone'] != null) ...[
+                        SizedBox(height: 4),
+                        Text(
+                          request.formData['phone'],
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                      SizedBox(height: 8),
                       Text(
-                        'Requested: ${_formatDate(request.timestamps.requested)}',
+                        'Requested on: ${_formatDate(request.timestamps.requested)}',
                         style: TextStyle(
                           color: Colors.grey[600],
                           fontSize: 12,
@@ -268,10 +289,42 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                 ),
               ],
             ),
+            
             SizedBox(height: 16),
+            
+            if (request.formData['purpose'] != null) ...[
+              Container(
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Purpose of Visit',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      request.formData['purpose'],
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 16),
+            ],
+            
             Divider(),
-            _buildFormDataSection(request.formData),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -281,9 +334,10 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                     child: SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
+                      child: LoadingIndicator(
+                        size: 20,
+                        showMessage: false,
+                        color: Colors.orange,
                       ),
                     ),
                   )
@@ -313,16 +367,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: isProcessing 
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Text('Accept'),
+                  child: Text('Approve'),
                 ),
               ],
             ),
@@ -330,51 +375,6 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
         ),
       ),
     );
-  }
-
-  Widget _buildFormDataSection(Map<String, dynamic> formData) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'User Information:',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[700],
-          ),
-        ),
-        SizedBox(height: 8),
-        ...formData.entries.map((entry) {
-          // Skip name as it's already shown in the header
-          if (entry.key == 'name') return SizedBox.shrink();
-          
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 4.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${_formatFieldName(entry.key)}: ',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    '${entry.value}',
-                    style: TextStyle(color: Colors.grey[800]),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ],
-    );
-  }
-
-  String _formatFieldName(String key) {
-    return key.substring(0, 1).toUpperCase() + key.substring(1);
   }
 
   String _formatDate(DateTime date) {

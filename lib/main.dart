@@ -6,6 +6,7 @@ import 'providers/room_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'firebase_options.dart';
+import 'widgets/loading_indicator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,13 +74,10 @@ class MyApp extends StatelessWidget {
   Widget _buildLoadingScreen() {
     return const Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading...'),
-          ],
+        child: LoadingIndicator(
+          size: 60,
+          message: 'Loading app...',
+          useBlurBackground: true,
         ),
       ),
     );

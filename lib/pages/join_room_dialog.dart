@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/room_provider.dart';
+import '../widgets/loading_indicator.dart';
 
 class JoinRoomDialog extends StatefulWidget {
+  const JoinRoomDialog({super.key});
+
   @override
   _JoinRoomDialogState createState() => _JoinRoomDialogState();
 }
@@ -174,26 +177,27 @@ class _JoinRoomDialogState extends State<JoinRoomDialog> {
                 children: [
                   TextButton(
                     onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    child: Text('Cancel'),
                     style: TextButton.styleFrom(
                       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
+                    child: Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _joinRoom,
+                    style: ElevatedButton.styleFrom(
+                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
                     child: _isLoading
                         ? SizedBox(
                             width: 20,
                             height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                            child: LoadingIndicator(
+                              size: 20,
+                              showMessage: false,
                               color: Colors.white,
                             ),
                           )
                         : Text('Join'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
                   ),
                 ],
               ),

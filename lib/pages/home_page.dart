@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/room_provider.dart';
+import '../widgets/loading_indicator.dart';
 import '../models/user_room.dart';
 import 'join_room_dialog.dart';
 import 'create_room_dialog.dart';
@@ -10,6 +11,8 @@ import 'creator_dashboard_page.dart';
 import 'profile_page.dart';
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -53,7 +56,9 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: roomProvider.isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? Center(child: LoadingIndicator(
+              message: 'Loading your rooms...',
+            ))
           : roomProvider.error != null
               ? Center(
                   child: Column(
@@ -217,7 +222,7 @@ class _HomePageState extends State<HomePage> {
             ),
           )
         else
-          ...rooms.map(cardBuilder).toList(),
+          ...rooms.map(cardBuilder),
       ],
     );
   }

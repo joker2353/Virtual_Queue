@@ -5,12 +5,13 @@ import 'package:provider/provider.dart';
 import '../providers/room_provider.dart';
 import '../models/room.dart';
 import '../models/membership.dart';
+import '../widgets/loading_indicator.dart';
 import 'join_requests_page.dart';
 
 class CreatorDashboardPage extends StatefulWidget {
   final String roomId;
 
-  CreatorDashboardPage({required this.roomId});
+  const CreatorDashboardPage({super.key, required this.roomId});
 
   @override
   _CreatorDashboardPageState createState() => _CreatorDashboardPageState();
@@ -22,14 +23,47 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
   List<Membership> _activeMembers = [];
   int _pendingRequestsCount = 0;
   String? _error;
+  
+  // Stream subscriptions
+  late Stream<DocumentSnapshot> _roomStream;
+  late Stream<QuerySnapshot> _membersStream;
+  late Stream<QuerySnapshot> _requestsStream;
 
   @override
   void initState() {
     super.initState();
-    _loadRoomData();
+    _setupStreams();
   }
-
-  Future<void> _loadRoomData() async {
+  
+  @override
+  void dispose() {
+    super.dispose();
+  }
+  
+  void _setupStreams() {
+    final firestore = FirebaseFirestore.instance;
+    
+    // Room data stream
+    _roomStream = firestore.collection('rooms').doc(widget.roomId).snapshots();
+    
+    // Active members stream
+    _membersStream = firestore
+        .collection('memberships')
+        .where('roomId', isEqualTo: widget.roomId)
+        .where('status', isEqualTo: 'active')
+        .snapshots();
+    
+    // Pending requests stream
+    _requestsStream = firestore
+        .collection('memberships')
+        .where('roomId', isEqualTo: widget.roomId)
+        .where('status', isEqualTo: 'pending')
+        .snapshots();
+    
+    _loadInitialData();
+  }
+  
+  Future<void> _loadInitialData() async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -91,7 +125,9 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     try {
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
       await roomProvider.advanceQueue(widget.roomId);
-      await _loadRoomData();
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
@@ -112,7 +148,9 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     try {
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
       await roomProvider.decreaseQueue(widget.roomId);
-      await _loadRoomData();
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
@@ -157,7 +195,9 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     try {
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
       await roomProvider.resetQueue(widget.roomId);
-      await _loadRoomData();
+      setState(() {
+        _isLoading = false;
+      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error: ${e.toString()}')),
@@ -206,7 +246,9 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
       try {
         final roomProvider = Provider.of<RoomProvider>(context, listen: false);
         await roomProvider.updateNotice(widget.roomId, result);
-        await _loadRoomData();
+        setState(() {
+          _isLoading = false;
+        });
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
@@ -223,7 +265,9 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     if (_isLoading && _room == null) {
       return Scaffold(
         appBar: AppBar(title: Text('Dashboard')),
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: LoadingIndicator(
+          message: 'Loading dashboard...',
+        )),
       );
     }
 
@@ -248,7 +292,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _loadRoomData,
+                onPressed: _loadInitialData,
                 child: Text('Retry'),
               ),
             ],
@@ -257,8 +301,6 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
       );
     }
 
-    final room = _room!;
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Room Dashboard'),
@@ -266,33 +308,75 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
           IconButton(
             icon: Icon(Icons.refresh),
             tooltip: 'Refresh',
-            onPressed: _isLoading ? null : _loadRoomData,
+            onPressed: _isLoading ? null : _loadInitialData,
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadRoomData,
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildRoomHeader(room),
-                    SizedBox(height: 24),
-                    _buildStatsSection(room),
-                    SizedBox(height: 24),
-                    _buildQueueControls(room),
-                    SizedBox(height: 24),
-                    _buildMembersList(),
-                    SizedBox(height: 24),
-                    _buildPendingRequests(),
-                    SizedBox(height: 24),
-                    _buildNoticeBoard(room),
-                  ],
-                ),
-              ),
+      body: _isLoading && _room == null
+          ? Center(child: LoadingIndicator())
+          : StreamBuilder<DocumentSnapshot>(
+              stream: _roomStream,
+              initialData: null,
+              builder: (context, roomSnapshot) {
+                if (!roomSnapshot.hasData && _room == null) {
+                  return Center(child: LoadingIndicator(
+                    message: 'Loading room data...',
+                  ));
+                }
+                
+                // Use the latest room data from stream or fallback to initial data
+                final Room room = roomSnapshot.hasData && roomSnapshot.data!.exists
+                    ? Room.fromMap(widget.roomId, roomSnapshot.data!.data() as Map<String, dynamic>)
+                    : _room!;
+                
+                return StreamBuilder<QuerySnapshot>(
+                  stream: _membersStream,
+                  builder: (context, membersSnapshot) {
+                    // Process active members
+                    List<Membership> activeMembers = _activeMembers;
+                    if (membersSnapshot.hasData) {
+                      activeMembers = membersSnapshot.data!.docs
+                          .map((doc) => Membership.fromMap(doc.id, doc.data() as Map<String, dynamic>))
+                          .toList();
+                      activeMembers.sort((a, b) => a.position.compareTo(b.position));
+                    }
+                    
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: _requestsStream,
+                      builder: (context, requestsSnapshot) {
+                        // Process pending requests count
+                        int pendingCount = _pendingRequestsCount;
+                        if (requestsSnapshot.hasData) {
+                          pendingCount = requestsSnapshot.data!.docs.length;
+                        }
+                        
+                        return RefreshIndicator(
+                          onRefresh: _loadInitialData,
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildRoomHeader(room),
+                                SizedBox(height: 24),
+                                _buildStatsSection(room, pendingCount),
+                                SizedBox(height: 24),
+                                _buildQueueControls(room),
+                                SizedBox(height: 24),
+                                _buildMembersList(activeMembers, room),
+                                SizedBox(height: 24),
+                                _buildPendingRequests(pendingCount),
+                                SizedBox(height: 24),
+                                _buildNoticeBoard(room),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
     );
   }
@@ -355,7 +439,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     );
   }
 
-  Widget _buildStatsSection(Room room) {
+  Widget _buildStatsSection(Room room, int pendingCount) {
     return Row(
       children: [
         Expanded(
@@ -379,7 +463,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
         Expanded(
           child: _buildStatCard(
             'Pending Requests',
-            '$_pendingRequestsCount',
+            '$pendingCount',
             Icons.person_add,
             Colors.orange,
           ),
@@ -476,7 +560,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     );
   }
 
-  Widget _buildMembersList() {
+  Widget _buildMembersList(List<Membership> activeMembers, Room room) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -495,7 +579,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
               ),
             ),
             SizedBox(height: 16),
-            if (_activeMembers.isEmpty)
+            if (activeMembers.isEmpty)
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -509,10 +593,10 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
               ListView.builder(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
-                itemCount: _activeMembers.length,
+                itemCount: activeMembers.length,
                 itemBuilder: (context, index) {
-                  final member = _activeMembers[index];
-                  final isBeingServed = member.position == _room!.currentPosition;
+                  final member = activeMembers[index];
+                  final isBeingServed = member.position == room.currentPosition;
                   
                   return ListTile(
                     leading: CircleAvatar(
@@ -555,7 +639,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
     );
   }
 
-  Widget _buildPendingRequests() {
+  Widget _buildPendingRequests(int pendingCount) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -568,7 +652,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
             MaterialPageRoute(
               builder: (_) => JoinRequestsPage(roomId: widget.roomId),
             ),
-          ).then((_) => _loadRoomData());
+          );
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -594,8 +678,8 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
                     ),
                     SizedBox(height: 4),
                     Text(
-                      _pendingRequestsCount > 0
-                          ? '$_pendingRequestsCount people waiting for approval'
+                      pendingCount > 0
+                          ? '$pendingCount people waiting for approval'
                           : 'No pending requests',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
