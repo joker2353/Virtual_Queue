@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/room_provider.dart';
+import 'providers/notification_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'firebase_options.dart';
@@ -17,12 +18,16 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProxyProvider<AuthProvider, RoomProvider>(
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProxyProvider2<AuthProvider, NotificationProvider, RoomProvider>(
           create: (context) => RoomProvider(userId: ''),
-          update: (context, auth, previous) {
+          update: (context, auth, notificationProvider, previous) {
             final provider = previous ?? RoomProvider(userId: '');
             provider.userId = auth.user?.uid ?? '';
-            return provider;
+            return RoomProvider(
+              userId: auth.user?.uid ?? '',
+              notificationProvider: notificationProvider,
+            );
           },
         ),
       ],
@@ -37,6 +42,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    
+    // Initialize notification provider with Twilio credentials
+    final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Replace with your actual Twilio credentials
+      notificationProvider.initialize(
+        accountSid: 'YOUR_TWILIO_ACCOUNT_SID',
+        authToken: 'YOUR_TWILIO_AUTH_TOKEN',
+        twilioNumber: 'whatsapp:+14155238886', // Twilio Sandbox WhatsApp number
+      );
+    });
     
     return MaterialApp(
       title: 'Virtual Queue',

@@ -5,6 +5,7 @@ import '../models/room.dart';
 import '../models/membership.dart';
 import '../models/user_room.dart';
 import '../models/form_field.dart';
+import '../providers/notification_provider.dart';
 
 class RoomProvider with ChangeNotifier {
   String _userId;
@@ -14,8 +15,9 @@ class RoomProvider with ChangeNotifier {
   
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription? _userRoomsSubscription;
+  final NotificationProvider? notificationProvider;
 
-  RoomProvider({required String userId}) : _userId = userId {
+  RoomProvider({required String userId, this.notificationProvider}) : _userId = userId {
     if (userId.isNotEmpty) {
       _setupUserRoomsListener();
     }
@@ -29,6 +31,10 @@ class RoomProvider with ChangeNotifier {
   List<UserRoom> get joinedRooms => _userRooms.where((room) => room.isJoined).toList();
   List<UserRoom> get pendingRooms => joinedRooms.where((room) => room.isPending).toList();
   List<UserRoom> get activeRooms => joinedRooms.where((room) => room.isActive).toList();
+  
+  // Check for notification eligible rooms
+  List<UserRoom> get roomsEligibleForNotification => 
+    activeRooms.where((room) => room.isCurrentlyServed).toList();
 
   // Update userId when user changes
   set userId(String newUserId) {
@@ -97,12 +103,149 @@ class RoomProvider with ChangeNotifier {
         ).toList();
       }
       
-      _userRooms = [...created, ...joined];
+      final List<UserRoom> newUserRooms = [...created, ...joined];
+      
+      // Check for position changes
+      _checkPositionChangesAndNotify(_userRooms, newUserRooms);
+      
+      _userRooms = newUserRooms;
       _setError(null);
     } catch (e) {
       _handleError(e);
     } finally {
       _setLoading(false);
+    }
+  }
+  
+  // Check for position changes and send notifications
+  void _checkPositionChangesAndNotify(List<UserRoom> oldRooms, List<UserRoom> newRooms) {
+    if (oldRooms.isEmpty || notificationProvider == null || !notificationProvider!.isInitialized) {
+      return;
+    }
+    
+    for (final newRoom in newRooms) {
+      // Find the matching old room
+      final oldRoom = oldRooms.firstWhere(
+        (room) => room.roomId == newRoom.roomId,
+        orElse: () => UserRoom(
+          roomId: '', 
+          name: '', 
+          type: '', 
+          status: '',
+          position: -1,
+          currentPosition: -1,
+          memberCount: 0,
+          joinedAt: DateTime.now(),
+        ),
+      );
+      
+      // If this is a valid room and the user's position is now being served
+      if (oldRoom.roomId.isNotEmpty && 
+          !oldRoom.isCurrentlyServed && 
+          newRoom.isCurrentlyServed) {
+        
+        // Get the membership to retrieve phone number from form data
+        _getMembershipAndSendNotification(newRoom);
+      }
+    }
+  }
+  
+  // Get membership data and send notification using the phone number from form data
+  Future<void> _getMembershipAndSendNotification(UserRoom room) async {
+    try {
+      final membershipId = '${room.roomId}_$_userId';
+      final membershipDoc = await _firestore.collection('memberships').doc(membershipId).get();
+      
+      if (membershipDoc.exists) {
+        final membershipData = membershipDoc.data() as Map<String, dynamic>;
+        final formData = Map<String, dynamic>.from(membershipData['formData'] ?? {});
+        
+        // Get phone number from the contact field in form data
+        final contactNumber = formData['contact'] as String?;
+        
+        if (contactNumber != null && contactNumber.isNotEmpty) {
+          // Format phone number for WhatsApp if needed (add country code if missing)
+          final formattedNumber = _formatPhoneNumber(contactNumber);
+          
+          // Send WhatsApp notification with the phone number from form data
+          notificationProvider?.sendQueuePositionNotification(
+            phoneNumber: formattedNumber,
+            queueName: room.name,
+          );
+          
+          // Update membership to record notification
+          _updateMembershipNotificationTimestamp(room.roomId);
+        }
+      }
+    } catch (e) {
+      print('Error getting membership data for notification: $e');
+    }
+  }
+  
+  // New method to find and notify customers based on position and room state
+  Future<void> notifyCustomerOnQueueAdvance(String roomId, int newPosition) async {
+    try {
+      // Find memberships at the current position
+      final membershipsQuery = await _firestore
+        .collection('memberships')
+        .where('roomId', isEqualTo: roomId)
+        .where('position', isEqualTo: newPosition) // Match the new current position
+        .where('status', isEqualTo: 'active')
+        .get();
+
+      for (final membershipDoc in membershipsQuery.docs) {
+        final membership = Membership.fromMap(membershipDoc.id, membershipDoc.data());
+        final formData = membership.formData;
+        
+        // Get phone number from form data
+        final contactNumber = formData['contact'] as String?;
+        
+        if (contactNumber != null && contactNumber.isNotEmpty) {
+          // Get room name for notification
+          final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+          final room = Room.fromMap(roomId, roomDoc.data()!);
+          
+          // Format phone number for WhatsApp if needed
+          final formattedNumber = _formatPhoneNumber(contactNumber);
+          
+          // Send notification
+          notificationProvider?.sendQueuePositionNotification(
+            phoneNumber: formattedNumber,
+            queueName: room.name,
+          );
+          
+          // Update membership to record notification
+          await _firestore.collection('memberships').doc(membership.id).update({
+            'lastNotified': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+    } catch (e) {
+      print('Error notifying customers: $e');
+    }
+  }
+  
+  // Helper method to format phone number (add country code if missing)
+  String _formatPhoneNumber(String phoneNumber) {
+    if (phoneNumber.startsWith('+')) {
+      return phoneNumber; // Already has country code
+    }
+    
+    // Otherwise, add default country code (modify for your region)
+    return '+1$phoneNumber'; // Change +1 to your country code if different
+  }
+  
+  // Update membership to record when the notification was sent
+  Future<void> _updateMembershipNotificationTimestamp(String roomId) async {
+    try {
+      final membershipId = '${roomId}_$_userId';
+      final membershipRef = _firestore.collection('memberships').doc(membershipId);
+      
+      await membershipRef.update({
+        'lastNotified': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error updating notification timestamp: $e');
     }
   }
 
@@ -200,6 +343,7 @@ class RoomProvider with ChangeNotifier {
   Future<void> joinRoom({
     required String roomCode,
     required Map<String, dynamic> formData,
+    bool autoApprove = false,
   }) async {
     try {
       // 1. Find room by code
@@ -236,7 +380,15 @@ class RoomProvider with ChangeNotifier {
         }
       }
 
-      // 2. Create a pending membership in a transaction
+      // For auto-approval (added by receptionist), check if current user is room creator
+      if (autoApprove && room.creatorId != _userId) {
+        throw Exception('Only room creators can auto-approve new members');
+      }
+
+      final nextPosition = autoApprove ? room.memberCount + 1 : 0;
+      final memberStatus = autoApprove ? 'active' : 'pending';
+
+      // Create membership in a transaction
       await _firestore.runTransaction((transaction) async {
         // Create membership document
         final membershipRef = _firestore.collection('memberships').doc(membershipId);
@@ -246,11 +398,12 @@ class RoomProvider with ChangeNotifier {
           userId: _userId,
           roomId: roomId,
           role: 'member',
-          status: 'pending',
-          position: 0, // Will be assigned when approved
+          status: memberStatus,
+          position: nextPosition,
           formData: formData,
           timestamps: MembershipTimestamps(
             requested: DateTime.now(),
+            approved: autoApprove ? DateTime.now() : null,
           ),
           metadata: {},
         );
@@ -264,8 +417,8 @@ class RoomProvider with ChangeNotifier {
           roomId: roomId,
           name: room.name,
           type: 'joined',
-          status: 'pending',
-          position: 0,
+          status: memberStatus,
+          position: nextPosition,
           currentPosition: room.currentPosition,
           memberCount: room.memberCount,
           joinedAt: DateTime.now(),
@@ -278,10 +431,117 @@ class RoomProvider with ChangeNotifier {
           },
           SetOptions(merge: true),
         );
+        
+        // If auto-approving, also update the room's member count
+        if (autoApprove) {
+          transaction.update(roomDoc.reference, {
+            'memberCount': FieldValue.increment(1),
+            'lastUpdatedAt': FieldValue.serverTimestamp(),
+          });
+        }
       });
     } catch (e) {
       _handleError(e);
       throw Exception('Failed to join room: $e');
+    }
+  }
+
+  // New method for creator to add customers with a custom ID
+  Future<void> addCustomerByCreator({
+    required String roomCode,
+    required Map<String, dynamic> formData,
+    required String customerId,
+  }) async {
+    try {
+      // 1. Find room by code
+      final roomQuery = await _firestore
+        .collection('rooms')
+        .where('code', isEqualTo: roomCode)
+        .limit(1)
+        .get();
+
+      if (roomQuery.docs.isEmpty) {
+        throw Exception('Room not found with code: $roomCode');
+      }
+
+      final roomDoc = roomQuery.docs.first;
+      final roomId = roomDoc.id;
+      final roomData = roomDoc.data();
+      final room = Room.fromMap(roomId, roomData);
+
+      // Check if current user is room creator
+      if (room.creatorId != _userId) {
+        throw Exception('Only room creators can add customers');
+      }
+
+      // Generate a membership ID using the custom ID instead of the creator's ID
+      final membershipId = '${roomId}_$customerId';
+      
+      // Check if this membership ID already exists
+      final existingMembership = await _firestore
+          .collection('memberships')
+          .doc(membershipId)
+          .get();
+
+      if (existingMembership.exists) {
+        throw Exception('A customer with this ID already exists in the queue');
+      }
+
+      final nextPosition = room.memberCount + 1;
+
+      // Create membership in a transaction
+      await _firestore.runTransaction((transaction) async {
+        // Create membership document
+        final membershipRef = _firestore.collection('memberships').doc(membershipId);
+        
+        final membership = Membership(
+          id: membershipId,
+          userId: customerId, // Use the custom ID as userId
+          roomId: roomId,
+          role: 'member',
+          status: 'active', // Auto-approve
+          position: nextPosition,
+          formData: formData,
+          timestamps: MembershipTimestamps(
+            requested: DateTime.now(),
+            approved: DateTime.now(),
+          ),
+          metadata: {'addedByCreator': true},
+        );
+        
+        transaction.set(membershipRef, membership.toMap());
+
+        // Update user_rooms for easier lookup
+        final userRoomRef = _firestore.collection('user_rooms').doc(customerId);
+        
+        final userRoom = UserRoom(
+          roomId: roomId,
+          name: room.name,
+          type: 'joined',
+          status: 'active',
+          position: nextPosition,
+          currentPosition: room.currentPosition,
+          memberCount: room.memberCount,
+          joinedAt: DateTime.now(),
+        );
+        
+        transaction.set(
+          userRoomRef, 
+          {
+            'joined': FieldValue.arrayUnion([userRoom.toMap()]),
+          },
+          SetOptions(merge: true),
+        );
+        
+        // Update the room's member count
+        transaction.update(roomDoc.reference, {
+          'memberCount': FieldValue.increment(1),
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      _handleError(e);
+      throw Exception('Failed to add customer: $e');
     }
   }
 
@@ -489,6 +749,9 @@ class RoomProvider with ChangeNotifier {
 
       // Then update all user_rooms records separately
       await _updateAllUserRoomsWithNewQueuePosition(roomId, room.currentPosition + 1);
+      
+      // Also notify customers who were added directly by the creator
+      await notifyCustomerOnQueueAdvance(roomId, room.currentPosition + 1);
     } catch (e) {
       _handleError(e);
       throw Exception('Failed to advance queue: $e');
@@ -711,6 +974,48 @@ class RoomProvider with ChangeNotifier {
     // Generate a random 6-digit code
     final random = DateTime.now().millisecondsSinceEpoch % 1000000;
     return random.toString().padLeft(6, '0');
+  }
+  
+  // Verify if room code exists and return room details
+  Future<Room> verifyRoomCode(String roomCode) async {
+    try {
+      final roomQuery = await _firestore
+        .collection('rooms')
+        .where('code', isEqualTo: roomCode)
+        .limit(1)
+        .get();
+
+      if (roomQuery.docs.isEmpty) {
+        throw Exception('Room not found with code: $roomCode');
+      }
+
+      final roomDoc = roomQuery.docs.first;
+      final roomData = roomDoc.data();
+      final room = Room.fromMap(roomDoc.id, roomData);
+      
+      // Check if user already has a membership
+      final membershipId = '${roomDoc.id}_$_userId';
+      final existingMembership = await _firestore
+          .collection('memberships')
+          .doc(membershipId)
+          .get();
+
+      if (existingMembership.exists) {
+        final membership = Membership.fromMap(
+            membershipId, existingMembership.data()!);
+            
+        if (membership.status == 'active') {
+          throw Exception('You are already a member of this room');
+        } else if (membership.status == 'pending') {
+          throw Exception('Your join request is already pending');
+        }
+      }
+      
+      return room;
+    } catch (e) {
+      _handleError(e);
+      throw Exception('Failed to verify room code: $e');
+    }
   }
 
   @override

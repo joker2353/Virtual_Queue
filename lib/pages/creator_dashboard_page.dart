@@ -7,6 +7,7 @@ import '../models/room.dart';
 import '../models/membership.dart';
 import '../widgets/loading_indicator.dart';
 import 'join_requests_page.dart';
+import 'package:uuid/uuid.dart';
 
 class CreatorDashboardPage extends StatefulWidget {
   final String roomId;
@@ -433,6 +434,17 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
               'Created on: ${_formatDate(room.createdAt)}',
               style: TextStyle(color: Colors.grey[700]),
             ),
+            SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: () => _showRegisterMemberDialog(room),
+              icon: Icon(Icons.person_add),
+              label: Text('Register New Member'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple,
+                foregroundColor: Colors.white,
+                minimumSize: Size(double.infinity, 40),
+              ),
+            ),
           ],
         ),
       ),
@@ -571,12 +583,24 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Active Members',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Active Members',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Total: ${activeMembers.length}',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 16),
             if (activeMembers.isEmpty)
@@ -590,45 +614,105 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
                 ),
               )
             else
-              ListView.builder(
+              ListView.separated(
                 shrinkWrap: true,
                 physics: NeverScrollableScrollPhysics(),
                 itemCount: activeMembers.length,
+                separatorBuilder: (context, index) => Divider(height: 1),
                 itemBuilder: (context, index) {
                   final member = activeMembers[index];
                   final isBeingServed = member.position == room.currentPosition;
+                  final contactNumber = member.formData['contact'] as String? ?? 'No number';
                   
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: isBeingServed ? Colors.green[100] : Colors.blue[100],
-                      child: Icon(
-                        Icons.person,
-                        color: isBeingServed ? Colors.green : Colors.blue,
-                      ),
+                  return Container(
+                    padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isBeingServed ? Colors.green[50] : null,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    title: Text(
-                      member.formData['name'] ?? 'Unknown Member',
-                      style: TextStyle(
-                        fontWeight: isBeingServed ? FontWeight.bold : FontWeight.normal,
-                      ),
-                    ),
-                    subtitle: Text('Position: ${member.position}'),
-                    trailing: Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isBeingServed ? Colors.green[50] : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isBeingServed ? Colors.green : Colors.grey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: isBeingServed ? Colors.green[100] : Colors.blue[100],
+                              child: Text(
+                                '${member.position}',
+                                style: TextStyle(
+                                  color: isBeingServed ? Colors.green[800] : Colors.blue[800],
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    member.formData['name'] ?? 'Unknown Member',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16, 
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.phone, size: 14, color: Colors.grey[600]),
+                                      SizedBox(width: 4),
+                                      Text(
+                                        contactNumber,
+                                        style: TextStyle(color: Colors.grey[800]),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isBeingServed ? Colors.green : Colors.grey[200],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                isBeingServed ? 'Current' : 'Waiting',
+                                style: TextStyle(
+                                  color: isBeingServed ? Colors.white : Colors.grey[800],
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      child: Text(
-                        isBeingServed ? 'Current' : 'Waiting',
-                        style: TextStyle(
-                          color: isBeingServed ? Colors.green[800] : Colors.grey[800],
-                          fontSize: 12,
-                        ),
-                      ),
+                        if (isBeingServed) ...[
+                          SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.green[100],
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.green[200]!),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.notifications_active, size: 16, color: Colors.green[800]),
+                                SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Currently being served! WhatsApp notification sent.',
+                                    style: TextStyle(color: Colors.green[800], fontSize: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   );
                 },
@@ -776,5 +860,180 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage> {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  // Dialog to register a new member
+  Future<void> _showRegisterMemberDialog(Room room) async {
+    final _formKey = GlobalKey<FormState>();
+    String _name = '';
+    String _contact = '';
+    String _address = '';
+    bool _isRegistering = false;
+    String? _errorMessage;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismiss while loading
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text('Register New Member'),
+          content: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_errorMessage != null)
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      margin: EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.red[50],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red[200]!),
+                      ),
+                      child: Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red[900]),
+                      ),
+                    ),
+                  Text(
+                    'For people without smartphones. They will be added directly to the queue.',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Name',
+                      hintText: 'Enter member name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter member name';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _name = value ?? '',
+                    enabled: !_isRegistering,
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Contact Number',
+                      hintText: 'Enter with country code (e.g., +1234567890)',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      prefixIcon: Icon(Icons.phone),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter contact number';
+                      }
+                      // Basic check for country code
+                      if (!value.startsWith('+')) {
+                        return 'Include country code (e.g., +1)';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _contact = value ?? '',
+                    enabled: !_isRegistering,
+                  ),
+                  SizedBox(height: 16),
+                  TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Address',
+                      hintText: 'Enter member address',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      prefixIcon: Icon(Icons.home),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter member address';
+                      }
+                      return null;
+                    },
+                    onSaved: (value) => _address = value ?? '',
+                    enabled: !_isRegistering,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: _isRegistering ? null : () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: _isRegistering ? null : () async {
+                if (_formKey.currentState!.validate()) {
+                  _formKey.currentState!.save();
+                  
+                  setDialogState(() {
+                    _isRegistering = true;
+                    _errorMessage = null;
+                  });
+                  
+                  try {
+                    // Generate a unique ID for the customer added by the creator
+                    final uuid = Uuid();
+                    final customerId = uuid.v4(); // Generate random UUID
+                    
+                    // Register member directly using the room code
+                    final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+                    await roomProvider.addCustomerByCreator(
+                      roomCode: room.code,
+                      formData: {
+                        'name': _name,
+                        'contact': _contact,
+                        'address': _address,
+                      },
+                      customerId: customerId,
+                    );
+                    
+                    // Refresh the data
+                    _loadInitialData();
+                    
+                    // Show success message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Member registered and added to the queue'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                    
+                    // Close the dialog
+                    Navigator.pop(dialogContext);
+                  } catch (e) {
+                    setDialogState(() {
+                      _isRegistering = false;
+                      _errorMessage = e.toString();
+                    });
+                  }
+                }
+              },
+              child: _isRegistering
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text('Register'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
