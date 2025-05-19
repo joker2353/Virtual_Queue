@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/room_provider.dart';
 import '../models/form_field.dart';
+import '../widgets/loading_indicator.dart';
 
 class CreateRoomDialog extends StatefulWidget {
+  const CreateRoomDialog({super.key});
+
   @override
   _CreateRoomDialogState createState() => _CreateRoomDialogState();
 }
 
-class _CreateRoomDialogState extends State<CreateRoomDialog> {
+class _CreateRoomDialogState extends State<CreateRoomDialog> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _capacityController = TextEditingController();
@@ -16,12 +19,36 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
   
   bool _isLoading = false;
   String? _error;
+  
+  // Animation controller
+  late AnimationController _animationController;
+  late Animation<double> _fadeInAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Setup animations
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+    
+    _fadeInAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    );
+    
+    // Start animations
+    _animationController.forward();
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _capacityController.dispose();
     _noticeController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -78,7 +105,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
       ),
       elevation: 0,
       backgroundColor: Colors.transparent,
@@ -88,154 +115,212 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
 
   Widget contentBox(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         shape: BoxShape.rectangle,
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 25,
+            spreadRadius: 5,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
-      child: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: SingleChildScrollView(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Create a Room',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _nameController,
-                decoration: InputDecoration(
-                  labelText: 'Room Name',
-                  hintText: 'Enter a name for your room',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: Icon(Icons.meeting_room),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a room name';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _capacityController,
-                decoration: InputDecoration(
-                  labelText: 'Room Capacity',
-                  hintText: 'Maximum number of members',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: Icon(Icons.people),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter room capacity';
-                  }
-                  final capacity = int.tryParse(value);
-                  if (capacity == null || capacity <= 0) {
-                    return 'Capacity must be a positive number';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: _noticeController,
-                decoration: InputDecoration(
-                  labelText: 'Room Notice',
-                  hintText: 'Enter a notice for room members',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  prefixIcon: Icon(Icons.notifications),
-                ),
-                maxLines: 3,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a notice';
-                  }
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
+              // Header with gradient
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(12),
+                padding: EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.blue[200]!),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.deepPurple,
+                      Colors.deepPurple.shade700,
+                    ],
+                  ),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Default Form Fields',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue[800],
+                    FadeTransition(
+                      opacity: _fadeInAnimation,
+                      child: Icon(
+                        Icons.add_circle,
+                        color: Colors.white,
+                        size: 56,
                       ),
                     ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Members will need to provide the following information:',
-                      style: TextStyle(color: Colors.blue[800]),
+                    SizedBox(height: 12),
+                    FadeTransition(
+                      opacity: _fadeInAnimation,
+                      child: Text(
+                        'Create a Room',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    SizedBox(height: 8),
-                    _buildFormFieldInfo('Name', true),
-                    _buildFormFieldInfo('Contact Number', true),
-                    _buildFormFieldInfo('Address', true),
+                    SizedBox(height: 6),
+                    FadeTransition(
+                      opacity: _fadeInAnimation,
+                      child: Text(
+                        'Set up a new queue for your members',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(
-                    _error!,
-                    style: TextStyle(color: Colors.red),
-                    textAlign: TextAlign.center,
+              // Form content
+              Padding(
+                padding: EdgeInsets.all(24),
+                child: Form(
+                  key: _formKey,
+                  child: FadeTransition(
+                    opacity: _fadeInAnimation,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInputField(
+                          controller: _nameController,
+                          label: 'Room Name',
+                          hint: 'Enter a name for your room',
+                          icon: Icons.meeting_room,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a room name';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 20),
+                        _buildInputField(
+                          controller: _capacityController,
+                          label: 'Room Capacity',
+                          hint: 'Maximum number of members',
+                          icon: Icons.people,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter room capacity';
+                            }
+                            final capacity = int.tryParse(value);
+                            if (capacity == null || capacity <= 0) {
+                              return 'Capacity must be a positive number';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 20),
+                        _buildInputField(
+                          controller: _noticeController,
+                          label: 'Room Notice',
+                          hint: 'Enter a notice for room members',
+                          icon: Icons.notifications,
+                          maxLines: 3,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a notice';
+                            }
+                            return null;
+                          },
+                        ),
+                        SizedBox(height: 24),
+                        _buildFormFieldsCard(),
+                        if (_error != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Container(
+                              padding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                              decoration: BoxDecoration(
+                                color: Colors.red.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.red.shade200),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.error_outline, color: Colors.red),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _error!,
+                                      style: TextStyle(color: Colors.red.shade800),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        SizedBox(height: 24),
+                        // Action buttons
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _isLoading ? null : () => Navigator.pop(context),
+                                style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                child: Text(
+                                  'Cancel',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isLoading ? null : _createRoom,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.deepPurple,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading
+                                    ? LoadingIndicator(
+                                        size: 24,
+                                        message: null,
+                                        primaryColor: Colors.white,
+                                        backgroundColor: Colors.transparent,
+                                      )
+                                    : Text(
+                                        'Create Room',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: _isLoading ? null : () => Navigator.pop(context),
-                    child: Text('Cancel'),
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _createRoom,
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : Text('Create'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
@@ -244,22 +329,157 @@ class _CreateRoomDialogState extends State<CreateRoomDialog> {
     );
   }
 
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    required String? Function(String?) validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(color: Colors.grey.shade400),
+            filled: true,
+            fillColor: Colors.grey.shade50,
+            prefixIcon: Icon(icon, color: Colors.deepPurple),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+            ),
+            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          ),
+          keyboardType: keyboardType,
+          maxLines: maxLines,
+          validator: validator,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormFieldsCard() {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Colors.blue.shade100, Colors.blue.shade50],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.withOpacity(0.1),
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.assignment,
+                  color: Colors.blue.shade700,
+                  size: 24,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Default Form Fields',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue.shade900,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          Text(
+            'Members will need to provide the following information:',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.blue.shade900,
+            ),
+          ),
+          SizedBox(height: 16),
+          _buildFormFieldInfo('Name', true),
+          _buildFormFieldInfo('Contact Number', true),
+          _buildFormFieldInfo('Address', true),
+        ],
+      ),
+    );
+  }
+
   Widget _buildFormFieldInfo(String name, bool isRequired) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          Icon(
-            Icons.check_circle,
-            color: Colors.green,
-            size: 16,
+          Container(
+            padding: EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.check,
+              color: Colors.green,
+              size: 16,
+            ),
           ),
-          SizedBox(width: 8),
-          Text(name),
+          SizedBox(width: 12),
+          Text(
+            name,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.blue.shade900,
+            ),
+          ),
           if (isRequired)
-            Text(
-              ' *',
-              style: TextStyle(color: Colors.red),
+            Padding(
+              padding: const EdgeInsets.only(left: 4.0),
+              child: Text(
+                '*',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
         ],
       ),

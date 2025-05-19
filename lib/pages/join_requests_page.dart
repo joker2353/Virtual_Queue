@@ -336,8 +336,8 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                       height: 20,
                       child: LoadingIndicator(
                         size: 20,
-                        showMessage: false,
-                        color: Colors.orange,
+                        primaryColor: Colors.orange,
+                        message: null,
                       ),
                     ),
                   )

@@ -25,13 +25,22 @@ class UserRoom {
   bool get isJoined => type == 'joined';
   bool get isPending => status == 'pending';
   bool get isActive => status == 'active';
-  int get waitingCount => isPending ? 0 : position > currentPosition ? position - currentPosition : 0;
-  bool get isCurrentlyServed => position == currentPosition && isActive;
+  
+  // Calculate how many people are ahead in the queue
+  int get waitingCount => isPending 
+      ? 0 
+      : position > currentPosition 
+          ? position - currentPosition 
+          : 0;
+          
+  // Fix: Check if position is greater than 0 (not creator) and equals current position
+  bool get isCurrentlyServed => position > 0 && position == currentPosition && isActive;
   
   // Calculate wait time estimate (5 minutes per person)
   String get estimatedWaitTime {
     if (isPending) return 'Waiting for approval';
     if (isCurrentlyServed) return 'It\'s your turn!';
+    if (currentPosition == 0) return 'Queue not started';
     
     final waitMins = waitingCount * 5;
     if (waitMins < 60) {

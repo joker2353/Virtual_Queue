@@ -8,12 +8,21 @@ import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'firebase_options.dart';
 import 'widgets/loading_indicator.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  
+  // Initialize Firebase
+  if (kIsWeb) {
+    // Initialize with minimal config for testing
+    await Firebase.initializeApp();
+  } else {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
+  
   runApp(
     MultiProvider(
       providers: [
@@ -44,15 +53,18 @@ class MyApp extends StatelessWidget {
     final auth = Provider.of<AuthProvider>(context);
     
     // Initialize notification provider with Twilio credentials
-    final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Replace with your actual Twilio credentials
-      notificationProvider.initialize(
-        accountSid: 'YOUR_TWILIO_ACCOUNT_SID',
-        authToken: 'YOUR_TWILIO_AUTH_TOKEN',
-        twilioNumber: 'whatsapp:+14155238886', // Twilio Sandbox WhatsApp number
-      );
-    });
+    // Skip Twilio initialization on web since it might not be supported
+    if (!kIsWeb) {
+      final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Replace with your actual Twilio credentials
+        notificationProvider.initialize(
+          accountSid: 'YOUR_TWILIO_ACCOUNT_SID',
+          authToken: 'YOUR_TWILIO_AUTH_TOKEN',
+          twilioNumber: 'whatsapp:+14155238886', // Twilio Sandbox WhatsApp number
+        );
+      });
+    }
     
     return MaterialApp(
       title: 'Virtual Queue',
@@ -88,12 +100,12 @@ class MyApp extends StatelessWidget {
   }
 
   Widget _buildLoadingScreen() {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: LoadingIndicator(
           size: 60,
           message: 'Loading app...',
-          useBlurBackground: true,
+          backgroundColor: Colors.white.withOpacity(0.8),
         ),
       ),
     );

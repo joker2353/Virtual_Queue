@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class NotificationService {
   static NotificationService? _instance;
-  late TwilioFlutter _twilioFlutter;
+  late TwilioFlutter? _twilioFlutter;
   bool _isInitialized = false;
   
   // Singleton pattern
@@ -21,6 +21,13 @@ class NotificationService {
     required String twilioNumber,
   }) async {
     if (_isInitialized) return;
+    
+    // Skip Twilio initialization on web
+    if (kIsWeb) {
+      debugPrint('Running on web, skipping Twilio initialization');
+      _isInitialized = true;
+      return;
+    }
     
     _twilioFlutter = TwilioFlutter(
       accountSid: accountSid,
@@ -44,6 +51,12 @@ class NotificationService {
       return false;
     }
     
+    // For web, just log that we would have sent a message
+    if (kIsWeb) {
+      debugPrint('Web platform: Would send WhatsApp message to $toNumber: $messageBody');
+      return true;
+    }
+    
     try {
       if (toNumber.isEmpty) {
         debugPrint('No phone number provided for notification');
@@ -55,7 +68,7 @@ class NotificationService {
           ? toNumber 
           : 'whatsapp:$toNumber';
       
-      final response = await _twilioFlutter.sendWhatsApp(
+      final response = await _twilioFlutter!.sendWhatsApp(
         toNumber: formattedNumber,
         messageBody: messageBody,
       );
@@ -63,12 +76,7 @@ class NotificationService {
       // Log the response for debugging
       debugPrint('WhatsApp message sent, response: $response');
       
-      // The twilio_flutter package returns a dynamic response
-      // Check if it contains data indicating success
-      if (response != null) {
-        return true;
-      }
-      return false;
+      return true;
     } catch (e) {
       debugPrint('Error sending WhatsApp message: $e');
       return false;
