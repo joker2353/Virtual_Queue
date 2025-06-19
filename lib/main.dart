@@ -14,6 +14,7 @@ import 'firebase_options.dart';
 import 'widgets/loading_indicator.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
+import 'providers/cache_provider.dart';
 
 // Define notification channel for Android
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -234,6 +235,7 @@ class VirtualQueueApp extends StatelessWidget {
             return provider;
           },
         ),
+        ChangeNotifierProvider(create: (_) => CacheProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -283,6 +285,7 @@ class MyAppWithProviders extends StatelessWidget {
             return provider;
           },
         ),
+        ChangeNotifierProvider(create: (_) => CacheProvider()),
       ],
       child: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {

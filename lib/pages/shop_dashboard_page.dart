@@ -15,6 +15,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../widgets/order_processing_dialog.dart';
+import '../providers/cache_provider.dart';
 
 class ShopDashboardPage extends StatefulWidget {
   final String roomId;
@@ -104,6 +105,20 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
     print('Setting up orders listener for room: ${widget.roomId}');
 
     try {
+      // First check the cache
+      final cache = Provider.of<CacheProvider>(context, listen: false);
+      final cachedOrders = cache.getRoomOrders(widget.roomId);
+
+      if (cachedOrders != null) {
+        print('Using cached orders');
+        if (mounted) {
+          setState(() {
+            _activeOrders = cachedOrders;
+            _isLoading = false;
+          });
+        }
+      }
+
       // Create the query for active orders (not completed or cancelled)
       final orderQuery = firestore.FirebaseFirestore.instance
           .collection('orders')
@@ -119,67 +134,43 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
           print('Received orders update. Count: ${snapshot.docs.length}');
 
           if (mounted) {
-            setState(() {
-              _activeOrders =
-                  snapshot.docs.map((doc) {
-                    final data = doc.data();
-                    print(
-                      'Processing order: ${doc.id}, roomId: ${data['roomId']}',
-                    );
-                    return Order.fromMap(doc.id, data);
-                  }).toList();
+            final orders =
+                snapshot.docs.map((doc) {
+                  final data = doc.data();
+                  print(
+                    'Processing order: ${doc.id}, roomId: ${data['roomId']}',
+                  );
+                  return Order.fromMap(doc.id, data);
+                }).toList();
 
-              // Sort orders in memory
-              _activeOrders.sort((a, b) {
-                // First sort by status priority
-                final statusPriority = {
-                  'pending': 0,
-                  'processing': 1,
-                  'ready_for_pickup': 2,
-                };
-                final priorityCompare = (statusPriority[a.status] ?? 3)
-                    .compareTo(statusPriority[b.status] ?? 3);
-                if (priorityCompare != 0) return priorityCompare;
+            // Sort orders in memory
+            orders.sort((a, b) {
+              // First sort by status priority
+              final statusPriority = {
+                'pending': 0,
+                'processing': 1,
+                'ready_for_pickup': 2,
+              };
+              final priorityCompare = (statusPriority[a.status] ?? 3).compareTo(
+                statusPriority[b.status] ?? 3,
+              );
+              if (priorityCompare != 0) return priorityCompare;
 
-                // Then sort by creation time (newest first)
-                return b.createdAt.compareTo(a.createdAt);
-              });
+              // Then sort by creation time (newest first)
+              return b.createdAt.compareTo(a.createdAt);
             });
+
+            setState(() {
+              _activeOrders = orders;
+            });
+
+            // Update cache with new orders
+            cache.cacheRoomOrders(widget.roomId, orders);
           }
         },
         onError: (error) {
           print('Error in orders listener: $error');
-          if (error.toString().contains('failed-precondition') &&
-              error.toString().contains('requires an index')) {
-            // Show a more helpful error message with the link
-            final indexLink = error.toString().split('create it here: ')[1];
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Setting up database indexes...'),
-                    SizedBox(height: 4),
-                    Text(
-                      'This may take a few minutes. Please wait or click the link in the console to create the index manually.',
-                      style: TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-                duration: Duration(seconds: 10),
-                backgroundColor: Colors.orange,
-                action: SnackBarAction(
-                  label: 'Retry',
-                  onPressed: () {
-                    // Cancel existing subscription and retry
-                    _ordersSubscription?.cancel();
-                    _setupOrdersListener();
-                  },
-                ),
-              ),
-            );
-          } else {
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error loading orders: ${error.toString()}'),
@@ -209,6 +200,9 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
 
   Future<void> _refreshOrders() async {
     print('Manually refreshing orders');
+    // Clear cache before refreshing
+    final cache = Provider.of<CacheProvider>(context, listen: false);
+    cache.clearRoomCache(widget.roomId);
     await _initialize();
   }
 

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import '../models/order.dart';
 import '../widgets/loading_indicator.dart';
+import 'package:provider/provider.dart';
+import '../providers/cache_provider.dart';
 
 class PurchaseHistoryPage extends StatefulWidget {
   final String roomId;
@@ -52,7 +54,40 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
 
   Future<void> _loadOrders() async {
     try {
-      // Simplified query - fetch all orders for this customer
+      // First check the cache
+      final cache = Provider.of<CacheProvider>(context, listen: false);
+      final cachedOrders = cache.getCustomerOrders(widget.customerContact);
+
+      if (cachedOrders != null) {
+        print('Using cached orders for purchase history');
+        // Get customer's baki amount
+        final customerDoc =
+            await firestore.FirebaseFirestore.instance
+                .collection('customers')
+                .doc(widget.customerContact)
+                .get();
+
+        if (mounted) {
+          setState(() {
+            _orders =
+                cachedOrders
+                    .where(
+                      (order) =>
+                          order.roomId == widget.roomId &&
+                          order.status == 'completed',
+                    )
+                    .toList()
+                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            _totalBakiAmount =
+                (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
+            _isLoading = false;
+          });
+        }
+        return; // Exit early if we have cached data
+      }
+
+      print('No cache found, fetching from Firestore');
+      // Fetch from Firestore only if cache is empty or expired
       final querySnapshot =
           await firestore.FirebaseFirestore.instance
               .collection('orders')
@@ -66,26 +101,35 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
               .doc(widget.customerContact)
               .get();
 
-      // Filter completed orders for this room in memory
+      // Process all orders
       final allOrders =
           querySnapshot.docs
               .map((doc) => Order.fromMap(doc.id, doc.data()))
+              .toList();
+
+      // Filter completed orders for this room
+      final completedOrders =
+          allOrders
               .where(
                 (order) =>
                     order.roomId == widget.roomId &&
                     order.status == 'completed',
               )
               .toList()
-            ..sort(
-              (a, b) => b.createdAt.compareTo(a.createdAt),
-            ); // Sort by date descending
+            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
-      setState(() {
-        _orders = allOrders;
-        _totalBakiAmount =
-            (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _orders = completedOrders;
+          _totalBakiAmount =
+              (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
+          _isLoading = false;
+        });
+
+        // Cache all orders for this customer
+        print('Caching ${allOrders.length} orders for future use');
+        cache.cacheCustomerOrders(widget.customerContact, allOrders);
+      }
     } catch (e) {
       print('Error loading orders: $e');
       setState(() {
@@ -93,6 +137,14 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
         _isLoading = false;
       });
     }
+  }
+
+  // Add pull-to-refresh functionality
+  Future<void> _refreshOrders() async {
+    print('Manually refreshing orders');
+    final cache = Provider.of<CacheProvider>(context, listen: false);
+    cache.clearCustomerCache(widget.customerContact);
+    await _loadOrders();
   }
 
   void _showOrderDetails(Order order) {
@@ -341,213 +393,223 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.deepPurple, Colors.deepPurple.shade50],
-            stops: const [0.0, 0.3],
-          ),
-        ),
-        child: Column(
-          children: [
-            // Total Baki Amount Card
-            Container(
-              margin: EdgeInsets.all(16),
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Total Baki (Due)',
-                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        '৳${_totalBakiAmount.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color:
-                              _totalBakiAmount > 0 ? Colors.red : Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color:
-                          _totalBakiAmount > 0
-                              ? Colors.red.withOpacity(0.1)
-                              : Colors.green.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      _totalBakiAmount > 0
-                          ? Icons.account_balance_wallet
-                          : Icons.check_circle,
-                      color: _totalBakiAmount > 0 ? Colors.red : Colors.green,
-                      size: 24,
-                    ),
-                  ),
-                ],
-              ),
+      body: RefreshIndicator(
+        onRefresh: _refreshOrders,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.deepPurple, Colors.deepPurple.shade50],
+              stops: const [0.0, 0.3],
             ),
-            // Orders List
-            Expanded(
-              child:
-                  _orders.isEmpty
-                      ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.history,
-                              size: 64,
-                              color: Colors.grey[400],
-                            ),
-                            SizedBox(height: 16),
-                            Text(
-                              'No completed orders yet',
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
+          ),
+          child: Column(
+            children: [
+              // Total Baki Amount Card
+              Container(
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Total Baki (Due)',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      )
-                      : ListView.builder(
-                        padding: EdgeInsets.all(16),
-                        itemCount: _orders.length,
-                        itemBuilder: (context, index) {
-                          final order = _orders[index];
-                          return GestureDetector(
-                            onTap: () => _showOrderDetails(order),
-                            child: Card(
-                              margin: EdgeInsets.only(bottom: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                        SizedBox(height: 4),
+                        Text(
+                          '৳${_totalBakiAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color:
+                                _totalBakiAmount > 0
+                                    ? Colors.red
+                                    : Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color:
+                            _totalBakiAmount > 0
+                                ? Colors.red.withOpacity(0.1)
+                                : Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _totalBakiAmount > 0
+                            ? Icons.account_balance_wallet
+                            : Icons.check_circle,
+                        color: _totalBakiAmount > 0 ? Colors.red : Colors.green,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Orders List
+              Expanded(
+                child:
+                    _orders.isEmpty
+                        ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.history,
+                                size: 64,
+                                color: Colors.grey[400],
                               ),
-                              child: Padding(
-                                padding: EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Order #${order.id.substring(0, 8)}',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 6,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.withOpacity(
-                                              0.1,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              20,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            'COMPLETED',
-                                            style: TextStyle(
-                                              color: Colors.green,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    Divider(height: 24),
-                                    ...order.items.map(
-                                      (item) => Padding(
-                                        padding: EdgeInsets.only(bottom: 8),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              '${item.quantity}x ${item.name}',
-                                              style: TextStyle(fontSize: 15),
-                                            ),
-                                            Text(
-                                              '৳${(item.total).toStringAsFixed(2)}',
-                                              style: TextStyle(
-                                                color:
-                                                    Colors.deepPurple.shade700,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    Divider(height: 24),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          'Total:',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        Text(
-                                          '৳${order.totalAmount.toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.deepPurple,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(height: 8),
-                                    Text(
-                                      'Completed on ${_formatDate(order.createdAt)}',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
+                              SizedBox(height: 16),
+                              Text(
+                                'No completed orders yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey[600],
                                 ),
                               ),
-                            ),
-                          );
-                        },
-                      ),
-            ),
-          ],
+                            ],
+                          ),
+                        )
+                        : ListView.builder(
+                          padding: EdgeInsets.all(16),
+                          itemCount: _orders.length,
+                          itemBuilder: (context, index) {
+                            final order = _orders[index];
+                            return GestureDetector(
+                              onTap: () => _showOrderDetails(order),
+                              child: Card(
+                                margin: EdgeInsets.only(bottom: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Order #${order.id.substring(0, 8)}',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.green.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              'COMPLETED',
+                                              style: TextStyle(
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Divider(height: 24),
+                                      ...order.items.map(
+                                        (item) => Padding(
+                                          padding: EdgeInsets.only(bottom: 8),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                '${item.quantity}x ${item.name}',
+                                                style: TextStyle(fontSize: 15),
+                                              ),
+                                              Text(
+                                                '৳${(item.total).toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                  color:
+                                                      Colors
+                                                          .deepPurple
+                                                          .shade700,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                      Divider(height: 24),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Total:',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Text(
+                                            '৳${order.totalAmount.toStringAsFixed(2)}',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.deepPurple,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Completed on ${_formatDate(order.createdAt)}',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+              ),
+            ],
+          ),
         ),
       ),
     );

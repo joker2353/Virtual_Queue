@@ -7,6 +7,8 @@ import '../models/order.dart';
 import '../widgets/loading_indicator.dart';
 import 'shop_order_page.dart';
 import 'purchase_history_page.dart';
+import 'package:provider/provider.dart';
+import '../providers/cache_provider.dart';
 
 class CustomerPage extends StatefulWidget {
   final String roomId;
@@ -168,7 +170,21 @@ class _CustomerPageState extends State<CustomerPage> {
       print(
         'Setting up orders listener for customer: ${widget.customerContact}',
       );
-      print('Room ID: ${widget.roomId}');
+
+      // First check the cache
+      final cache = Provider.of<CacheProvider>(context, listen: false);
+      final cachedOrders = cache.getCustomerOrders(widget.customerContact);
+
+      if (cachedOrders != null) {
+        print('Using cached orders');
+        if (mounted) {
+          setState(() {
+            _recentOrders = cachedOrders;
+            _isLoading = false;
+            _error = null;
+          });
+        }
+      }
 
       // Query orders for this customer in this room
       final ordersQuery = firestore.FirebaseFirestore.instance
@@ -192,6 +208,8 @@ class _CustomerPageState extends State<CustomerPage> {
                 _isLoading = false;
                 _error = null;
               });
+              // Update cache with empty list
+              cache.cacheCustomerOrders(widget.customerContact, []);
             }
           } else {
             List<Order> validOrders = [];
@@ -203,19 +221,21 @@ class _CustomerPageState extends State<CustomerPage> {
                 print('Successfully parsed order: ${doc.id}');
               } catch (e) {
                 print('Error parsing order ${doc.id}: $e');
-                // Continue with next order if one fails to parse
                 continue;
               }
             }
 
+            // Sort orders by date
+            validOrders.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
             if (mounted) {
               setState(() {
-                _recentOrders =
-                    validOrders
-                      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+                _recentOrders = validOrders;
                 _isLoading = false;
                 _error = null;
               });
+              // Update cache with new orders
+              cache.cacheCustomerOrders(widget.customerContact, validOrders);
             }
           }
         },

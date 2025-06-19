@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import '../models/order.dart';
 import '../widgets/loading_indicator.dart';
+import 'package:provider/provider.dart';
+import '../providers/cache_provider.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   final String roomId;
@@ -34,6 +36,22 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     try {
       print('Loading completed orders for room: ${widget.roomId}');
 
+      // First check the cache
+      final cache = Provider.of<CacheProvider>(context, listen: false);
+      final cachedOrders = cache.getCompletedOrders(widget.roomId);
+
+      if (cachedOrders != null) {
+        print('Using cached completed orders');
+        if (mounted) {
+          setState(() {
+            _completedOrders = cachedOrders;
+            _isLoading = false;
+            _error = null;
+          });
+          return;
+        }
+      }
+
       // Use a simpler query without compound indexes
       final querySnapshot =
           await firestore.FirebaseFirestore.instance
@@ -44,26 +62,30 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       print('Query completed. Processing orders...');
 
       if (mounted) {
-        setState(() {
-          // Filter and sort in memory instead of in query
-          _completedOrders =
-              querySnapshot.docs
-                  .map((doc) => Order.fromMap(doc.id, doc.data()))
-                  .where(
-                    (order) => order.status == 'completed',
-                  ) // Filter in memory
-                  .toList()
-                ..sort(
-                  (a, b) => // Sort in memory
-                      (b.updatedAt ?? b.createdAt).compareTo(
-                    a.updatedAt ?? a.createdAt,
-                  ),
-                );
+        // Filter and sort in memory instead of in query
+        final orders =
+            querySnapshot.docs
+                .map((doc) => Order.fromMap(doc.id, doc.data()))
+                .where(
+                  (order) => order.status == 'completed',
+                ) // Filter in memory
+                .toList()
+              ..sort(
+                (a, b) => // Sort in memory
+                    (b.updatedAt ?? b.createdAt).compareTo(
+                  a.updatedAt ?? a.createdAt,
+                ),
+              );
 
+        setState(() {
+          _completedOrders = orders;
           print('Found ${_completedOrders.length} completed orders');
           _isLoading = false;
           _error = null;
         });
+
+        // Cache the completed orders
+        cache.cacheCompletedOrders(widget.roomId, orders);
       }
     } catch (e) {
       print('Error loading completed orders: $e');
