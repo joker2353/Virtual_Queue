@@ -497,70 +497,114 @@ class _CustomerPageState extends State<CustomerPage> {
                                 itemCount: _recentOrders.length,
                                 itemBuilder: (context, index) {
                                   final order = _recentOrders[index];
+                                  final statusColor = _getStatusColor(
+                                    order.status,
+                                  );
+
                                   return Card(
-                                    margin: EdgeInsets.only(bottom: 8),
+                                    margin: EdgeInsets.only(bottom: 12),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: ListTile(
-                                      contentPadding: EdgeInsets.all(12),
-                                      leading: Container(
-                                        padding: EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(
-                                            order.status,
-                                          ).withOpacity(0.1),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          _getStatusIcon(order.status),
-                                          color: _getStatusColor(order.status),
-                                        ),
-                                      ),
-                                      title: Text(
-                                        'Order #${order.id.substring(0, 8)}',
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text('${order.items.length} items'),
-                                          Text(
-                                            _formatDate(order.createdAt),
+                                    child: Column(
+                                      children: [
+                                        ListTile(
+                                          contentPadding: EdgeInsets.all(16),
+                                          leading: Container(
+                                            padding: EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withOpacity(
+                                                0.1,
+                                              ),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: Icon(
+                                              _getStatusIcon(order.status),
+                                              color: statusColor,
+                                            ),
+                                          ),
+                                          title: Text(
+                                            'Order #${order.id.substring(0, 8)}',
                                             style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                      trailing: Container(
-                                        padding: EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: _getStatusColor(
-                                            order.status,
-                                          ).withOpacity(0.1),
-                                          borderRadius: BorderRadius.circular(
-                                            20,
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              SizedBox(height: 4),
+                                              Text(
+                                                '${order.items.length} items',
+                                              ),
+                                              Text(
+                                                _formatDate(order.createdAt),
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        child: Text(
-                                          order.status.toUpperCase(),
-                                          style: TextStyle(
-                                            color: _getStatusColor(
-                                              order.status,
+                                          trailing: Container(
+                                            padding: EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
                                             ),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
+                                            decoration: BoxDecoration(
+                                              color: statusColor.withOpacity(
+                                                0.1,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
+                                            child: Text(
+                                              _getStatusText(order.status),
+                                              style: TextStyle(
+                                                color: statusColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 12,
+                                              ),
+                                            ),
                                           ),
                                         ),
-                                      ),
+                                        if (order.isReadyForPickup ||
+                                            order.isCompleted)
+                                          Container(
+                                            padding: EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade50,
+                                              borderRadius: BorderRadius.only(
+                                                bottomLeft: Radius.circular(12),
+                                                bottomRight: Radius.circular(
+                                                  12,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  'Total Amount:',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    color: Colors.grey[700],
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '৳${order.totalAmount.toStringAsFixed(2)}',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.deepPurple,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                   );
                                 },
@@ -582,6 +626,8 @@ class _CustomerPageState extends State<CustomerPage> {
         return Colors.orange;
       case 'processing':
         return Colors.blue;
+      case 'ready_for_pickup':
+        return Colors.green.shade600;
       case 'completed':
         return Colors.green;
       case 'cancelled':
@@ -597,12 +643,23 @@ class _CustomerPageState extends State<CustomerPage> {
         return Icons.hourglass_empty;
       case 'processing':
         return Icons.sync;
+      case 'ready_for_pickup':
+        return Icons.check_circle;
       case 'completed':
         return Icons.check_circle;
       case 'cancelled':
         return Icons.cancel;
       default:
         return Icons.receipt;
+    }
+  }
+
+  String _getStatusText(String status) {
+    switch (status) {
+      case 'ready_for_pickup':
+        return 'READY FOR PICKUP';
+      default:
+        return status.toUpperCase();
     }
   }
 

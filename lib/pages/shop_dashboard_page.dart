@@ -13,6 +13,7 @@ import 'customer_list_page.dart'; // New page for customer list
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import '../widgets/order_processing_dialog.dart';
 
 class ShopDashboardPage extends StatefulWidget {
   final String roomId;
@@ -420,9 +421,8 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
       margin: EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
-          _showOrderDetails(order);
-        },
+        onTap: () => _showOrderDetails(order),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: EdgeInsets.all(16),
           child: Column(
@@ -537,259 +537,15 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
   }
 
   void _showOrderDetails(Order order) {
-    final totalController = TextEditingController(
-      text: order.totalAmount.toStringAsFixed(2),
-    );
-    final bakiController = TextEditingController(text: "0.00");
-
     showDialog(
       context: context,
-      builder:
-          (context) => StatefulBuilder(
-            builder:
-                (context, setState) => AlertDialog(
-                  title: Text('Order Details'),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Customer Information',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 8),
-                        Text('Name: ${order.customerName}'),
-                        Text('Contact: ${order.customerContact}'),
-                        SizedBox(height: 16),
-                        Text(
-                          'Order Items',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 8),
-                        ...order.items.map(
-                          (item) => Padding(
-                            padding: EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(item.name),
-                                      if (item.notes?.isNotEmpty ?? false)
-                                        Text(
-                                          item.notes!,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                                Text('${item.quantity}x'),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (order.status == 'completed' ||
-                            order.status == 'processing')
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Divider(),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Total Amount:',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    '৳${order.totalAmount.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        if (order.status == 'pending')
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Divider(),
-                              Text(
-                                'Set Total Amount:',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 8),
-                              TextField(
-                                controller: totalController,
-                                keyboardType: TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                                decoration: InputDecoration(
-                                  prefixText: '৳ ',
-                                  border: OutlineInputBorder(),
-                                  hintText: 'Enter total amount',
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'Amount to Add to Baki:',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 8),
-                              TextField(
-                                controller: bakiController,
-                                keyboardType: TextInputType.numberWithOptions(
-                                  decimal: true,
-                                ),
-                                decoration: InputDecoration(
-                                  prefixText: '৳ ',
-                                  border: OutlineInputBorder(),
-                                  hintText:
-                                      'Enter amount to add to pending balance',
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text('Close'),
-                    ),
-                    if (order.status == 'pending')
-                      ElevatedButton(
-                        onPressed: () async {
-                          final amount = double.tryParse(totalController.text);
-                          final bakiAmount = double.tryParse(
-                            bakiController.text,
-                          );
-                          if (amount == null || bakiAmount == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Please enter valid amounts'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                            return;
-                          }
-
-                          // First update the order total
-                          await _updateOrderTotal(order.id, amount);
-
-                          // Then update the customer's pending amount in a separate collection
-                          await _updateCustomerPendingAmount(
-                            order.customerContact,
-                            bakiAmount,
-                          );
-
-                          // Finally update the order status
-                          await _updateOrderStatus(order.id, 'processing');
-                          Navigator.pop(context);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Order processed and baki updated'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepPurple,
-                        ),
-                        child: Text('Set Price & Process'),
-                      )
-                    else if (order.status == 'processing')
-                      ElevatedButton(
-                        onPressed: () {
-                          _updateOrderStatus(order.id, 'completed');
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                        ),
-                        child: Text('Mark as Completed'),
-                      ),
-                  ],
-                ),
-          ),
-    );
-  }
-
-  Future<void> _updateCustomerPendingAmount(
-    String customerContact,
-    double additionalAmount,
-  ) async {
-    try {
-      final customerDoc =
-          await firestore.FirebaseFirestore.instance
-              .collection('customers')
-              .doc(customerContact)
-              .get();
-
-      double currentPending = 0;
-      if (customerDoc.exists) {
-        currentPending = (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
+      builder: (context) => OrderProcessingDialog(order: order),
+    ).then((updated) {
+      if (updated == true) {
+        // Refresh data if needed
+        setState(() {});
       }
-
-      await firestore.FirebaseFirestore.instance
-          .collection('customers')
-          .doc(customerContact)
-          .set({
-            'pendingAmount': currentPending + additionalAmount,
-            'lastUpdated': firestore.FieldValue.serverTimestamp(),
-            'roomId': widget.roomId, // Store the room ID for reference
-          }, firestore.SetOptions(merge: true));
-    } catch (e) {
-      print('Error updating customer pending amount: $e');
-      throw e;
-    }
-  }
-
-  Future<void> _updateOrderStatus(String orderId, String status) async {
-    try {
-      await firestore.FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId)
-          .update({
-            'status': status,
-            'updatedAt': firestore.FieldValue.serverTimestamp(),
-          });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update order status: $e')),
-      );
-    }
-  }
-
-  Future<void> _updateOrderTotal(String orderId, double totalAmount) async {
-    try {
-      await firestore.FirebaseFirestore.instance
-          .collection('orders')
-          .doc(orderId)
-          .update({
-            'totalAmount': totalAmount,
-            'updatedAt': firestore.FieldValue.serverTimestamp(),
-          });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update order total: $e')),
-      );
-    }
+    });
   }
 
   double _calculateTotalPending() {

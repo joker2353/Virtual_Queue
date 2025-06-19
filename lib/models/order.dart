@@ -8,7 +8,8 @@ class Order {
   final String customerContact;
   final List<OrderItem> items;
   final double totalAmount;
-  final String status; // 'pending', 'processing', 'completed', 'cancelled'
+  final String
+  status; // 'pending', 'processing', 'ready_for_pickup', 'completed', 'cancelled'
   final String paymentMethod; // 'cash', 'card', etc.
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -31,8 +32,12 @@ class Order {
 
   bool get isPending => status == 'pending';
   bool get isProcessing => status == 'processing';
+  bool get isReadyForPickup => status == 'ready_for_pickup';
   bool get isCompleted => status == 'completed';
   bool get isCancelled => status == 'cancelled';
+
+  // Check if all items have been checked (either available or not)
+  bool get allItemsChecked => items.every((item) => item.isChecked);
 
   Map<String, dynamic> toMap() {
     return {
@@ -110,6 +115,7 @@ class OrderItem {
   final double price;
   final String? notes;
   final bool isAvailable;
+  final bool isChecked; // New field to track if item has been checked
 
   OrderItem({
     required this.name,
@@ -117,6 +123,7 @@ class OrderItem {
     required this.price,
     this.notes,
     required this.isAvailable,
+    this.isChecked = false, // Default to false for new items
   });
 
   // Extract numeric value from quantity string (e.g., "2 kg" -> 2)
@@ -138,6 +145,7 @@ class OrderItem {
       'price': price,
       'notes': notes,
       'isAvailable': isAvailable,
+      'isChecked': isChecked,
     };
   }
 
@@ -158,7 +166,8 @@ class OrderItem {
       quantity: quantityStr,
       price: (map['price'] as num).toDouble(),
       notes: map['notes'] as String?,
-      isAvailable: map['isAvailable'] as bool,
+      isAvailable: map['isAvailable'] as bool? ?? true,
+      isChecked: map['isChecked'] as bool? ?? false,
     );
   }
 
@@ -168,6 +177,7 @@ class OrderItem {
     double? price,
     String? notes,
     bool? isAvailable,
+    bool? isChecked,
   }) {
     return OrderItem(
       name: name ?? this.name,
@@ -175,6 +185,7 @@ class OrderItem {
       price: price ?? this.price,
       notes: notes ?? this.notes,
       isAvailable: isAvailable ?? this.isAvailable,
+      isChecked: isChecked ?? this.isChecked,
     );
   }
 }
