@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Rooms collection
+    match /rooms/{roomId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && resource.data.creatorId == request.auth.uid;
+      
+      // Allow access to the members subcollection
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && (
+          // Allow room creator to modify members
+          get(/databases/$(database)/documents/rooms/$(roomId)).data.creatorId == request.auth.uid ||
+          // Allow users to modify their own membership
+          memberId == request.auth.uid
+        );
+      }
+    }
+
+    // Memberships collection
+    match /memberships/{membershipId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        // Allow room creator to modify memberships
+        get(/databases/$(database)/documents/rooms/$(membershipId.split('_')[0])).data.creatorId == request.auth.uid ||
+        // Allow users to modify their own membership
+        membershipId.split('_')[1] == request.auth.uid
+      );
+    }
+
+    // Orders collection
+    match /orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        // Allow room creator to update orders
+        get(/databases/$(database)/documents/rooms/$(resource.data.roomId)).data.creatorId == request.auth.uid ||
+        // Allow order creator to update their own orders
+        resource.data.userId == request.auth.uid
+      );
+    }
+
+    // User rooms collection (for faster access)
+    match /user_rooms/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId);
+    }
+  }
+}

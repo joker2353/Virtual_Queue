@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Virtual Queue - A modern queue management system that helps you manage your queues effortlessly.">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Virtual Queue">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Virtual Queue</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Theme color for browser -->
+  <meta name="theme-color" content="#673AB7">
+
+  <!-- Firebase SDK - updated to latest version compatible with flutterfire -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Firebase web app initialization and configuration
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        console.log('Initializing Firebase web configuration');
+        
+        // Initialize Firebase with API key manually
+        var firebaseConfig = {
+          apiKey: "AIzaSyA8rnafQQbGjo2YC6NklWkt-VPaOEGx0OU",
+          authDomain: "virtual-queue-a4422.firebaseapp.com",
+          projectId: "virtual-queue-a4422",
+          storageBucket: "virtual-queue-a4422.firebasestorage.app",
+          messagingSenderId: "666976149522",
+          appId: "1:666976149522:web:c3a2f4539c9b807af138cb",
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        console.log('Firebase initialized successfully from HTML');
+      } catch (e) {
+        console.error('Error initializing Firebase from HTML:', e);
+      }
+      
+      // Add event listener for Flutter initialization
+      window.addEventListener('flutter-first-frame', function() {
+        console.log('Flutter app has loaded - Firebase should be initialized');
+      });
+    });
+  </script>
+
+  <style>
+    /* Add a loading animation while the app loads */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(135deg, #673AB7, #9575CD);
+    }
+    .loading-indicator {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #f3f3f3;
+      border-radius: 50%;
+      border-top: 5px solid #673AB7;
+      -webkit-animation: spin 1s linear infinite;
+      animation: spin 1s linear infinite;
+    }
+    @-webkit-keyframes spin {
+      0% { -webkit-transform: rotate(0deg); }
+      100% { -webkit-transform: rotate(360deg); }
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading animation -->
+  <div class="loading">
+    <div class="loading-indicator"></div>
+  </div>
+  
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Used for notification icon background color -->
+    <color name="notification_icon_color">#6200EE</color>
+    <!-- Professional deep blue for launcher background -->
+    <color name="ic_launcher_background">#1A237E</color>
+</resources> 
