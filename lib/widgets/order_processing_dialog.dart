@@ -45,11 +45,12 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
           .doc(widget.order.id);
 
       double finalAmount = widget.order.totalAmount;
+      double bakiAmount = 0.0;
 
       if (markAsCompleted) {
         // Add baki amount to the previous total
-        finalAmount =
-            widget.order.totalAmount + double.parse(_bakiAmountController.text);
+        bakiAmount = double.parse(_bakiAmountController.text);
+        finalAmount = widget.order.totalAmount + bakiAmount;
       } else if (markAsReady) {
         finalAmount = double.parse(_totalAmountController.text);
       }
@@ -62,20 +63,22 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 : (markAsReady ? 'ready_for_pickup' : 'processing'),
         totalAmount: finalAmount,
         updatedAt: DateTime.now(),
+        metadata:
+            markAsCompleted
+                ? {...widget.order.metadata ?? {}, 'bakiAmount': bakiAmount}
+                : widget.order.metadata,
       );
 
       await orderRef.update(updatedOrder.toMap());
 
       // If there's a baki amount, update the customer's pending amount
-      if (markAsCompleted && double.parse(_bakiAmountController.text) > 0) {
+      if (markAsCompleted && bakiAmount > 0) {
         final customerRef = firestore.FirebaseFirestore.instance
             .collection('customers')
             .doc(widget.order.customerContact);
 
         await customerRef.set({
-          'pendingAmount': firestore.FieldValue.increment(
-            double.parse(_bakiAmountController.text),
-          ),
+          'pendingAmount': firestore.FieldValue.increment(bakiAmount),
         }, SetOptions(merge: true));
       }
 

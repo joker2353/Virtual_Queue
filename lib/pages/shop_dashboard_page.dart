@@ -10,6 +10,7 @@ import '../widgets/loading_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'join_requests_page.dart';
 import 'customer_list_page.dart'; // New page for customer list
+import 'order_history_page.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -103,55 +104,94 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
     print('Setting up orders listener for room: ${widget.roomId}');
 
     try {
-      // Create the query for orders by roomId
+      // Create the query for active orders (not completed or cancelled)
       final orderQuery = firestore.FirebaseFirestore.instance
           .collection('orders')
-          .where('roomId', isEqualTo: widget.roomId);
+          .where('roomId', isEqualTo: widget.roomId)
+          .where(
+            'status',
+            whereIn: ['pending', 'processing', 'ready_for_pickup'],
+          );
 
       // Listen to the query
       _ordersSubscription = orderQuery.snapshots().listen(
         (snapshot) {
           print('Received orders update. Count: ${snapshot.docs.length}');
 
-          setState(() {
-            _activeOrders =
-                snapshot.docs.map((doc) {
-                  final data = doc.data();
-                  print(
-                    'Processing order: ${doc.id}, roomId: ${data['roomId']}',
-                  );
-                  return Order.fromMap(doc.id, data);
-                }).toList();
+          if (mounted) {
+            setState(() {
+              _activeOrders =
+                  snapshot.docs.map((doc) {
+                    final data = doc.data();
+                    print(
+                      'Processing order: ${doc.id}, roomId: ${data['roomId']}',
+                    );
+                    return Order.fromMap(doc.id, data);
+                  }).toList();
 
-            // Sort orders in memory instead of in query
-            _activeOrders.sort((a, b) {
-              // First sort by status
-              if (a.status == 'pending' && b.status != 'pending') return -1;
-              if (a.status != 'pending' && b.status == 'pending') return 1;
-              // Then sort by creation time
-              return b.createdAt.compareTo(a.createdAt);
+              // Sort orders in memory
+              _activeOrders.sort((a, b) {
+                // First sort by status priority
+                final statusPriority = {
+                  'pending': 0,
+                  'processing': 1,
+                  'ready_for_pickup': 2,
+                };
+                final priorityCompare = (statusPriority[a.status] ?? 3)
+                    .compareTo(statusPriority[b.status] ?? 3);
+                if (priorityCompare != 0) return priorityCompare;
+
+                // Then sort by creation time (newest first)
+                return b.createdAt.compareTo(a.createdAt);
+              });
             });
-          });
+          }
         },
         onError: (error) {
           print('Error in orders listener: $error');
-          // Check if the error is about missing index
           if (error.toString().contains('failed-precondition') &&
               error.toString().contains('requires an index')) {
+            // Show a more helpful error message with the link
+            final indexLink = error.toString().split('create it here: ')[1];
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(
-                  'Setting up database indexes. This may take a few minutes. Please wait...',
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Setting up database indexes...'),
+                    SizedBox(height: 4),
+                    Text(
+                      'This may take a few minutes. Please wait or click the link in the console to create the index manually.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ],
                 ),
                 duration: Duration(seconds: 10),
                 backgroundColor: Colors.orange,
+                action: SnackBarAction(
+                  label: 'Retry',
+                  onPressed: () {
+                    // Cancel existing subscription and retry
+                    _ordersSubscription?.cancel();
+                    _setupOrdersListener();
+                  },
+                ),
               ),
             );
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error loading orders. Please try again.'),
+                content: Text('Error loading orders: ${error.toString()}'),
                 backgroundColor: Colors.red,
+                action: SnackBarAction(
+                  label: 'Retry',
+                  onPressed: () {
+                    // Cancel existing subscription and retry
+                    _ordersSubscription?.cancel();
+                    _setupOrdersListener();
+                  },
+                ),
               ),
             );
           }
@@ -159,9 +199,11 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
       );
     } catch (e) {
       print('Error setting up orders listener: $e');
-      setState(() {
-        _error = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
     }
   }
 
@@ -212,6 +254,11 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
             icon: Icon(_showQR ? Icons.visibility_off : Icons.qr_code),
             onPressed: _toggleQRCode,
             tooltip: _showQR ? 'Hide QR Code' : 'Show QR Code',
+          ),
+          IconButton(
+            icon: Icon(Icons.history),
+            onPressed: () => OrderHistoryPage.navigate(context, widget.roomId),
+            tooltip: 'Order History',
           ),
         ],
       ),

@@ -683,6 +683,11 @@ class _CustomerPageState extends State<CustomerPage> {
   }
 
   void _navigateToPurchaseHistory() {
-    PurchaseHistoryPage.navigate(context, widget.roomId, widget.customerName);
+    PurchaseHistoryPage.navigate(
+      context,
+      widget.roomId,
+      widget.customerName,
+      widget.customerContact,
+    );
   }
 }
