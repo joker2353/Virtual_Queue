@@ -220,49 +220,21 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                 ),
                               ),
                               SizedBox(height: 16),
-                              ...order.items
-                                  .map(
-                                    (item) => Padding(
-                                      padding: EdgeInsets.only(bottom: 12),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  item.name,
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  '৳${item.price.toStringAsFixed(2)} × ${item.quantity}',
-                                                  style: TextStyle(
-                                                    color: Colors.grey[600],
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Text(
-                                            '৳${item.total.toStringAsFixed(2)}',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.deepPurple,
-                                            ),
-                                          ),
-                                        ],
+                              ...order.items.map(
+                                (item) => Padding(
+                                  padding: EdgeInsets.only(bottom: 8),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${item.quantity}x ${item.name}',
+                                        style: TextStyle(fontSize: 15),
                                       ),
-                                    ),
-                                  )
-                                  .toList(),
+                                    ],
+                                  ),
+                                ),
+                              ),
                               Divider(height: 24),
                               Row(
                                 mainAxisAlignment:
@@ -555,16 +527,6 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                               Text(
                                                 '${item.quantity}x ${item.name}',
                                                 style: TextStyle(fontSize: 15),
-                                              ),
-                                              Text(
-                                                '৳${(item.total).toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  color:
-                                                      Colors
-                                                          .deepPurple
-                                                          .shade700,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
                                               ),
                                             ],
                                           ),

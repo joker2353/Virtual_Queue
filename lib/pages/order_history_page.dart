@@ -174,19 +174,21 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  item.name,
+                                  '${item.quantity}x ${item.name}',
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                Text(
-                                  item.quantity,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
+                                if (item.notes?.isNotEmpty ?? false)
+                                  Text(
+                                    item.notes!,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                      fontStyle: FontStyle.italic,
+                                    ),
                                   ),
-                                ),
                               ],
                             ),
                           ),
@@ -221,9 +223,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Initial Amount:', style: TextStyle(fontSize: 14)),
+                      Text('Total Amount:', style: TextStyle(fontSize: 14)),
                       Text(
-                        '৳${(order.totalAmount - (order.metadata?['bakiAmount'] ?? 0)).toStringAsFixed(2)}',
+                        '৳${order.totalAmount.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -236,7 +238,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Baki Amount:', style: TextStyle(fontSize: 14)),
+                        Text('Unpaid Amount:', style: TextStyle(fontSize: 14)),
                         Text(
                           '৳${(order.metadata?['bakiAmount'] ?? 0).toStringAsFixed(2)}',
                           style: TextStyle(
@@ -248,27 +250,6 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       ],
                     ),
                   ],
-                  SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Total Amount:',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '৳${order.totalAmount.toStringAsFixed(2)}',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.deepPurple,
-                        ),
-                      ),
-                    ],
-                  ),
                   SizedBox(height: 16),
                   Text(
                     'Completed on: ${_formatDate(order.updatedAt ?? order.createdAt)}',

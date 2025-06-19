@@ -9,6 +9,7 @@ import 'shop_order_page.dart';
 import 'purchase_history_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/cache_provider.dart';
+import 'edit_order_page.dart';
 
 class CustomerPage extends StatefulWidget {
   final String roomId;
@@ -217,7 +218,10 @@ class _CustomerPageState extends State<CustomerPage> {
             for (var doc in snapshot.docs) {
               try {
                 final order = Order.fromMap(doc.id, doc.data());
-                validOrders.add(order);
+                // Only add non-completed orders to the recent orders list
+                if (order.status != 'completed') {
+                  validOrders.add(order);
+                }
                 print('Successfully parsed order: ${doc.id}');
               } catch (e) {
                 print('Error parsing order ${doc.id}: $e');
@@ -297,12 +301,65 @@ class _CustomerPageState extends State<CustomerPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            icon: Icon(_showQR ? Icons.visibility_off : Icons.qr_code),
-            onPressed: _toggleQRCode,
-            tooltip: _showQR ? 'Hide QR Code' : 'Show QR Code',
+          Builder(
+            builder:
+                (context) => IconButton(
+                  icon: Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
+                ),
           ),
         ],
+      ),
+      endDrawer: Drawer(
+        child: Container(
+          color: Colors.white,
+          child: Column(
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(color: Colors.deepPurple),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.store_rounded, color: Colors.white, size: 48),
+                      SizedBox(height: 12),
+                      Text(
+                        _room!.name,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.qr_code, color: Colors.deepPurple),
+                title: Text(
+                  'Share QR',
+                  style: TextStyle(fontSize: 16, color: Colors.deepPurple),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  _showQRDialog();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.exit_to_app, color: Colors.red),
+                title: Text(
+                  'Leave Room',
+                  style: TextStyle(fontSize: 16, color: Colors.red),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  _showLeaveConfirmation();
+                },
+              ),
+            ],
+          ),
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -526,105 +583,148 @@ class _CustomerPageState extends State<CustomerPage> {
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
-                                    child: Column(
-                                      children: [
-                                        ListTile(
-                                          contentPadding: EdgeInsets.all(16),
-                                          leading: Container(
-                                            padding: EdgeInsets.all(8),
-                                            decoration: BoxDecoration(
-                                              color: statusColor.withOpacity(
-                                                0.1,
-                                              ),
-                                              shape: BoxShape.circle,
-                                            ),
-                                            child: Icon(
-                                              _getStatusIcon(order.status),
-                                              color: statusColor,
-                                            ),
-                                          ),
-                                          title: Text(
-                                            'Order #${order.id.substring(0, 8)}',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          subtitle: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(height: 4),
-                                              Text(
-                                                '${order.items.length} items',
-                                              ),
-                                              Text(
-                                                _formatDate(order.createdAt),
+                                    child: InkWell(
+                                      onTap: () {
+                                        // Only allow editing if order is pending
+                                        if (order.status == 'pending') {
+                                          _navigateToEditOrder(order);
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Only pending orders can be edited',
                                                 style: TextStyle(
-                                                  color: Colors.grey[600],
-                                                  fontSize: 12,
+                                                  color: Colors.white,
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                          trailing: Container(
-                                            padding: EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
+                                              backgroundColor: Colors.orange,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: statusColor.withOpacity(
-                                                0.1,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                            ),
-                                            child: Text(
-                                              _getStatusText(order.status),
-                                              style: TextStyle(
-                                                color: statusColor,
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          border:
+                                              order.status == 'pending'
+                                                  ? Border.all(
+                                                    color:
+                                                        Colors
+                                                            .deepPurple
+                                                            .shade200,
+                                                    width: 2,
+                                                  )
+                                                  : null,
                                         ),
-                                        if (order.isReadyForPickup ||
-                                            order.isCompleted)
-                                          Container(
-                                            padding: EdgeInsets.all(16),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade50,
-                                              borderRadius: BorderRadius.only(
-                                                bottomLeft: Radius.circular(12),
-                                                bottomRight: Radius.circular(
-                                                  12,
+                                        child: Column(
+                                          children: [
+                                            ListTile(
+                                              contentPadding: EdgeInsets.all(
+                                                16,
+                                              ),
+                                              leading: Container(
+                                                padding: EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: statusColor
+                                                      .withOpacity(0.1),
+                                                  shape: BoxShape.circle,
+                                                ),
+                                                child: Icon(
+                                                  _getStatusIcon(order.status),
+                                                  color: statusColor,
+                                                ),
+                                              ),
+                                              title: Text(
+                                                'Order #${order.id.substring(0, 8)}',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              subtitle: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  SizedBox(height: 4),
+                                                  Text(
+                                                    '${order.items.length} items',
+                                                  ),
+                                                  Text(
+                                                    _formatDate(
+                                                      order.createdAt,
+                                                    ),
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              trailing: Container(
+                                                padding: EdgeInsets.symmetric(
+                                                  horizontal: 12,
+                                                  vertical: 6,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: statusColor
+                                                      .withOpacity(0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(20),
+                                                ),
+                                                child: Text(
+                                                  _getStatusText(order.status),
+                                                  style: TextStyle(
+                                                    color: statusColor,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 12,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  'Total Amount:',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.grey[700],
-                                                  ),
+                                            if (order.isReadyForPickup ||
+                                                order.isCompleted)
+                                              Container(
+                                                padding: EdgeInsets.all(16),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.only(
+                                                        bottomLeft:
+                                                            Radius.circular(12),
+                                                        bottomRight:
+                                                            Radius.circular(12),
+                                                      ),
                                                 ),
-                                                Text(
-                                                  '৳${order.totalAmount.toStringAsFixed(2)}',
-                                                  style: TextStyle(
-                                                    fontSize: 16,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.deepPurple,
-                                                  ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(
+                                                      'Total Amount:',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                        color: Colors.grey[700],
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '৳${order.totalAmount.toStringAsFixed(2)}',
+                                                      style: TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color:
+                                                            Colors.deepPurple,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
+                                              ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   );
                                 },
@@ -708,6 +808,95 @@ class _CustomerPageState extends State<CustomerPage> {
       widget.roomId,
       widget.customerName,
       widget.customerContact,
+    );
+  }
+
+  void _showQRDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Room QR Code',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  QrImageView(
+                    data: _room!.code,
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurple,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Room Code: ${_room!.code}',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                  SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+    );
+  }
+
+  void _showLeaveConfirmation() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Leave Room'),
+            content: Text('Are you sure you want to leave this room?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  _leaveRoom();
+                },
+                child: Text('Leave', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _leaveRoom() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  void _navigateToEditOrder(Order order) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (context) => EditOrderPage(
+              roomId: widget.roomId,
+              customerName: widget.customerName,
+              customerContact: widget.customerContact,
+              existingOrder: order,
+            ),
+      ),
     );
   }
 }

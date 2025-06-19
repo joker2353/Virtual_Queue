@@ -112,37 +112,22 @@ class Order {
 class OrderItem {
   final String name;
   final String quantity;
-  final double price;
   final String? notes;
   final bool isAvailable;
-  final bool isChecked; // New field to track if item has been checked
+  final bool isChecked;
 
   OrderItem({
     required this.name,
     required this.quantity,
-    required this.price,
     this.notes,
     required this.isAvailable,
-    this.isChecked = false, // Default to false for new items
+    this.isChecked = false,
   });
-
-  // Extract numeric value from quantity string (e.g., "2 kg" -> 2)
-  double get numericQuantity {
-    final RegExp regex = RegExp(r'(\d+(\.\d+)?)');
-    final match = regex.firstMatch(quantity);
-    if (match != null) {
-      return double.parse(match.group(1)!);
-    }
-    return 1.0; // Default to 1 if no number found
-  }
-
-  double get total => numericQuantity * price;
 
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'quantity': quantity,
-      'price': price,
       'notes': notes,
       'isAvailable': isAvailable,
       'isChecked': isChecked,
@@ -150,21 +135,10 @@ class OrderItem {
   }
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
-    // Handle both string and int quantity types
-    String quantityStr;
-    final rawQuantity = map['quantity'];
-    if (rawQuantity is int) {
-      quantityStr = rawQuantity.toString();
-    } else if (rawQuantity is String) {
-      quantityStr = rawQuantity;
-    } else {
-      quantityStr = '0'; // Default value if quantity is null or invalid
-    }
-
+    final quantity = map['quantity'];
     return OrderItem(
       name: map['name'] as String,
-      quantity: quantityStr,
-      price: (map['price'] as num).toDouble(),
+      quantity: quantity is int ? quantity.toString() : quantity as String,
       notes: map['notes'] as String?,
       isAvailable: map['isAvailable'] as bool? ?? true,
       isChecked: map['isChecked'] as bool? ?? false,
@@ -174,7 +148,6 @@ class OrderItem {
   OrderItem copyWith({
     String? name,
     String? quantity,
-    double? price,
     String? notes,
     bool? isAvailable,
     bool? isChecked,
@@ -182,7 +155,6 @@ class OrderItem {
     return OrderItem(
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
-      price: price ?? this.price,
       notes: notes ?? this.notes,
       isAvailable: isAvailable ?? this.isAvailable,
       isChecked: isChecked ?? this.isChecked,

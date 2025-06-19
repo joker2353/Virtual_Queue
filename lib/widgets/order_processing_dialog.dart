@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' show SetOptions;
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:provider/provider.dart';
 import '../models/order.dart';
+import '../providers/fcm_provider.dart';
+import 'loading_indicator.dart';
 
 class OrderProcessingDialog extends StatefulWidget {
   final Order order;
@@ -17,6 +20,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
   final _totalAmountController = TextEditingController();
   final _bakiAmountController = TextEditingController();
   bool _isProcessing = false;
+  String? _error;
 
   @override
   void initState() {
@@ -37,7 +41,12 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
     bool markAsReady = false,
     bool markAsCompleted = false,
   }) async {
-    setState(() => _isProcessing = true);
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+      _error = null;
+    });
 
     try {
       final orderRef = firestore.FirebaseFirestore.instance
@@ -48,10 +57,10 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
       double bakiAmount = 0.0;
 
       if (markAsCompleted) {
-        // Add baki amount to the previous total
+        // Calculate baki amount based on unpaid amount
         bakiAmount = double.parse(_bakiAmountController.text);
-        finalAmount = widget.order.totalAmount + bakiAmount;
       } else if (markAsReady) {
+        // Set the total amount when marking as ready
         finalAmount = double.parse(_totalAmountController.text);
       }
 
@@ -82,21 +91,35 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
         }, SetOptions(merge: true));
       }
 
+      // Get room name for notification
+      final roomDoc =
+          await firestore.FirebaseFirestore.instance
+              .collection('rooms')
+              .doc(widget.order.roomId)
+              .get();
+
+      final String shopName = roomDoc.data()?['name'] ?? 'Shop';
+
+      // Send notification if status is ready_for_pickup
+      if (updatedOrder.status == 'ready_for_pickup') {
+        final fcmProvider = Provider.of<FCMProvider>(context, listen: false);
+        await fcmProvider.sendReadyForPickupNotification(
+          customerContact: widget.order.customerContact,
+          orderNumber: widget.order.id.substring(0, 8),
+          shopName: shopName,
+        );
+      }
+
       if (mounted) {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
+      print('Error updating order: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error updating order: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
+        setState(() {
+          _error = e.toString();
+          _isProcessing = false;
+        });
       }
     }
   }
@@ -118,205 +141,82 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final allItemsChecked = _items.every((item) => item.isChecked);
+    final bool allItemsChecked = _items.every((item) => item.isChecked);
+    final bool isReadyForPickup = widget.order.status == 'ready_for_pickup';
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.shopping_cart, color: Colors.deepPurple),
-                  SizedBox(width: 8),
-                  Text(
-                    widget.order.isReadyForPickup
-                        ? 'Complete Order'
-                        : 'Process Order',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                ],
+        padding: EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Order Details',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
               ),
-              SizedBox(height: 8),
-              Text(
-                'Order #${widget.order.id.substring(0, 8)}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Customer: ${widget.order.customerName}',
+              style: TextStyle(fontSize: 16),
+            ),
+            Text(
+              'Contact: ${widget.order.customerContact}',
+              style: TextStyle(fontSize: 16),
+            ),
+            Divider(height: 24),
+            Text(
+              'Items:',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.deepPurple,
               ),
-              Divider(height: 24),
-              if (!widget.order.isReadyForPickup) ...[
-                ...List.generate(_items.length, (index) {
-                  final item = _items[index];
-                  return Container(
-                    margin: EdgeInsets.only(bottom: 12),
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color:
-                          item.isChecked
-                              ? (item.isAvailable
-                                  ? Colors.green.shade50
-                                  : Colors.red.shade50)
-                              : Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color:
-                            item.isChecked
-                                ? (item.isAvailable
-                                    ? Colors.green.shade200
-                                    : Colors.red.shade200)
-                                : Colors.grey.shade300,
+            ),
+            SizedBox(height: 12),
+            ...widget.order.items.asMap().entries.map(
+              (entry) => CheckboxListTile(
+                value: _items[entry.key].isChecked,
+                onChanged:
+                    !isReadyForPickup
+                        ? (bool? value) {
+                          setState(() {
+                            _items[entry.key] = _items[entry.key].copyWith(
+                              isChecked: value ?? false,
+                            );
+                          });
+                        }
+                        : null,
+                title: Text(entry.value.name),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Quantity: ${entry.value.quantity}'),
+                    if (entry.value.notes?.isNotEmpty ?? false)
+                      Text(
+                        'Notes: ${entry.value.notes}',
+                        style: TextStyle(fontStyle: FontStyle.italic),
                       ),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.name,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                item.quantity,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                              if (item.notes?.isNotEmpty ?? false)
-                                Padding(
-                                  padding: EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    item.notes!,
-                                    style: TextStyle(
-                                      color: Colors.grey[500],
-                                      fontSize: 12,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        if (!item.isChecked) ...[
-                          IconButton(
-                            icon: Icon(Icons.check_circle_outline),
-                            color: Colors.green,
-                            onPressed:
-                                () => _toggleItemAvailability(index, true),
-                            tooltip: 'Mark as available',
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.cancel_outlined),
-                            color: Colors.red,
-                            onPressed:
-                                () => _toggleItemAvailability(index, false),
-                            tooltip: 'Mark as unavailable',
-                          ),
-                        ] else
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  item.isAvailable
-                                      ? Colors.green.shade100
-                                      : Colors.red.shade100,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              item.isAvailable ? 'Available' : 'Unavailable',
-                              style: TextStyle(
-                                color:
-                                    item.isAvailable
-                                        ? Colors.green.shade700
-                                        : Colors.red.shade700,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                }),
-                if (allItemsChecked) ...[
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _totalAmountController,
-                    decoration: InputDecoration(
-                      labelText: 'Total Amount',
-                      prefixText: '৳',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    keyboardType: TextInputType.number,
-                  ),
-                  SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed:
-                        _isProcessing
-                            ? null
-                            : () => _updateOrder(markAsReady: true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child:
-                        _isProcessing
-                            ? SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                            : Text(
-                              'Mark as Ready for Pickup',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                  ),
-                ],
-              ] else ...[
-                // Show completion UI when order is ready for pickup
-                Text(
-                  'Previous Total Amount: ৳${widget.order.totalAmount.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[700],
-                  ),
+                  ],
                 ),
-                SizedBox(height: 16),
+              ),
+            ),
+            SizedBox(height: 20),
+            if (!isReadyForPickup) ...[
+              if (allItemsChecked) ...[
                 TextFormField(
-                  controller: _bakiAmountController,
+                  controller: _totalAmountController,
                   decoration: InputDecoration(
-                    labelText: 'Additional Amount (Baki)',
+                    labelText: 'Total Amount',
                     prefixText: '৳',
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    helperText: 'Enter any additional amount to be added',
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -325,9 +225,9 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                   onPressed:
                       _isProcessing
                           ? null
-                          : () => _updateOrder(markAsCompleted: true),
+                          : () => _updateOrder(markAsReady: true),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
+                    backgroundColor: Colors.green,
                     padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -346,29 +246,82 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                             ),
                           )
                           : Text(
-                            'Complete Order',
+                            'Mark as Ready for Pickup',
                             style: TextStyle(fontSize: 16),
                           ),
                 ),
-                if (double.parse(_bakiAmountController.text) > 0) ...[
-                  SizedBox(height: 8),
-                  Text(
-                    'Final Amount: ৳${(widget.order.totalAmount + double.parse(_bakiAmountController.text)).toStringAsFixed(2)}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                ],
               ],
-              SizedBox(height: 16),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
+            ] else ...[
+              // Show completion UI when order is ready for pickup
+              Text(
+                'Total Amount: ৳${widget.order.totalAmount.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey[700],
+                ),
               ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: _bakiAmountController,
+                decoration: InputDecoration(
+                  labelText: 'Unpaid Amount (Baki)',
+                  prefixText: '৳',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  helperText: 'Enter amount that customer did not pay',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed:
+                    _isProcessing
+                        ? null
+                        : () => _updateOrder(markAsCompleted: true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child:
+                    _isProcessing
+                        ? SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                        : Text(
+                          'Complete Order',
+                          style: TextStyle(fontSize: 16),
+                        ),
+              ),
+              if (double.parse(_bakiAmountController.text) > 0) ...[
+                SizedBox(height: 8),
+                Text(
+                  'Amount to be added to baki: ৳${double.parse(_bakiAmountController.text).toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ],
-          ),
+            SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
+          ],
         ),
       ),
     );

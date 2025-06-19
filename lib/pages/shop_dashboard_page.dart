@@ -244,17 +244,65 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: Icon(_showQR ? Icons.visibility_off : Icons.qr_code),
-            onPressed: _toggleQRCode,
-            tooltip: _showQR ? 'Hide QR Code' : 'Show QR Code',
-          ),
-          IconButton(
-            icon: Icon(Icons.history),
-            onPressed: () => OrderHistoryPage.navigate(context, widget.roomId),
-            tooltip: 'Order History',
+          Builder(
+            builder:
+                (context) => IconButton(
+                  icon: Icon(Icons.menu),
+                  onPressed: () => Scaffold.of(context).openEndDrawer(),
+                ),
           ),
         ],
+      ),
+      endDrawer: Drawer(
+        child: Container(
+          color: Colors.white,
+          child: Column(
+            children: [
+              DrawerHeader(
+                decoration: BoxDecoration(color: Colors.deepPurple),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.store_rounded, color: Colors.white, size: 48),
+                      SizedBox(height: 12),
+                      Text(
+                        _room!.name,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              ListTile(
+                leading: Icon(Icons.qr_code, color: Colors.deepPurple),
+                title: Text(
+                  'Share QR',
+                  style: TextStyle(fontSize: 16, color: Colors.deepPurple),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  _showQRDialog();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.history, color: Colors.deepPurple),
+                title: Text(
+                  'Order History',
+                  style: TextStyle(fontSize: 16, color: Colors.deepPurple),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close drawer
+                  OrderHistoryPage.navigate(context, widget.roomId);
+                },
+              ),
+            ],
+          ),
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -652,6 +700,52 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+    );
+  }
+
+  void _showQRDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Room QR Code',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  QrImageView(
+                    data: _room!.code,
+                    version: QrVersions.auto,
+                    size: 200,
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.deepPurple,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Room Code: ${_room!.code}',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                  SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Close'),
+                  ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 }

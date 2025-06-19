@@ -94,7 +94,6 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
           OrderItem(
             name: _itemNameController.text,
             quantity: _itemQuantityController.text.trim(),
-            price: 0, // Price will be set by shop owner
             notes: _itemNotesController.text.trim(),
             isAvailable: true,
           ),
@@ -167,7 +166,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         ),
                       ),
                       prefixIcon: Icon(
-                        Icons.shopping_bag_outlined,
+                        Icons.shopping_bag,
                         color: Colors.deepPurple.shade400,
                       ),
                       filled: true,
@@ -184,7 +183,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                   TextFormField(
                     controller: quantityController,
                     decoration: InputDecoration(
-                      labelText: 'Quantity (e.g., 2 kg, 1 liter)',
+                      labelText: 'Quantity',
                       labelStyle: TextStyle(
                         color: Colors.deepPurple.shade600,
                         fontWeight: FontWeight.w500,
@@ -274,7 +273,6 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                     _items[index] = OrderItem(
                       name: nameController.text,
                       quantity: quantityController.text.trim(),
-                      price: 0,
                       notes: notesController.text.trim(),
                       isAvailable: true,
                     );
@@ -343,13 +341,12 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                   (item) => OrderItem(
                     name: item.name,
                     quantity: item.quantity,
-                    price: 0, // Price will be set by shop owner
                     notes: item.notes,
                     isAvailable: true,
                   ),
                 )
                 .toList(),
-        totalAmount: 0, // Total will be calculated by shop owner
+        totalAmount: 0, // Initial amount is 0
         status: 'pending',
         paymentMethod: 'cash',
         createdAt: DateTime.now(),
