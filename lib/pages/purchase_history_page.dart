@@ -54,69 +54,47 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
 
   Future<void> _loadOrders() async {
     try {
-      // First check the cache
-      final cache = Provider.of<CacheProvider>(context, listen: false);
-      final cachedOrders = cache.getCustomerOrders(widget.customerContact);
+      print(
+        'Loading purchase history for customer: ${widget.customerContact} in room: ${widget.roomId}',
+      );
 
-      if (cachedOrders != null) {
-        print('Using cached orders for purchase history');
-        // Get customer's baki amount
-        final customerDoc =
-            await firestore.FirebaseFirestore.instance
-                .collection('customers')
-                .doc(widget.customerContact)
-                .get();
-
-        if (mounted) {
-          setState(() {
-            _orders =
-                cachedOrders
-                    .where(
-                      (order) =>
-                          order.roomId == widget.roomId &&
-                          order.status == 'completed',
-                    )
-                    .toList()
-                  ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-            _totalBakiAmount =
-                (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
-            _isLoading = false;
-          });
-        }
-        return; // Exit early if we have cached data
-      }
-
-      print('No cache found, fetching from Firestore');
-      // Fetch from Firestore only if cache is empty or expired
-      final querySnapshot =
-          await firestore.FirebaseFirestore.instance
-              .collection('orders')
-              .where('customerContact', isEqualTo: widget.customerContact)
-              .get();
-
-      // Get customer's current baki amount
+      // Get customer's current baki amount first
       final customerDoc =
           await firestore.FirebaseFirestore.instance
               .collection('customers')
               .doc(widget.customerContact)
               .get();
 
-      // Process all orders
-      final allOrders =
-          querySnapshot.docs
-              .map((doc) => Order.fromMap(doc.id, doc.data()))
-              .toList();
+      // Fetch from Firestore
+      final querySnapshot =
+          await firestore.FirebaseFirestore.instance
+              .collection('orders')
+              .where('customerContact', isEqualTo: widget.customerContact)
+              .where('roomId', isEqualTo: widget.roomId)
+              .where('status', isEqualTo: 'completed')
+              .get();
 
-      // Filter completed orders for this room
+      print('Firestore query returned ${querySnapshot.docs.length} orders');
+
+      // Process all orders
       final completedOrders =
-          allOrders
-              .where(
-                (order) =>
-                    order.roomId == widget.roomId &&
-                    order.status == 'completed',
-              )
+          querySnapshot.docs
+              .map((doc) {
+                try {
+                  return Order.fromMap(doc.id, doc.data());
+                } catch (e) {
+                  print('Error parsing order ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .where((order) => order != null)
+              .cast<Order>()
               .toList()
-            ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            ..sort(
+              (a, b) => b.createdAt.compareTo(a.createdAt),
+            ); // Sort in memory
+
+      print('Successfully parsed ${completedOrders.length} completed orders');
 
       if (mounted) {
         setState(() {
@@ -125,17 +103,15 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
               (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
           _isLoading = false;
         });
-
-        // Cache all orders for this customer
-        print('Caching ${allOrders.length} orders for future use');
-        cache.cacheCustomerOrders(widget.customerContact, allOrders);
       }
     } catch (e) {
       print('Error loading orders: $e');
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
