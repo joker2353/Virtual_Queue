@@ -7,7 +7,12 @@ import 'fcm_provider.dart'; // Import FCM provider
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId:
+        kIsWeb
+            ? '666976149522-aqvvs0u1buvhfkndtpv00ogh3k8qj8l6.apps.googleusercontent.com'
+            : null,
+  );
   User? _user;
   bool _isLoading = false;
   String? _error;
@@ -52,27 +57,37 @@ class AuthProvider with ChangeNotifier {
       _setLoading(true);
       _setError(null);
 
-      // Initialize Google Sign In
-      await _googleSignIn.signOut(); // Clear any existing sessions
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      late final AuthCredential credential;
 
-      if (googleUser == null) {
-        throw Exception('Google Sign In was cancelled');
+      if (kIsWeb) {
+        // Web-specific sign in
+        GoogleAuthProvider googleProvider = GoogleAuthProvider();
+        googleProvider.addScope('email');
+        final userCredential = await _auth.signInWithPopup(googleProvider);
+        _user = userCredential.user;
+      } else {
+        // Mobile sign in
+        await _googleSignIn.signOut(); // Clear any existing sessions
+        final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+        if (googleUser == null) {
+          throw Exception('Google Sign In was cancelled');
+        }
+
+        // Get auth details from request
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
+
+        // Create credential
+        credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        // Sign in with Firebase
+        final userCredential = await _auth.signInWithCredential(credential);
+        _user = userCredential.user;
       }
-
-      // Get auth details from request
-      final GoogleSignInAuthentication googleAuth =
-          await googleUser.authentication;
-
-      // Create credential
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      // Sign in with Firebase
-      final userCredential = await _auth.signInWithCredential(credential);
-      _user = userCredential.user;
 
       print('Successfully signed in with Google: ${_user?.uid}');
     } catch (e) {
@@ -94,7 +109,11 @@ class AuthProvider with ChangeNotifier {
         await _fcmProvider!.cleanUp();
       }
 
-      await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+      if (!kIsWeb) {
+        // Only sign out from Google Sign In on mobile
+        await _googleSignIn.signOut();
+      }
+      await _auth.signOut();
 
       _user = null;
     } catch (e) {

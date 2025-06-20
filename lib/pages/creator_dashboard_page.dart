@@ -97,12 +97,16 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
     // Room data stream
     _roomStream = firestore.collection('rooms').doc(widget.roomId).snapshots();
 
-    // Active members stream
+    // Active members stream - exclude creator
     _membersStream =
         firestore
             .collection('memberships')
             .where('roomId', isEqualTo: widget.roomId)
             .where('status', isEqualTo: 'active')
+            .where(
+              'role',
+              isEqualTo: 'member',
+            ) // Only get regular members, not creator
             .snapshots();
 
     // Pending requests stream
@@ -135,12 +139,13 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
 
       _room = Room.fromMap(widget.roomId, roomDoc.data()!);
 
-      // Get active members
+      // Get active members - exclude creator
       final membersSnapshot =
           await firestore
               .collection('memberships')
               .where('roomId', isEqualTo: widget.roomId)
               .where('status', isEqualTo: 'active')
+              .where('role', isEqualTo: 'member') // Only get regular members
               .get();
 
       _activeMembers =
@@ -468,44 +473,16 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
             icon: Badge(
               label: Text(
                 _pendingRequestsCount.toString(),
-                style: TextStyle(color: Colors.white, fontSize: 10),
+                style: const TextStyle(color: Colors.white, fontSize: 10),
               ),
-              child: Icon(Icons.person_add),
+              child: const Icon(Icons.person_add),
             ),
             tooltip: 'Join Requests',
             onPressed: () {
-              // Capture providers before navigation
-              final authProvider = Provider.of<AuthProvider>(
-                context,
-                listen: false,
-              );
-              final roomProvider = Provider.of<RoomProvider>(
-                context,
-                listen: false,
-              );
-              final fcmProvider = Provider.of<FCMProvider>(
-                context,
-                listen: false,
-              );
-
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder:
-                      (context) => MultiProvider(
-                        providers: [
-                          ChangeNotifierProvider<AuthProvider>.value(
-                            value: authProvider,
-                          ),
-                          ChangeNotifierProvider<RoomProvider>.value(
-                            value: roomProvider,
-                          ),
-                          ChangeNotifierProvider<FCMProvider>.value(
-                            value: fcmProvider,
-                          ),
-                        ],
-                        child: JoinRequestsPage(roomId: widget.roomId),
-                      ),
+                  builder: (context) => JoinRequestsPage(roomId: widget.roomId),
                 ),
               );
             },
@@ -772,8 +749,8 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                     Colors.blue.shade600,
                   ),
                   _buildStatItem(
-                    'Total Members',
-                    '${room.memberCount}',
+                    'In Queue',
+                    '${_activeMembers.length}', // Use actual members list length
                     Icons.people,
                     Colors.deepPurple.shade600,
                   ),
@@ -1368,7 +1345,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                   ),
                   const SizedBox(width: 16),
                   Text(
-                    'Active Members',
+                    'Queue Members',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -1394,7 +1371,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                       ],
                     ),
                     child: Text(
-                      '${activeMembers.length} members',
+                      '${activeMembers.length} in queue',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -2120,27 +2097,60 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
 
       try {
         final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+
+        // Show loading indicator
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => const Center(child: CircularProgressIndicator()),
+        );
+
         await roomProvider.removeMember(widget.roomId, member.userId);
-        _loadInitialData();
+
+        // Hide loading indicator
+        Navigator.of(context).pop();
+
+        // Refresh the data immediately
+        await _loadInitialData();
+
+        // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
               '${member.formData['name'] ?? 'Member'} removed from the queue',
             ),
             backgroundColor: Colors.green.shade800,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       } catch (e) {
+        // Hide loading indicator if still showing
+        if (Navigator.canPop(context)) {
+          Navigator.of(context).pop();
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red.shade800,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       } finally {
-        setState(() {
-          _removingMembers.remove(member.userId);
-        });
+        if (mounted) {
+          setState(() {
+            _removingMembers.remove(member.userId);
+          });
+        }
       }
     }
   }
