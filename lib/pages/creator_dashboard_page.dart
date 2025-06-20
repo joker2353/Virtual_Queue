@@ -470,24 +470,6 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Badge(
-              label: Text(
-                _pendingRequestsCount.toString(),
-                style: const TextStyle(color: Colors.white, fontSize: 10),
-              ),
-              child: const Icon(Icons.person_add),
-            ),
-            tooltip: 'Join Requests',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => JoinRequestsPage(roomId: widget.roomId),
-                ),
-              );
-            },
-          ),
-          IconButton(
             icon: const Icon(Icons.menu),
             onPressed: () {
               _scaffoldKey.currentState?.openEndDrawer();
@@ -880,7 +862,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                   ),
                   _buildStatItem(
                     'In Queue',
-                    '${_activeMembers.length}', // Use actual members list length
+                    '${_activeMembers.length}',
                     Icons.people,
                     Colors.deepPurple.shade600,
                   ),
@@ -889,6 +871,16 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                     '$pendingCount',
                     Icons.person_add,
                     Colors.orange.shade600,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder:
+                              (context) =>
+                                  JoinRequestsPage(roomId: widget.roomId),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -903,32 +895,40 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
     String label,
     String value,
     IconData icon,
-    Color color,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+    Color color, {
+    VoidCallback? onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(14),
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1686,106 +1686,6 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Call button
-                                if (member.formData['contact'] != null &&
-                                    member.formData['contact']
-                                        .toString()
-                                        .isNotEmpty)
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: Colors.blue.shade200,
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap:
-                                            () => _makePhoneCall(
-                                              member.formData['contact']
-                                                  .toString(),
-                                            ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child: Icon(
-                                            Icons.phone,
-                                            color: Colors.blue.shade600,
-                                            size: 20,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                // Remove button (only for members, not creator)
-                                if (member.role != 'creator')
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          _removingMembers.contains(
-                                                member.userId,
-                                              )
-                                              ? Colors.grey.shade100
-                                              : Colors.red.shade50,
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color:
-                                            _removingMembers.contains(
-                                                  member.userId,
-                                                )
-                                                ? Colors.grey.shade300
-                                                : Colors.red.shade200,
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap:
-                                            _removingMembers.contains(
-                                                  member.userId,
-                                                )
-                                                ? null
-                                                : () => _showRemoveMemberDialog(
-                                                  member,
-                                                ),
-                                        borderRadius: BorderRadius.circular(12),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8),
-                                          child:
-                                              _removingMembers.contains(
-                                                    member.userId,
-                                                  )
-                                                  ? SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child: CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      valueColor:
-                                                          AlwaysStoppedAnimation<
-                                                            Color
-                                                          >(
-                                                            Colors
-                                                                .grey
-                                                                .shade600,
-                                                          ),
-                                                    ),
-                                                  )
-                                                  : Icon(
-                                                    Icons.person_remove,
-                                                    color: Colors.red.shade600,
-                                                    size: 20,
-                                                  ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                // Status badge
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
@@ -1830,6 +1730,78 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                                     ),
                                   ),
                                 ),
+                                if (member.role != 'creator')
+                                  PopupMenuButton<String>(
+                                    icon: Icon(
+                                      Icons.more_vert,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    itemBuilder:
+                                        (context) => [
+                                          if (member.formData['contact'] !=
+                                                  null &&
+                                              member.formData['contact']
+                                                  .toString()
+                                                  .isNotEmpty)
+                                            PopupMenuItem<String>(
+                                              value: 'call',
+                                              child: ListTile(
+                                                leading: Icon(
+                                                  Icons.phone,
+                                                  color: Colors.blue.shade600,
+                                                  size: 20,
+                                                ),
+                                                title: const Text(
+                                                  'Call Member',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                contentPadding: EdgeInsets.zero,
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                              ),
+                                            ),
+                                          if (!_removingMembers.contains(
+                                            member.userId,
+                                          ))
+                                            PopupMenuItem<String>(
+                                              value: 'remove',
+                                              child: ListTile(
+                                                leading: Icon(
+                                                  Icons.person_remove,
+                                                  color: Colors.red.shade600,
+                                                  size: 20,
+                                                ),
+                                                title: const Text(
+                                                  'Remove Member',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                contentPadding: EdgeInsets.zero,
+                                                visualDensity:
+                                                    VisualDensity.compact,
+                                              ),
+                                            ),
+                                        ],
+                                    onSelected: (value) {
+                                      switch (value) {
+                                        case 'call':
+                                          _makePhoneCall(
+                                            member.formData['contact']
+                                                .toString(),
+                                          );
+                                          break;
+                                        case 'remove':
+                                          _showRemoveMemberDialog(member);
+                                          break;
+                                      }
+                                    },
+                                  ),
                               ],
                             ),
                           ),
