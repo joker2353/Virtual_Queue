@@ -9,6 +9,14 @@ import '../models/form_field.dart';
 import 'fcm_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+class QueueCompletionException implements Exception {
+  final String message;
+  const QueueCompletionException(this.message);
+
+  @override
+  String toString() => message;
+}
+
 class RoomProvider with ChangeNotifier {
   String _userId;
   List<UserRoom> _userRooms = [];
@@ -794,12 +802,18 @@ class RoomProvider with ChangeNotifier {
         }
       }
 
-      // If no valid position found, reset to 0
-      if (!foundValid) {
-        nextPosition = 0;
+      // If we're already at or past the last position, or no valid position found
+      if (!foundValid || room.currentPosition >= activePositions.last) {
+        // Reset the queue position to 0
+        await _firestore.collection('rooms').doc(roomId).update({
+          'currentPosition': 0,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+        await _updateAllUserRoomsWithNewQueuePosition(roomId, 0);
+        throw const QueueCompletionException('All members have been served');
       }
 
-      // Update the room document
+      // Update the room document with the next position
       await _firestore.collection('rooms').doc(roomId).update({
         'currentPosition': nextPosition,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
@@ -813,6 +827,10 @@ class RoomProvider with ChangeNotifier {
         await _notifyUsersAtPosition(roomId, room.name, nextPosition);
       }
     } catch (e) {
+      if (e is QueueCompletionException) {
+        // Re-throw completion message to show in UI
+        rethrow;
+      }
       _handleError(e);
       throw Exception('Failed to advance queue: $e');
     }
