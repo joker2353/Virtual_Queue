@@ -171,85 +171,119 @@ class RoomProvider with ChangeNotifier {
     required String category,
   }) async {
     try {
+      print('Debug - Attempting to create room. Current user ID: $_userId');
+
+      // Wait a bit for auth to initialize if needed
+      if (_userId.isEmpty) {
+        print('Debug - User ID is empty, waiting briefly for auth...');
+        await Future.delayed(Duration(milliseconds: 500));
+        if (_userId.isEmpty) {
+          print('Debug - User ID is still empty after waiting');
+          throw Exception('Please sign in again to create a room');
+        }
+      }
+
+      print('Debug - Creating room with creator ID: $_userId');
       final code = _generateRoomCode();
       final roomRef = _firestore.collection('rooms').doc();
       final roomId = roomRef.id;
 
-      final room = Room(
-        id: roomId,
-        name: name,
-        code: code,
-        qrCodeUrl: null,
-        creatorId: _userId,
-        capacity: capacity,
-        currentPosition: 0,
-        memberCount: 1, // Creator counts as first member
-        status: 'active',
-        createdAt: DateTime.now(),
-        lastUpdatedAt: DateTime.now(),
-        notice: notice,
-        formFields: formFields,
-        settings: RoomSettings(),
-        category: category,
-        shopSettings:
-            category == 'shop'
-                ? {
-                  'acceptOrders': true,
-                  'allowCashPayment': true,
-                  'notifyOnNewOrder': true,
-                }
-                : null,
-      );
+      // Convert form fields to simple maps
+      final List<Map<String, dynamic>> serializedFormFields =
+          formFields
+              .map(
+                (field) => {
+                  'id': field.id,
+                  'name': field.name,
+                  'type': field.type,
+                  'required': field.required,
+                },
+              )
+              .toList();
 
-      // Create room in a transaction
-      await _firestore.runTransaction((transaction) async {
-        // 1. Create the room
-        transaction.set(roomRef, room.toMap());
+      // Create a simplified room data structure
+      final Map<String, dynamic> roomData = {
+        'id': roomId,
+        'name': name,
+        'code': code,
+        'qrCodeUrl': '',
+        'creatorId': _userId,
+        'capacity': capacity,
+        'currentPosition': 0,
+        'memberCount': 1,
+        'status': 'active',
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+        'notice': notice,
+        'formFields': serializedFormFields,
+        'category': category,
+        'settings': {
+          'autoAdvanceQueue': false,
+          'allowRejoin': true,
+          'notifyNextInLine': true,
+        },
+      };
 
-        // 2. Create membership for creator
-        final membershipId = '${roomId}_$_userId';
-        final membershipRef = _firestore
-            .collection('memberships')
-            .doc(membershipId);
+      if (category == 'shop') {
+        roomData['shopSettings'] = {
+          'acceptOrders': true,
+          'allowCashPayment': true,
+          'notifyOnNewOrder': true,
+        };
+      }
 
-        final membership = Membership(
-          id: membershipId,
-          userId: _userId,
-          roomId: roomId,
-          role: 'creator',
-          status: 'active',
-          position: 0, // Creator doesn't have a position
-          formData: {},
-          timestamps: MembershipTimestamps(
-            requested: DateTime.now(),
-            approved: DateTime.now(),
-          ),
-          metadata: {},
-        );
+      print('Debug - Room data to be saved: $roomData');
 
-        transaction.set(membershipRef, membership.toMap());
+      // Create room document first
+      await roomRef.set(roomData);
+      print('Debug - Room document created');
 
-        // 3. Update user_rooms for faster access
-        final userRoomRef = _firestore.collection('user_rooms').doc(_userId);
+      // Create membership document
+      final membershipId = '${roomId}_$_userId';
+      final membershipRef = _firestore
+          .collection('memberships')
+          .doc(membershipId);
 
-        final userRoom = UserRoom(
-          roomId: roomId,
-          name: name,
-          type: 'created',
-          status: 'active',
-          position: 0,
-          currentPosition: 0,
-          memberCount: 1,
-          joinedAt: DateTime.now(),
-        );
+      final membershipData = {
+        'id': membershipId,
+        'userId': _userId,
+        'roomId': roomId,
+        'role': 'creator',
+        'status': 'active',
+        'position': 0,
+        'formData': {},
+        'timestamps': {
+          'requested': FieldValue.serverTimestamp(),
+          'approved': FieldValue.serverTimestamp(),
+        },
+        'metadata': {},
+      };
 
-        transaction.set(userRoomRef, {
-          'created': FieldValue.arrayUnion([userRoom.toMap()]),
-        }, SetOptions(merge: true));
-      });
+      await membershipRef.set(membershipData);
+      print('Debug - Membership document created');
 
+      // Update user_rooms document
+      final userRoomRef = _firestore.collection('user_rooms').doc(_userId);
+
+      final userRoomData = {
+        'roomId': roomId,
+        'name': name,
+        'type': 'created',
+        'status': 'active',
+        'position': 0,
+        'currentPosition': 0,
+        'memberCount': 1,
+        'joinedAt': DateTime.now().toIso8601String(),
+      };
+
+      await userRoomRef.set({
+        'created': FieldValue.arrayUnion([userRoomData]),
+      }, SetOptions(merge: true));
+
+      print('Debug - Room created successfully with ID: $roomId');
       return roomId;
     } catch (e) {
+      print('Debug - Error creating room: $e');
       _handleError(e);
       throw Exception('Failed to create room: $e');
     }
@@ -459,6 +493,7 @@ class RoomProvider with ChangeNotifier {
   Future<void> acceptJoinRequest(String roomId, String userId) async {
     try {
       final membershipId = '${roomId}_$userId';
+      print('Debug - Current user ID (_userId): $_userId');
 
       // Get the room and membership docs OUTSIDE the transaction
       final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
@@ -470,12 +505,18 @@ class RoomProvider with ChangeNotifier {
       }
 
       final room = Room.fromMap(roomId, roomDoc.data()!);
+      print('Debug - Room creator ID: ${room.creatorId}');
+      print('Debug - Room data: ${roomDoc.data()}');
+
       final membership = Membership.fromMap(
         membershipId,
         membershipDoc.data()!,
       );
 
       if (room.creatorId != _userId) {
+        print(
+          'Debug - ID mismatch: Creator ID (${room.creatorId}) != Current user ID ($_userId)',
+        );
         throw Exception('Only the room creator can accept join requests');
       }
 
@@ -483,25 +524,26 @@ class RoomProvider with ChangeNotifier {
         throw Exception('This join request is no longer pending');
       }
 
-      final nextPosition = room.memberCount;
+      // For queue rooms, position is based on current position
+      // For shop rooms, position is based on member count
+      final nextPosition =
+          room.isQueue ? room.currentPosition : room.memberCount;
 
-      // Run in a transaction with read operations first, then writes
+      // Run in a transaction
       await _firestore.runTransaction((transaction) async {
-        // Get user_rooms document reference
-        final userRoomRef = _firestore.collection('user_rooms').doc(userId);
-
         // First do all READS
+        final userRoomRef = _firestore.collection('user_rooms').doc(userId);
         final userRoomDoc = await transaction.get(userRoomRef);
 
         // Then do all WRITES
-        // 1. Update membership status
+        // 1. Update membership status and position
         transaction.update(membershipDoc.reference, {
           'status': 'active',
           'position': nextPosition,
           'timestamps.approved': FieldValue.serverTimestamp(),
         });
 
-        // 2. Update room member count
+        // 2. Update room's member count
         transaction.update(roomDoc.reference, {
           'memberCount': FieldValue.increment(1),
           'lastUpdatedAt': FieldValue.serverTimestamp(),
@@ -512,43 +554,21 @@ class RoomProvider with ChangeNotifier {
           final data = userRoomDoc.data() as Map<String, dynamic>;
 
           if (data.containsKey('joined')) {
-            // Find the pending room entry and replace it
+            // Add this room to the user's joined rooms
+            final userRoom =
+                UserRoom(
+                  roomId: roomId,
+                  name: room.name,
+                  type: 'joined',
+                  status: 'active',
+                  position: nextPosition,
+                  currentPosition: room.currentPosition,
+                  memberCount: room.memberCount + 1,
+                  joinedAt: DateTime.now(),
+                ).toMap();
+
             final joinedRooms = List<Map<String, dynamic>>.from(data['joined']);
-            bool foundAndUpdated = false;
-
-            for (int i = 0; i < joinedRooms.length; i++) {
-              if (joinedRooms[i]['roomId'] == roomId) {
-                // Update the existing entry with active status and position
-                joinedRooms[i] = {
-                  ...joinedRooms[i],
-                  'status': 'active',
-                  'position': nextPosition,
-                  'currentPosition': room.currentPosition,
-                  'memberCount':
-                      room.memberCount + 1, // Include the newly added member
-                };
-                foundAndUpdated = true;
-                break;
-              }
-            }
-
-            // If we didn't find the room to update (unlikely but possible),
-            // add it as a new entry
-            if (!foundAndUpdated) {
-              final userRoom =
-                  UserRoom(
-                    roomId: roomId,
-                    name: room.name,
-                    type: 'joined',
-                    status: 'active',
-                    position: nextPosition,
-                    currentPosition: room.currentPosition,
-                    memberCount: room.memberCount + 1,
-                    joinedAt: DateTime.now(),
-                  ).toMap();
-
-              joinedRooms.add(userRoom);
-            }
+            joinedRooms.add(userRoom);
 
             transaction.update(userRoomRef, {'joined': joinedRooms});
           } else {

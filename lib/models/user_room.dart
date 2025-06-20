@@ -4,7 +4,7 @@ class UserRoom {
   final String roomId;
   final String name;
   final String type; // 'created' or 'joined'
-  final String status; // 'pending', 'active', 'left', 'rejected'
+  final String status; // 'pending' or 'active'
   final int position;
   final int currentPosition;
   final int memberCount;
@@ -25,23 +25,25 @@ class UserRoom {
   bool get isJoined => type == 'joined';
   bool get isPending => status == 'pending';
   bool get isActive => status == 'active';
-  
+
   // Calculate how many people are ahead in the queue
-  int get waitingCount => isPending 
-      ? 0 
-      : position > currentPosition 
-          ? position - currentPosition 
+  int get waitingCount =>
+      isPending
+          ? 0
+          : position > currentPosition
+          ? position - currentPosition
           : 0;
-          
+
   // Fix: Check if position is greater than 0 (not creator) and equals current position
-  bool get isCurrentlyServed => position > 0 && position == currentPosition && isActive;
-  
+  bool get isCurrentlyServed =>
+      position > 0 && position == currentPosition && isActive;
+
   // Calculate wait time estimate (5 minutes per person)
   String get estimatedWaitTime {
     if (isPending) return 'Waiting for approval';
     if (isCurrentlyServed) return 'It\'s your turn!';
     if (currentPosition == 0) return 'Queue not started';
-    
+
     final waitMins = waitingCount * 5;
     if (waitMins < 60) {
       return '$waitMins minutes';
@@ -66,15 +68,22 @@ class UserRoom {
   }
 
   factory UserRoom.fromMap(Map<String, dynamic> map) {
+    DateTime parseTimestamp(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is Timestamp) return value.toDate();
+      if (value is String) return DateTime.parse(value);
+      return DateTime.now();
+    }
+
     return UserRoom(
       roomId: map['roomId'] ?? '',
       name: map['name'] ?? '',
       type: map['type'] ?? 'joined',
       status: map['status'] ?? 'pending',
-      position: map['position'] ?? 0,
-      currentPosition: map['currentPosition'] ?? 0,
-      memberCount: map['memberCount'] ?? 0,
-      joinedAt: (map['joinedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      position: map['position']?.toInt() ?? 0,
+      currentPosition: map['currentPosition']?.toInt() ?? 0,
+      memberCount: map['memberCount']?.toInt() ?? 0,
+      joinedAt: parseTimestamp(map['joinedAt']),
     );
   }
 
@@ -99,4 +108,4 @@ class UserRoom {
       joinedAt: joinedAt ?? this.joinedAt,
     );
   }
-} 
+}

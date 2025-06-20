@@ -141,7 +141,7 @@ class LoginPage extends StatelessWidget {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      if (auth.errorMessage.isNotEmpty)
+                      if (auth.error != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0),
                           child: Container(
@@ -153,7 +153,7 @@ class LoginPage extends StatelessWidget {
                               border: Border.all(color: Colors.red[300]!),
                             ),
                             child: Text(
-                              auth.errorMessage,
+                              auth.error!,
                               style: TextStyle(
                                 color: Colors.red[700],
                                 fontSize: 12,

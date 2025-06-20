@@ -62,19 +62,25 @@ class Room {
   }
 
   factory Room.fromMap(String id, Map<String, dynamic> map) {
+    DateTime parseTimestamp(dynamic value) {
+      if (value == null) return DateTime.now();
+      if (value is Timestamp) return value.toDate();
+      if (value is String) return DateTime.parse(value);
+      return DateTime.now();
+    }
+
     return Room(
       id: id,
       name: map['name'] ?? '',
       code: map['code'] ?? '',
       qrCodeUrl: map['qrCodeUrl'],
       creatorId: map['creatorId'] ?? '',
-      capacity: map['capacity'] ?? 0,
-      currentPosition: map['currentPosition'] ?? 0,
-      memberCount: map['memberCount'] ?? 0,
+      capacity: map['capacity']?.toInt() ?? 0,
+      currentPosition: map['currentPosition']?.toInt() ?? 0,
+      memberCount: map['memberCount']?.toInt() ?? 0,
       status: map['status'] ?? 'active',
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      lastUpdatedAt:
-          (map['lastUpdatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: parseTimestamp(map['createdAt']),
+      lastUpdatedAt: parseTimestamp(map['lastUpdatedAt']),
       notice: map['notice'] ?? '',
       formFields:
           (map['formFields'] as List<dynamic>?)
