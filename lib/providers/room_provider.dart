@@ -756,22 +756,50 @@ class RoomProvider with ChangeNotifier {
         throw Exception('Only the room creator can advance the queue');
       }
 
-      // Get the highest position to validate advancement
-      final highestPosition = await _getHighestPosition(roomId);
-      if (room.currentPosition >= highestPosition) {
-        throw Exception('Already at the last member in queue');
+      // Get current active members
+      final membersQuery =
+          await _firestore
+              .collection('memberships')
+              .where('roomId', isEqualTo: roomId)
+              .where('status', isEqualTo: 'active')
+              .where('role', isEqualTo: 'member')
+              .get();
+
+      // Create a map of active positions
+      final activePositions =
+          membersQuery.docs
+              .map((doc) => Membership.fromMap(doc.id, doc.data()).position)
+              .toList()
+            ..sort();
+
+      if (activePositions.isEmpty) {
+        // No active members, reset to 0
+        await _firestore.collection('rooms').doc(roomId).update({
+          'currentPosition': 0,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+        await _updateAllUserRoomsWithNewQueuePosition(roomId, 0);
+        return;
       }
 
       // Find next valid position
-      final nextPosition = await _getNextValidPosition(
-        roomId,
-        room.currentPosition,
-      );
-      if (nextPosition == null) {
-        throw Exception('No more active members ahead in queue');
+      int nextPosition = room.currentPosition;
+      bool foundValid = false;
+
+      // Keep incrementing until we find the next valid position or exceed the highest position
+      while (!foundValid && nextPosition < activePositions.last) {
+        nextPosition++;
+        if (activePositions.contains(nextPosition)) {
+          foundValid = true;
+        }
       }
 
-      // Update the room document with the next position
+      // If no valid position found, reset to 0
+      if (!foundValid) {
+        nextPosition = 0;
+      }
+
+      // Update the room document
       await _firestore.collection('rooms').doc(roomId).update({
         'currentPosition': nextPosition,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
@@ -780,8 +808,10 @@ class RoomProvider with ChangeNotifier {
       // Update all user_rooms records with the new position
       await _updateAllUserRoomsWithNewQueuePosition(roomId, nextPosition);
 
-      // Send notifications to users at the current position
-      await _notifyUsersAtPosition(roomId, room.name, nextPosition);
+      // Send notifications to users at the current position if not 0
+      if (nextPosition > 0) {
+        await _notifyUsersAtPosition(roomId, room.name, nextPosition);
+      }
     } catch (e) {
       _handleError(e);
       throw Exception('Failed to advance queue: $e');
@@ -802,29 +832,61 @@ class RoomProvider with ChangeNotifier {
         throw Exception('Only the room creator can decrease the queue');
       }
 
-      if (room.currentPosition <= 1) {
-        throw Exception('Already at the beginning of the queue');
+      // Get current active members
+      final membersQuery =
+          await _firestore
+              .collection('memberships')
+              .where('roomId', isEqualTo: roomId)
+              .where('status', isEqualTo: 'active')
+              .where('role', isEqualTo: 'member')
+              .get();
+
+      // Create a map of active positions
+      final activePositions =
+          membersQuery.docs
+              .map((doc) => Membership.fromMap(doc.id, doc.data()).position)
+              .toList()
+            ..sort();
+
+      if (activePositions.isEmpty || room.currentPosition <= 1) {
+        // No active members or already at start, reset to 0
+        await _firestore.collection('rooms').doc(roomId).update({
+          'currentPosition': 0,
+          'lastUpdatedAt': FieldValue.serverTimestamp(),
+        });
+        await _updateAllUserRoomsWithNewQueuePosition(roomId, 0);
+        return;
       }
 
       // Find previous valid position
-      final previousPosition = await _getPreviousValidPosition(
-        roomId,
-        room.currentPosition,
-      );
-      final newPosition = previousPosition ?? 0;
+      int previousPosition = room.currentPosition;
+      bool foundValid = false;
 
-      // Update the room document with the new position
+      // Keep decreasing until we find the previous valid position or reach 0
+      while (!foundValid && previousPosition > 1) {
+        previousPosition--;
+        if (activePositions.contains(previousPosition)) {
+          foundValid = true;
+        }
+      }
+
+      // If no valid position found, reset to 0
+      if (!foundValid) {
+        previousPosition = 0;
+      }
+
+      // Update the room document
       await _firestore.collection('rooms').doc(roomId).update({
-        'currentPosition': newPosition,
+        'currentPosition': previousPosition,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
       });
 
       // Update all user_rooms records with the new position
-      await _updateAllUserRoomsWithNewQueuePosition(roomId, newPosition);
+      await _updateAllUserRoomsWithNewQueuePosition(roomId, previousPosition);
 
       // Notify users at the new position if not 0
-      if (newPosition > 0) {
-        await _notifyUsersAtPosition(roomId, room.name, newPosition);
+      if (previousPosition > 0) {
+        await _notifyUsersAtPosition(roomId, room.name, previousPosition);
       }
     } catch (e) {
       _handleError(e);
@@ -846,13 +908,14 @@ class RoomProvider with ChangeNotifier {
         throw Exception('Only the room creator can reset the queue');
       }
 
-      // Reset the queue position to 0 (no one being served)
+      // Reset the queue position to 0 and clear removed positions
       await _firestore.collection('rooms').doc(roomId).update({
         'currentPosition': 0,
         'lastUpdatedAt': FieldValue.serverTimestamp(),
+        'removedPositions': [], // Clear the removed positions on reset
       });
 
-      // Then update all user_rooms records separately
+      // Update all user_rooms records
       await _updateAllUserRoomsWithNewQueuePosition(roomId, 0);
     } catch (e) {
       _handleError(e);
@@ -1199,6 +1262,14 @@ class RoomProvider with ChangeNotifier {
 
       print('📝 Found ${affectedMembers.length} members to update');
 
+      // Get current removed positions array or initialize if not exists
+      final roomData = roomDoc.data() as Map<String, dynamic>;
+      final removedPositions = List<int>.from(
+        roomData['removedPositions'] ?? [],
+      );
+      removedPositions.add(membership.position);
+      removedPositions.sort(); // Keep sorted for easier lookup
+
       // 4. Update removed member's status
       batch.update(membershipRef, {
         'status': 'removed',
@@ -1207,7 +1278,7 @@ class RoomProvider with ChangeNotifier {
         'metadata.removalReason': 'Admin removal',
       });
 
-      // 5. Update room document
+      // 5. Update room document with removed positions
       final newCurrentPosition =
           room.currentPosition == membership.position
               ? 0
@@ -1216,6 +1287,7 @@ class RoomProvider with ChangeNotifier {
         'memberCount': FieldValue.increment(-1),
         'lastUpdatedAt': FieldValue.serverTimestamp(),
         'currentPosition': newCurrentPosition,
+        'removedPositions': removedPositions,
       });
 
       // 6. Update positions for affected members
@@ -1227,7 +1299,6 @@ class RoomProvider with ChangeNotifier {
       }
 
       // 7. Update user_rooms documents
-      // First get all affected user_rooms
       final affectedUserIds = [
         memberUserId,
         ...affectedMembers.map((m) => m.userId),

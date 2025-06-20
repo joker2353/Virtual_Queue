@@ -67,6 +67,8 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
   late Stream<QuerySnapshot> _membersStream;
   late Stream<QuerySnapshot> _requestsStream;
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   void initState() {
     super.initState();
@@ -395,6 +397,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
   Widget build(BuildContext context) {
     if (_isLoading && _room == null) {
       return Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: const Text('Dashboard'),
           backgroundColor: Colors.deepPurple,
@@ -413,6 +416,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
 
     if (_error != null) {
       return Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: const Text('Dashboard'),
           backgroundColor: Colors.deepPurple,
@@ -454,6 +458,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
     }
 
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         title: const Text(
           'Room Dashboard',
@@ -464,11 +469,6 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code),
-            tooltip: 'Show QR Code',
-            onPressed: _showQRCodeDialog,
-          ),
           IconButton(
             icon: Badge(
               label: Text(
@@ -487,8 +487,16 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
               );
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              _scaffoldKey.currentState?.openEndDrawer();
+            },
+          ),
+          const SizedBox(width: 8),
         ],
       ),
+      endDrawer: _buildEndDrawer(),
       floatingActionButton:
           _room != null
               ? FloatingActionButton.extended(
@@ -596,6 +604,128 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                     );
                   },
                 ),
+      ),
+    );
+  }
+
+  Widget _buildEndDrawer() {
+    return Drawer(
+      width: MediaQuery.of(context).size.width * 0.75,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.deepPurple.shade50, Colors.white],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: Colors.deepPurple.shade50),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: Colors.deepPurple,
+                      child: const Icon(
+                        Icons.meeting_room,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Room Settings',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple.shade900,
+                            ),
+                          ),
+                          if (_room != null)
+                            Text(
+                              _room!.name,
+                              style: TextStyle(
+                                color: Colors.deepPurple.shade700,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  children: [
+                    _buildDrawerItem(
+                      icon: Icons.qr_code,
+                      title: 'Share QR Code',
+                      onTap: _showQRCodeDialog,
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.restart_alt,
+                      title: 'Reset Queue',
+                      onTap: _resetQueue,
+                      color: Colors.red,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? color,
+  }) {
+    final itemColor = color ?? Colors.deepPurple;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () {
+            Navigator.pop(context); // Close drawer
+            onTap();
+          },
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: itemColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: itemColor, size: 24),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(color: itemColor, fontWeight: FontWeight.w600),
+          ),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: itemColor.withOpacity(0.5),
+          ),
+        ),
       ),
     );
   }
@@ -896,12 +1026,6 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                           onPressed: _advanceQueue,
                           isPrimary: true,
                           color: Colors.deepPurple,
-                        ),
-                        _buildControlButton(
-                          'Reset',
-                          Icons.restart_alt,
-                          onPressed: _resetQueue,
-                          color: Colors.red.shade600,
                         ),
                       ],
                     ),
