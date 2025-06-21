@@ -29,18 +29,33 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Refresh rooms when the page initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final roomProvider = Provider.of<RoomProvider>(context, listen: false);
-      roomProvider.refreshRooms();
+    _refreshOnInit();
+  }
+
+  Future<void> _refreshOnInit() async {
+    await Future.microtask(() async {
+      if (!mounted) return;
+      await Provider.of<RoomProvider>(context, listen: false).refreshRooms();
     });
+  }
+
+  Future<void> _handlePullToRefresh() async {
+    if (!mounted) return;
+    try {
+      await Provider.of<RoomProvider>(context, listen: false).refreshRooms();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error refreshing rooms: ${e.toString()}'),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
-    final roomProvider = Provider.of<RoomProvider>(context);
-
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -76,11 +91,13 @@ class _HomePageState extends State<HomePage> {
                   radius: 18,
                   backgroundColor: Colors.deepPurple.shade300,
                   backgroundImage:
-                      auth.user?.photoURL != null
-                          ? NetworkImage(auth.user!.photoURL!)
+                      Provider.of<AuthProvider>(context).user?.photoURL != null
+                          ? NetworkImage(
+                            Provider.of<AuthProvider>(context).user!.photoURL!,
+                          )
                           : null,
                   child:
-                      auth.user?.photoURL == null
+                      Provider.of<AuthProvider>(context).user?.photoURL == null
                           ? Icon(Icons.person, color: Colors.white)
                           : null,
                 ),
@@ -95,56 +112,63 @@ class _HomePageState extends State<HomePage> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [Colors.deepPurple, Colors.deepPurple.shade50],
-            stops: [0.0, 0.3],
+            stops: const [0.0, 0.3],
           ),
         ),
-        child:
-            roomProvider.isLoading
-                ? Center(
-                  child: LoadingIndicator(
-                    message: 'Loading your rooms...',
-                    icon: Icons.home_rounded,
-                    primaryColor: Colors.white,
-                    backgroundColor: Colors.deepPurple.shade300,
-                  ),
-                )
-                : roomProvider.error != null
-                ? _buildErrorView(context, roomProvider)
-                : RefreshIndicator(
-                  onRefresh: () async => roomProvider.refreshRooms(),
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    physics: BouncingScrollPhysics(),
-                    children: [
-                      _buildWelcomeCard(context, auth),
-                      SizedBox(height: 32),
-                      _buildRoomSection(
-                        context,
-                        'My Created Rooms',
-                        roomProvider.createdRooms,
-                        (room) => _buildCreatedRoomCard(context, room),
-                        Colors.green,
-                      ),
-                      SizedBox(height: 32),
-                      _buildRoomSection(
-                        context,
-                        'Joined Rooms',
-                        roomProvider.activeRooms,
-                        (room) => _buildJoinedRoomCard(context, room),
-                        Colors.blue,
-                      ),
-                      SizedBox(height: 32),
-                      _buildRoomSection(
-                        context,
-                        'Pending Requests',
-                        roomProvider.pendingRooms,
-                        (room) => _buildPendingRoomCard(context, room),
-                        Colors.amber,
-                      ),
-                      SizedBox(height: 20),
-                    ],
-                  ),
+        child: Consumer<RoomProvider>(
+          builder: (context, roomProvider, child) {
+            if (roomProvider.isLoading) {
+              return Center(
+                child: LoadingIndicator(
+                  message: 'Loading your rooms...',
+                  icon: Icons.home_rounded,
+                  primaryColor: Colors.white,
+                  backgroundColor: Colors.deepPurple.shade300,
                 ),
+              );
+            }
+
+            if (roomProvider.error != null) {
+              return _buildErrorView(context, roomProvider);
+            }
+
+            return RefreshIndicator(
+              onRefresh: _handlePullToRefresh,
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  _buildWelcomeCard(context),
+                  SizedBox(height: 32),
+                  _buildRoomSection(
+                    context,
+                    'My Created Rooms',
+                    roomProvider.createdRooms,
+                    (room) => _buildCreatedRoomCard(context, room),
+                    Colors.green,
+                  ),
+                  SizedBox(height: 32),
+                  _buildRoomSection(
+                    context,
+                    'Joined Rooms',
+                    roomProvider.activeRooms,
+                    (room) => _buildJoinedRoomCard(context, room),
+                    Colors.blue,
+                  ),
+                  SizedBox(height: 32),
+                  _buildRoomSection(
+                    context,
+                    'Pending Requests',
+                    roomProvider.pendingRooms,
+                    (room) => _buildPendingRoomCard(context, room),
+                    Colors.amber,
+                  ),
+                  SizedBox(height: 20),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -190,9 +214,7 @@ class _HomePageState extends State<HomePage> {
             ),
             SizedBox(height: 25),
             ElevatedButton.icon(
-              onPressed: () {
-                roomProvider.refreshRooms();
-              },
+              onPressed: _handlePullToRefresh,
               icon: Icon(Icons.refresh),
               label: Text('Try Again'),
               style: ElevatedButton.styleFrom(
@@ -209,7 +231,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildWelcomeCard(BuildContext context, AuthProvider auth) {
+  Widget _buildWelcomeCard(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+
     return Card(
       elevation: 6,
       shadowColor: Colors.deepPurple.withOpacity(0.4),

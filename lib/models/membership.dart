@@ -27,8 +27,12 @@ class Membership {
 
   bool get isPending => status == 'pending';
   bool get isActive => status == 'active';
+  bool get isServed => status == 'served';
   bool get isCreator => role == 'creator';
   bool get isMember => role == 'member';
+
+  // Helper method to check if member can be served
+  bool get canBeServed => isActive && position > 0;
 
   Map<String, dynamic> toMap() {
     return {
@@ -39,7 +43,8 @@ class Membership {
       'position': position,
       'formData': formData,
       'timestamps': timestamps.toMap(),
-      'lastNotified': lastNotified != null ? Timestamp.fromDate(lastNotified!) : null,
+      'lastNotified':
+          lastNotified != null ? Timestamp.fromDate(lastNotified!) : null,
       'metadata': metadata,
     };
   }
@@ -54,7 +59,8 @@ class Membership {
       position: map['position'] ?? 0,
       formData: Map<String, dynamic>.from(map['formData'] ?? {}),
       timestamps: MembershipTimestamps.fromMap(
-          map['timestamps'] as Map<String, dynamic>? ?? {}),
+        map['timestamps'] as Map<String, dynamic>? ?? {},
+      ),
       lastNotified: (map['lastNotified'] as Timestamp?)?.toDate(),
       metadata: Map<String, dynamic>.from(map['metadata'] ?? {}),
     );
@@ -131,4 +137,4 @@ class MembershipTimestamps {
       left: left ?? this.left,
     );
   }
-} 
+}

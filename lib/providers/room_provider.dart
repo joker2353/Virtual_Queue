@@ -43,9 +43,13 @@ class RoomProvider with ChangeNotifier {
   List<UserRoom> get createdRooms =>
       _userRooms.where((room) => room.isCreated).toList();
   List<UserRoom> get joinedRooms =>
-      _userRooms.where((room) => room.isJoined).toList();
+      _userRooms
+          .where((room) => room.isJoined && room.status == 'active')
+          .toList();
   List<UserRoom> get pendingRooms =>
-      joinedRooms.where((room) => room.isPending).toList();
+      _userRooms
+          .where((room) => room.isJoined && room.status == 'pending')
+          .toList();
   List<UserRoom> get activeRooms =>
       joinedRooms.where((room) => room.isActive).toList();
 
@@ -101,17 +105,37 @@ class RoomProvider with ChangeNotifier {
   }
 
   // Listen to user's rooms
-  void _setupUserRoomsListener() {
+  Future<void> _setupUserRoomsListener() async {
     _setLoading(true);
 
     try {
+      // Create a Completer to handle the initial data fetch
+      final completer = Completer<void>();
+
       _userRoomsSubscription = _firestore
           .collection('user_rooms')
           .doc(_userId)
           .snapshots()
-          .listen(_handleUserRoomsSnapshot, onError: _handleError);
+          .listen(
+            (snapshot) {
+              _handleUserRoomsSnapshot(snapshot);
+              if (!completer.isCompleted) {
+                completer.complete();
+              }
+            },
+            onError: (e) {
+              _handleError(e);
+              if (!completer.isCompleted) {
+                completer.completeError(e);
+              }
+            },
+          );
+
+      // Wait for the first data fetch
+      await completer.future;
     } catch (e) {
       _handleError(e);
+      rethrow;
     }
   }
 
@@ -139,12 +163,28 @@ class RoomProvider with ChangeNotifier {
         joined =
             (data['joined'] as List)
                 .map((item) => UserRoom.fromMap(item as Map<String, dynamic>))
+                .where(
+                  (room) => room.roomId.isNotEmpty,
+                ) // Filter out invalid rooms
+                .toList();
+
+        // Remove any duplicate rooms (keep the most recent one)
+        final seenRoomIds = <String>{};
+        joined =
+            joined.reversed
+                .where((room) {
+                  final isFirst = !seenRoomIds.contains(room.roomId);
+                  seenRoomIds.add(room.roomId);
+                  return isFirst;
+                })
+                .toList()
+                .reversed
                 .toList();
       }
 
       final List<UserRoom> newUserRooms = [...created, ...joined];
 
-      // Check for position changes and send notifications
+      // Check for notifications
       if (_fcmProvider != null &&
           _fcmProvider!.isInitialized &&
           _userRooms.isNotEmpty) {
@@ -476,12 +516,28 @@ class RoomProvider with ChangeNotifier {
         throw Exception('A customer with this ID already exists in the queue');
       }
 
-      // Get the highest current position and add 1
-      final highestPosition = await _getHighestPosition(roomId);
-      final nextPosition = highestPosition + 1;
-      print(
-        'Debug - Assigning new position: $nextPosition (highest was: $highestPosition)',
-      );
+      // Get the highest current position from active members
+      final activeMembers =
+          await _firestore
+              .collection('memberships')
+              .where('roomId', isEqualTo: roomId)
+              .where('status', isEqualTo: 'active')
+              .where('role', isEqualTo: 'member')
+              .get();
+
+      // Calculate next position by finding the highest position manually
+      int highestPosition = 0;
+      for (var doc in activeMembers.docs) {
+        final membership = Membership.fromMap(doc.id, doc.data());
+        if (membership.position > highestPosition) {
+          highestPosition = membership.position;
+        }
+      }
+
+      // Calculate next position (highest current position + 1)
+      final nextPosition = activeMembers.docs.isEmpty ? 1 : highestPosition + 1;
+
+      print('Debug - Assigning position $nextPosition to new member');
 
       // Create membership in a transaction
       await _firestore.runTransaction((transaction) async {
@@ -609,8 +665,28 @@ class RoomProvider with ChangeNotifier {
         throw Exception('This join request is no longer pending');
       }
 
-      // Position starts from 1 for first member
-      final nextPosition = room.memberCount + 1;
+      // Get the highest current position from active members
+      final activeMembers =
+          await _firestore
+              .collection('memberships')
+              .where('roomId', isEqualTo: roomId)
+              .where('status', isEqualTo: 'active')
+              .where('role', isEqualTo: 'member')
+              .get();
+
+      // Calculate next position by finding the highest position manually
+      int highestPosition = 0;
+      for (var doc in activeMembers.docs) {
+        final membership = Membership.fromMap(doc.id, doc.data());
+        if (membership.position > highestPosition) {
+          highestPosition = membership.position;
+        }
+      }
+
+      // Calculate next position (highest current position + 1)
+      final nextPosition = activeMembers.docs.isEmpty ? 1 : highestPosition + 1;
+
+      print('Debug - Assigning position $nextPosition to new member');
 
       // Run in a transaction
       await _firestore.runTransaction((transaction) async {
@@ -633,60 +709,42 @@ class RoomProvider with ChangeNotifier {
         });
 
         // 3. Update user_rooms for the joining user
+        final userRoom =
+            UserRoom(
+              roomId: roomId,
+              name: room.name,
+              type: 'joined',
+              status: 'active',
+              position: nextPosition,
+              currentPosition: room.currentPosition,
+              memberCount: room.memberCount + 1,
+              joinedAt: DateTime.now(),
+            ).toMap();
+
         if (userRoomDoc.exists) {
           final data = userRoomDoc.data() as Map<String, dynamic>;
-          if (data.containsKey('joined')) {
-            final userRoom =
-                UserRoom(
-                  roomId: roomId,
-                  name: room.name,
-                  type: 'joined',
-                  status: 'active',
-                  position: nextPosition,
-                  currentPosition: room.currentPosition,
-                  memberCount: room.memberCount + 1,
-                  joinedAt: DateTime.now(),
-                ).toMap();
+          final List<Map<String, dynamic>> joinedRooms =
+              data.containsKey('joined')
+                  ? List<Map<String, dynamic>>.from(data['joined'])
+                  : [];
 
-            final joinedRooms = List<Map<String, dynamic>>.from(data['joined']);
-            joinedRooms.add(userRoom);
+          // Remove any existing entries for this room (pending or otherwise)
+          joinedRooms.removeWhere((room) => room['roomId'] == roomId);
 
-            transaction.update(userRoomRef, {'joined': joinedRooms});
-          } else {
-            final userRoom =
-                UserRoom(
-                  roomId: roomId,
-                  name: room.name,
-                  type: 'joined',
-                  status: 'active',
-                  position: nextPosition,
-                  currentPosition: room.currentPosition,
-                  memberCount: room.memberCount + 1,
-                  joinedAt: DateTime.now(),
-                ).toMap();
+          // Add the new active room entry
+          joinedRooms.add(userRoom);
 
-            transaction.update(userRoomRef, {
-              'joined': [userRoom],
-            });
-          }
+          transaction.update(userRoomRef, {'joined': joinedRooms});
         } else {
-          final userRoom =
-              UserRoom(
-                roomId: roomId,
-                name: room.name,
-                type: 'joined',
-                status: 'active',
-                position: nextPosition,
-                currentPosition: room.currentPosition,
-                memberCount: room.memberCount + 1,
-                joinedAt: DateTime.now(),
-              ).toMap();
-
           transaction.set(userRoomRef, {
             'joined': [userRoom],
           });
         }
       });
+
+      print(
+        'Debug - Successfully accepted join request and assigned position $nextPosition',
+      );
     } catch (e) {
       _handleError(e);
       throw Exception('Failed to accept join request: $e');
@@ -788,6 +846,35 @@ class RoomProvider with ChangeNotifier {
         });
         await _updateAllUserRoomsWithNewQueuePosition(roomId, 0);
         return;
+      }
+
+      // Find and mark current member as served if there is one
+      if (room.currentPosition > 0) {
+        final currentMemberQuery =
+            await _firestore
+                .collection('memberships')
+                .where('roomId', isEqualTo: roomId)
+                .where('position', isEqualTo: room.currentPosition)
+                .where('status', isEqualTo: 'active')
+                .limit(1)
+                .get();
+
+        if (currentMemberQuery.docs.isNotEmpty) {
+          final currentMemberDoc = currentMemberQuery.docs.first;
+          final currentMember = Membership.fromMap(
+            currentMemberDoc.id,
+            currentMemberDoc.data(),
+          );
+
+          // Update the member's status to served and set served timestamp
+          await _firestore
+              .collection('memberships')
+              .doc(currentMemberDoc.id)
+              .update({
+                'status': 'served',
+                'timestamps.served': FieldValue.serverTimestamp(),
+              });
+        }
       }
 
       // Find next valid position
@@ -1374,9 +1461,9 @@ class RoomProvider with ChangeNotifier {
     }
   }
 
-  void refreshRooms() {
+  Future<void> refreshRooms() async {
     _cleanup();
-    _setupUserRoomsListener();
+    await _setupUserRoomsListener();
   }
 
   // Generate a room code

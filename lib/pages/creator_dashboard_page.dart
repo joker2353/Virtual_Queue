@@ -1603,248 +1603,379 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                   ),
                 )
               else
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Material(
-                    color: Colors.white,
-                    elevation: 4,
-                    shadowColor: Colors.black.withOpacity(0.1),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: activeMembers.length,
-                      separatorBuilder:
-                          (context, index) => const Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: Color(0xFFEEEEEE),
-                          ),
-                      itemBuilder: (context, index) {
-                        final member = activeMembers[index];
-                        final isBeingServed =
-                            member.position == room.currentPosition;
-                        final isNextInLine =
-                            member.position == room.currentPosition + 1;
+                StreamBuilder<QuerySnapshot>(
+                  stream:
+                      FirebaseFirestore.instance
+                          .collection('memberships')
+                          .where('roomId', isEqualTo: room.id)
+                          .where('role', isEqualTo: 'member')
+                          .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                        return Container(
-                          decoration: BoxDecoration(
-                            color:
-                                isBeingServed
-                                    ? Colors.green.withOpacity(0.1)
-                                    : isNextInLine
-                                    ? Colors.amber.withOpacity(0.05)
-                                    : Colors.white,
-                          ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: CircleAvatar(
-                              radius: 24,
-                              backgroundColor:
-                                  isBeingServed
-                                      ? Colors.green
-                                      : isNextInLine
-                                      ? Colors.amber
-                                      : Colors.deepPurple,
-                              child: Text(
-                                '${member.position}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                    final allMembers =
+                        snapshot.data!.docs
+                            .map(
+                              (doc) => Membership.fromMap(
+                                doc.id,
+                                doc.data() as Map<String, dynamic>,
                               ),
-                            ),
-                            title: Text(
-                              member.formData['name'] ?? 'Unknown Member',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.grey.shade800,
-                              ),
-                            ),
-                            subtitle: Column(
+                            )
+                            .toList();
+
+                    // Separate members by status
+                    final activeMembers =
+                        allMembers.where((m) => m.isActive).toList()
+                          ..sort((a, b) => a.position.compareTo(b.position));
+                    final servedMembers =
+                        allMembers
+                            .where(
+                              (m) => m.isServed && m.timestamps.served != null,
+                            )
+                            .toList()
+                          ..sort((a, b) {
+                            // Ensure both timestamps exist before comparing
+                            final aTime = a.timestamps.served;
+                            final bTime = b.timestamps.served;
+                            if (aTime == null && bTime == null) return 0;
+                            if (aTime == null) return 1;
+                            if (bTime == null) return -1;
+                            return bTime.compareTo(aTime);
+                          });
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Material(
+                            color: Colors.white,
+                            elevation: 4,
+                            shadowColor: Colors.black.withOpacity(0.1),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.phone,
-                                      size: 16,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      member.formData['contact'] as String? ??
-                                          'No number',
+                                if (activeMembers.isNotEmpty) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text(
+                                      'Active Members',
                                       style: TextStyle(
-                                        fontSize: 14,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.deepPurple.shade800,
+                                      ),
+                                    ),
+                                  ),
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: activeMembers.length,
+                                    separatorBuilder:
+                                        (context, index) =>
+                                            const Divider(height: 1),
+                                    itemBuilder:
+                                        (context, index) => _buildMemberTile(
+                                          activeMembers[index],
+                                          room,
+                                        ),
+                                  ),
+                                ],
+                                if (servedMembers.isNotEmpty) ...[
+                                  Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Text(
+                                      'Served Members',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                         color: Colors.grey.shade600,
                                       ),
                                     ),
-                                  ],
-                                ),
-                                if (member.formData.containsKey('address') &&
-                                    member.formData['address'] != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 6),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.location_on,
-                                          size: 16,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            member.formData['address']
-                                                as String,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey.shade600,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
                                   ),
-                              ],
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color:
-                                        isBeingServed
-                                            ? Colors.green.shade100
-                                            : isNextInLine
-                                            ? Colors.amber.shade100
-                                            : Colors.grey.shade200,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: (isBeingServed
-                                                ? Colors.green
-                                                : isNextInLine
-                                                ? Colors.amber
-                                                : Colors.grey)
-                                            .withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Text(
-                                    isBeingServed
-                                        ? 'Current'
-                                        : isNextInLine
-                                        ? 'Next'
-                                        : 'Waiting',
-                                    style: TextStyle(
-                                      color:
-                                          isBeingServed
-                                              ? Colors.green.shade800
-                                              : isNextInLine
-                                              ? Colors.amber.shade800
-                                              : Colors.grey.shade800,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                if (member.role != 'creator')
-                                  PopupMenuButton<String>(
-                                    icon: Icon(
-                                      Icons.more_vert,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
+                                  ListView.separated(
+                                    shrinkWrap: true,
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
+                                    itemCount: servedMembers.length,
+                                    separatorBuilder:
+                                        (context, index) =>
+                                            const Divider(height: 1),
                                     itemBuilder:
-                                        (context) => [
-                                          if (member.formData['contact'] !=
-                                                  null &&
-                                              member.formData['contact']
-                                                  .toString()
-                                                  .isNotEmpty)
-                                            PopupMenuItem<String>(
-                                              value: 'call',
-                                              child: ListTile(
-                                                leading: Icon(
-                                                  Icons.phone,
-                                                  color: Colors.blue.shade600,
-                                                  size: 20,
-                                                ),
-                                                title: const Text(
-                                                  'Call Member',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                contentPadding: EdgeInsets.zero,
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
+                                        (context, index) =>
+                                            _buildServedMemberTile(
+                                              servedMembers[index],
                                             ),
-                                          if (!_removingMembers.contains(
-                                            member.userId,
-                                          ))
-                                            PopupMenuItem<String>(
-                                              value: 'remove',
-                                              child: ListTile(
-                                                leading: Icon(
-                                                  Icons.person_remove,
-                                                  color: Colors.red.shade600,
-                                                  size: 20,
-                                                ),
-                                                title: const Text(
-                                                  'Remove Member',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                contentPadding: EdgeInsets.zero,
-                                                visualDensity:
-                                                    VisualDensity.compact,
-                                              ),
-                                            ),
-                                        ],
-                                    onSelected: (value) {
-                                      switch (value) {
-                                        case 'call':
-                                          _makePhoneCall(
-                                            member.formData['contact']
-                                                .toString(),
-                                          );
-                                          break;
-                                        case 'remove':
-                                          _showRemoveMemberDialog(member);
-                                          break;
-                                      }
-                                    },
                                   ),
+                                ],
                               ],
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildMemberTile(Membership member, Room room) {
+    final isBeingServed = member.position == room.currentPosition;
+    final isNextInLine = member.position == room.currentPosition + 1;
+
+    return Container(
+      decoration: BoxDecoration(
+        color:
+            isBeingServed
+                ? Colors.green.withOpacity(0.1)
+                : isNextInLine
+                ? Colors.amber.withOpacity(0.05)
+                : Colors.white,
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor:
+              isBeingServed
+                  ? Colors.green
+                  : isNextInLine
+                  ? Colors.amber
+                  : Colors.deepPurple,
+          child: Text(
+            '${member.position}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        title: Text(
+          member.formData['name'] ?? 'Unknown Member',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.phone, size: 16, color: Colors.grey.shade600),
+                const SizedBox(width: 6),
+                Text(
+                  member.formData['contact'] as String? ?? 'No number',
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+            if (member.formData.containsKey('address') &&
+                member.formData['address'] != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.location_on,
+                      size: 16,
+                      color: Colors.grey.shade600,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        member.formData['address'] as String,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade600,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color:
+                    isBeingServed
+                        ? Colors.green.shade100
+                        : isNextInLine
+                        ? Colors.amber.shade100
+                        : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: (isBeingServed
+                            ? Colors.green
+                            : isNextInLine
+                            ? Colors.amber
+                            : Colors.grey)
+                        .withOpacity(0.2),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                isBeingServed
+                    ? 'Current'
+                    : isNextInLine
+                    ? 'Next'
+                    : 'Waiting',
+                style: TextStyle(
+                  color:
+                      isBeingServed
+                          ? Colors.green.shade800
+                          : isNextInLine
+                          ? Colors.amber.shade800
+                          : Colors.grey.shade800,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            if (member.role != 'creator')
+              PopupMenuButton<String>(
+                icon: Icon(Icons.more_vert, color: Colors.grey.shade700),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                itemBuilder:
+                    (context) => [
+                      if (member.formData['contact'] != null &&
+                          member.formData['contact'].toString().isNotEmpty)
+                        PopupMenuItem<String>(
+                          value: 'call',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.phone,
+                              color: Colors.blue.shade600,
+                              size: 20,
+                            ),
+                            title: const Text(
+                              'Call Member',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      if (!_removingMembers.contains(member.userId))
+                        PopupMenuItem<String>(
+                          value: 'remove',
+                          child: ListTile(
+                            leading: Icon(
+                              Icons.person_remove,
+                              color: Colors.red.shade600,
+                              size: 20,
+                            ),
+                            title: const Text(
+                              'Remove Member',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                    ],
+                onSelected: (value) {
+                  switch (value) {
+                    case 'call':
+                      _makePhoneCall(member.formData['contact'].toString());
+                      break;
+                    case 'remove':
+                      _showRemoveMemberDialog(member);
+                      break;
+                  }
+                },
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServedMemberTile(Membership member) {
+    // Ensure we have a served timestamp
+    final servedTime = member.timestamps.served;
+    if (servedTime == null) {
+      return Container(); // Return empty container if no timestamp
+    }
+
+    return Container(
+      color: Colors.grey.shade50,
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.grey.shade300,
+          child: Icon(
+            Icons.check_circle,
+            color: Colors.grey.shade700,
+            size: 24,
+          ),
+        ),
+        title: Text(
+          member.formData['name'] ?? 'Unknown Member',
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            Text(
+              'Served at ${_formatDateTime(servedTime)}',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade200,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'Served',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
   void _showQRCodeDialog() {
