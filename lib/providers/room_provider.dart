@@ -37,21 +37,88 @@ class RoomProvider with ChangeNotifier {
   }
 
   // Getters
-  List<UserRoom> get userRooms => _userRooms;
+  List<UserRoom> get userRooms {
+    print('DEBUG: All userRooms count: ${_userRooms.length}');
+    print(
+      'DEBUG: userRooms categories: ${_userRooms.map((r) => r.category).toList()}',
+    );
+    return _userRooms;
+  }
+
   bool get isLoading => _isLoading;
   String? get error => _error;
-  List<UserRoom> get createdRooms =>
-      _userRooms.where((room) => room.isCreated).toList();
-  List<UserRoom> get joinedRooms =>
-      _userRooms
-          .where((room) => room.isJoined && room.status == 'active')
-          .toList();
-  List<UserRoom> get pendingRooms =>
-      _userRooms
-          .where((room) => room.isJoined && room.status == 'pending')
-          .toList();
-  List<UserRoom> get activeRooms =>
-      joinedRooms.where((room) => room.isActive).toList();
+  List<UserRoom> get createdRooms {
+    final rooms = _userRooms.where((room) => room.isCreated).toList();
+    print('DEBUG: createdRooms count: ${rooms.length}');
+    return rooms;
+  }
+
+  List<UserRoom> get joinedRooms {
+    final rooms =
+        _userRooms
+            .where((room) => room.isJoined && room.status == 'active')
+            .toList();
+    print('DEBUG: joinedRooms count: ${rooms.length}');
+    print(
+      'DEBUG: joinedRooms categories: ${rooms.map((r) => r.category).toList()}',
+    );
+    return rooms;
+  }
+
+  List<UserRoom> get pendingRooms {
+    final rooms =
+        _userRooms
+            .where((room) => room.isJoined && room.status == 'pending')
+            .toList();
+    print('DEBUG: pendingRooms count: ${rooms.length}');
+    return rooms;
+  }
+
+  List<UserRoom> get shopRooms {
+    final rooms =
+        _userRooms
+            .where(
+              (room) =>
+                  room.isJoined &&
+                  room.status == 'active' &&
+                  room.category == 'shop',
+            )
+            .toList();
+    print('DEBUG: shopRooms count: ${rooms.length}');
+    print(
+      'DEBUG: shopRooms details: ${rooms.map((r) => '${r.name}(${r.category})').toList()}',
+    );
+    return rooms;
+  }
+
+  List<UserRoom> get queueRooms {
+    final rooms =
+        _userRooms
+            .where(
+              (room) =>
+                  room.isJoined &&
+                  room.status == 'active' &&
+                  room.category == 'queue',
+            )
+            .toList();
+    print('DEBUG: queueRooms count: ${rooms.length}');
+    print(
+      'DEBUG: queueRooms details: ${rooms.map((r) => '${r.name}(${r.category})').toList()}',
+    );
+    return rooms;
+  }
+
+  List<UserRoom> get activeRooms {
+    final rooms =
+        _userRooms
+            .where((room) => room.isJoined && room.status == 'active')
+            .toList();
+    print('DEBUG: activeRooms count: ${rooms.length}');
+    print(
+      'DEBUG: activeRooms categories: ${rooms.map((r) => r.category).toList()}',
+    );
+    return rooms;
+  }
 
   void _setupAuthListener() {
     _authSubscription = _auth.authStateChanges().listen((user) {
@@ -142,6 +209,7 @@ class RoomProvider with ChangeNotifier {
   void _handleUserRoomsSnapshot(DocumentSnapshot snapshot) {
     try {
       if (!snapshot.exists) {
+        print('DEBUG: No user_rooms document exists');
         _userRooms = [];
         _setLoading(false);
         notifyListeners();
@@ -149,38 +217,38 @@ class RoomProvider with ChangeNotifier {
       }
 
       final data = snapshot.data() as Map<String, dynamic>;
+      print('DEBUG: Raw user_rooms data: $data');
 
       List<UserRoom> created = [];
       if (data.containsKey('created')) {
         created =
-            (data['created'] as List)
-                .map((item) => UserRoom.fromMap(item as Map<String, dynamic>))
-                .toList();
+            (data['created'] as List).map((item) {
+              final map = item as Map<String, dynamic>;
+              print('DEBUG: Processing created room: $map');
+              if (!map.containsKey('category')) {
+                map['category'] = 'queue';
+              }
+              return UserRoom.fromMap(map);
+            }).toList();
       }
+      print('DEBUG: Created rooms count: ${created.length}');
 
       List<UserRoom> joined = [];
       if (data.containsKey('joined')) {
         joined =
             (data['joined'] as List)
-                .map((item) => UserRoom.fromMap(item as Map<String, dynamic>))
-                .where(
-                  (room) => room.roomId.isNotEmpty,
-                ) // Filter out invalid rooms
-                .toList();
-
-        // Remove any duplicate rooms (keep the most recent one)
-        final seenRoomIds = <String>{};
-        joined =
-            joined.reversed
-                .where((room) {
-                  final isFirst = !seenRoomIds.contains(room.roomId);
-                  seenRoomIds.add(room.roomId);
-                  return isFirst;
+                .map((item) {
+                  final map = item as Map<String, dynamic>;
+                  print('DEBUG: Processing joined room: $map');
+                  if (!map.containsKey('category')) {
+                    map['category'] = 'queue';
+                  }
+                  return UserRoom.fromMap(map);
                 })
-                .toList()
-                .reversed
+                .where((room) => room.roomId.isNotEmpty)
                 .toList();
       }
+      print('DEBUG: Joined rooms count: ${joined.length}');
 
       final List<UserRoom> newUserRooms = [...created, ...joined];
 
@@ -198,6 +266,7 @@ class RoomProvider with ChangeNotifier {
                   name: '',
                   type: '',
                   status: '',
+                  category: 'queue',
                   position: -1,
                   currentPosition: -1,
                   memberCount: 0,
@@ -385,6 +454,7 @@ class RoomProvider with ChangeNotifier {
       final roomId = roomDoc.id;
       final roomData = roomDoc.data();
       final room = Room.fromMap(roomId, roomData);
+      print('DEBUG: joinRoom - Room category: ${room.category}');
 
       // Check if user already has a membership
       final membershipId = '${roomId}_$_userId';
@@ -395,6 +465,9 @@ class RoomProvider with ChangeNotifier {
         final membership = Membership.fromMap(
           membershipId,
           existingMembership.data()!,
+        );
+        print(
+          'DEBUG: joinRoom - Existing membership status: ${membership.status}',
         );
 
         if (membership.status == 'active') {
@@ -412,6 +485,7 @@ class RoomProvider with ChangeNotifier {
       // Position starts from 1 for first member
       final nextPosition = autoApprove ? room.memberCount + 1 : 0;
       final memberStatus = autoApprove ? 'active' : 'pending';
+      print('DEBUG: joinRoom - Creating membership with status: $memberStatus');
 
       // Create membership in a transaction
       await _firestore.runTransaction((transaction) async {
@@ -445,10 +519,14 @@ class RoomProvider with ChangeNotifier {
           name: room.name,
           type: 'joined',
           status: memberStatus,
+          category: room.category,
           position: nextPosition,
           currentPosition: room.currentPosition,
           memberCount: room.memberCount,
           joinedAt: DateTime.now(),
+        );
+        print(
+          'DEBUG: joinRoom - Created UserRoom with category: ${userRoom.category}',
         );
 
         transaction.set(userRoomRef, {
@@ -587,6 +665,7 @@ class RoomProvider with ChangeNotifier {
           name: room.name,
           type: 'joined',
           status: 'active',
+          category: room.category,
           position: nextPosition,
           currentPosition: room.currentPosition,
           memberCount: room.memberCount + 1,
@@ -715,6 +794,7 @@ class RoomProvider with ChangeNotifier {
               name: room.name,
               type: 'joined',
               status: 'active',
+              category: room.category,
               position: nextPosition,
               currentPosition: room.currentPosition,
               memberCount: room.memberCount + 1,

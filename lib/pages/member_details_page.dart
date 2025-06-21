@@ -179,6 +179,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 name: _room!.name,
                 type: 'joined',
                 status: _membership!.status,
+                category: _room!.category,
                 position: _membership!.position,
                 currentPosition: _room!.currentPosition,
                 memberCount: _room!.memberCount,

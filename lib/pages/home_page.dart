@@ -17,6 +17,7 @@ import 'shop_dashboard_page.dart';
 import 'shop_order_page.dart';
 import '../models/order.dart' as app_models;
 import 'customer_page.dart';
+import 'homepage2.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -132,6 +133,13 @@ class _HomePageState extends State<HomePage> {
               return _buildErrorView(context, roomProvider);
             }
 
+            print('DEBUG: HomePage - RoomProvider loaded');
+            final queueRooms = roomProvider.queueRooms;
+            print('DEBUG: HomePage - Queue rooms count: ${queueRooms.length}');
+            print(
+              'DEBUG: HomePage - Queue rooms: ${queueRooms.map((r) => '${r.name}(${r.category})').toList()}',
+            );
+
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
               child: ListView(
@@ -142,16 +150,8 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(height: 32),
                   _buildRoomSection(
                     context,
-                    'My Created Rooms',
-                    roomProvider.createdRooms,
-                    (room) => _buildCreatedRoomCard(context, room),
-                    Colors.green,
-                  ),
-                  SizedBox(height: 32),
-                  _buildRoomSection(
-                    context,
-                    'Joined Rooms',
-                    roomProvider.activeRooms,
+                    'Joined Queues',
+                    queueRooms,
                     (room) => _buildJoinedRoomCard(context, room),
                     Colors.blue,
                   ),
@@ -276,7 +276,6 @@ class _HomePageState extends State<HomePage> {
                     label: 'Join Room',
                     color: Colors.blue.shade600,
                     onPressed: () {
-                      // Capture the RoomProvider before showing the dialog
                       final roomProvider = Provider.of<RoomProvider>(
                         context,
                         listen: false,
@@ -294,43 +293,11 @@ class _HomePageState extends State<HomePage> {
                 SizedBox(width: 16),
                 Expanded(
                   child: _buildActionButton(
-                    icon: Icons.add_box,
-                    label: 'Create Room',
+                    icon: Icons.search,
+                    label: 'Check Position',
                     color: Colors.deepPurple,
                     onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) => CreateRoomDialog(),
-                      ).then((roomId) async {
-                        if (roomId != null) {
-                          // Get room details to check category
-                          final roomDoc =
-                              await FirebaseFirestore.instance
-                                  .collection('rooms')
-                                  .doc(roomId)
-                                  .get();
-
-                          if (roomDoc.exists) {
-                            final roomData = Room.fromMap(
-                              roomId,
-                              roomDoc.data()!,
-                            );
-                            // After creating a room, always navigate to the appropriate dashboard
-                            if (roomData.category == 'shop') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) =>
-                                          ShopDashboardPage(roomId: roomId),
-                                ),
-                              );
-                            } else {
-                              CreatorDashboardPage.navigate(context, roomId);
-                            }
-                          }
-                        }
-                      });
+                      HomePage2.navigate(context);
                     },
                   ),
                 ),
@@ -427,7 +394,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   IconData _getSectionIcon(String title) {
-    if (title.contains('Created')) return Icons.create_new_folder;
     if (title.contains('Joined')) return Icons.group;
     if (title.contains('Pending')) return Icons.hourglass_empty;
     return Icons.folder;
@@ -455,117 +421,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildCreatedRoomCard(BuildContext context, UserRoom room) {
-    return Card(
-      elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap: () async {
-          // Get room details to check category
-          final roomDoc =
-              await FirebaseFirestore.instance
-                  .collection('rooms')
-                  .doc(room.roomId)
-                  .get();
-
-          if (roomDoc.exists) {
-            final roomData = Room.fromMap(room.roomId, roomDoc.data()!);
-            // For created rooms, always navigate to the appropriate dashboard
-            if (roomData.category == 'shop') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ShopDashboardPage(roomId: room.roomId),
-                ),
-              );
-            } else {
-              CreatorDashboardPage.navigate(context, room.roomId);
-            }
-          }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [Colors.green.shade50, Colors.white],
-            ),
-          ),
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              // Left side badge
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.withOpacity(0.2),
-                      blurRadius: 5,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    Icons.meeting_room,
-                    color: Colors.green.shade700,
-                    size: 30,
-                  ),
-                ),
-              ),
-              SizedBox(width: 16),
-              // Room details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      room.name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade900,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Row(
-                      children: [
-                        _buildStatusChip(
-                          label: 'Owner',
-                          color: Colors.green,
-                          icon: Icons.verified_user,
-                        ),
-                        SizedBox(width: 8),
-                        _buildStatusChip(
-                          label: '${room.memberCount} members',
-                          color: Colors.blue,
-                          icon: Icons.people,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Action buttons
-              Icon(
-                Icons.arrow_forward_ios,
-                color: Colors.green.shade700,
-                size: 18,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildJoinedRoomCard(BuildContext context, UserRoom room) {
     final isBeingServed = room.isCurrentlyServed;
     final color = isBeingServed ? Colors.green : Colors.blue;
@@ -581,45 +436,8 @@ class _HomePageState extends State<HomePage> {
       margin: EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () async {
-          // Get room details to check category
-          final roomDoc =
-              await FirebaseFirestore.instance
-                  .collection('rooms')
-                  .doc(room.roomId)
-                  .get();
-
-          if (roomDoc.exists) {
-            final roomData = Room.fromMap(room.roomId, roomDoc.data()!);
-
-            // Get current user
-            final auth = Provider.of<AuthProvider>(context, listen: false);
-            final isOwner = roomData.creatorId == auth.user?.uid;
-
-            if (roomData.category == 'shop') {
-              if (isOwner) {
-                // Shop owner sees the dashboard
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => ShopDashboardPage(roomId: room.roomId),
-                  ),
-                );
-              } else {
-                // Customer sees the customer page first
-                CustomerPage.navigate(
-                  context,
-                  room.roomId,
-                  auth.user?.displayName ?? 'Customer',
-                  auth.user?.email ?? '',
-                );
-              }
-            } else {
-              // For queue type rooms
-              MemberDetailsPage.navigate(context, room.roomId);
-            }
-          }
+        onTap: () {
+          MemberDetailsPage.navigate(context, room.roomId);
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -634,7 +452,6 @@ class _HomePageState extends State<HomePage> {
           padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              // Position indicator
               Container(
                 width: 60,
                 height: 60,
@@ -675,7 +492,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               SizedBox(width: 16),
-              // Room details
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -704,7 +520,6 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              // Action button
               Icon(Icons.arrow_forward_ios, color: color.shade700, size: 18),
             ],
           ),
@@ -730,7 +545,6 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16.0),
         child: Row(
           children: [
-            // Status indicator
             Container(
               width: 60,
               height: 60,
@@ -754,7 +568,6 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             SizedBox(width: 16),
-            // Room details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -808,30 +621,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // Helper method to navigate to a screen with providers
-  void _navigateWithProviders(BuildContext context, Widget screen) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => MultiProvider(
-              providers: [
-                ChangeNotifierProvider<AuthProvider>.value(
-                  value: Provider.of<AuthProvider>(context, listen: false),
-                ),
-                ChangeNotifierProvider<RoomProvider>.value(
-                  value: Provider.of<RoomProvider>(context, listen: false),
-                ),
-                ChangeNotifierProvider<FCMProvider>.value(
-                  value: Provider.of<FCMProvider>(context, listen: false),
-                ),
-              ],
-              child: screen,
-            ),
       ),
     );
   }

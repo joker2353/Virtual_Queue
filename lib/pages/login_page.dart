@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/loading_indicator.dart';
-import 'home_page.dart';
+import 'main_layout.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../widgets/virtual_queue_logo.dart';
 
@@ -23,11 +23,11 @@ class LoginPage extends StatelessWidget {
     }
 
     if (auth.user != null) {
-      // Redirect to HomePage if already signed in
+      // Redirect to MainLayout if already signed in
       Future.microtask(() {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => HomePage()),
+          MaterialPageRoute(builder: (_) => MainLayout()),
         );
       });
       return Scaffold(body: Center(child: LoadingIndicator()));

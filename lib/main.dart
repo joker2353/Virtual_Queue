@@ -15,6 +15,7 @@ import 'widgets/loading_indicator.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'providers/cache_provider.dart';
+import 'pages/main_layout.dart';
 
 // Define notification channel for Android
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -329,7 +330,7 @@ class MyApp extends StatelessWidget {
     return auth.isLoading
         ? _buildLoadingScreen()
         : auth.user != null
-        ? const HomePage()
+        ? const MainLayout()
         : const LoginPage();
   }
 

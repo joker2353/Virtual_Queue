@@ -5,6 +5,7 @@ class UserRoom {
   final String name;
   final String type; // 'created' or 'joined'
   final String status; // 'pending' or 'active'
+  final String category; // 'queue' or 'shop'
   final int position;
   final int currentPosition;
   final int memberCount;
@@ -15,6 +16,7 @@ class UserRoom {
     required this.name,
     required this.type,
     required this.status,
+    required this.category,
     required this.position,
     required this.currentPosition,
     required this.memberCount,
@@ -25,6 +27,15 @@ class UserRoom {
   bool get isJoined => type == 'joined';
   bool get isPending => status == 'pending';
   bool get isActive => status == 'active';
+  bool get isShop {
+    print('DEBUG: UserRoom isShop check - category: $category');
+    return category == 'shop';
+  }
+
+  bool get isQueue {
+    print('DEBUG: UserRoom isQueue check - category: $category');
+    return category == 'queue';
+  }
 
   // Calculate how many people are ahead in the queue
   int get waitingCount =>
@@ -60,6 +71,7 @@ class UserRoom {
       'name': name,
       'type': type,
       'status': status,
+      'category': category,
       'position': position,
       'currentPosition': currentPosition,
       'memberCount': memberCount,
@@ -80,6 +92,7 @@ class UserRoom {
       name: map['name'] ?? '',
       type: map['type'] ?? 'joined',
       status: map['status'] ?? 'pending',
+      category: map['category'] ?? 'queue',
       position: map['position']?.toInt() ?? 0,
       currentPosition: map['currentPosition']?.toInt() ?? 0,
       memberCount: map['memberCount']?.toInt() ?? 0,
@@ -92,6 +105,7 @@ class UserRoom {
     String? name,
     String? type,
     String? status,
+    String? category,
     int? position,
     int? currentPosition,
     int? memberCount,
@@ -102,6 +116,7 @@ class UserRoom {
       name: name ?? this.name,
       type: type ?? this.type,
       status: status ?? this.status,
+      category: category ?? this.category,
       position: position ?? this.position,
       currentPosition: currentPosition ?? this.currentPosition,
       memberCount: memberCount ?? this.memberCount,
