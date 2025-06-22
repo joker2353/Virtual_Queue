@@ -56,7 +56,12 @@ class RoomProvider with ChangeNotifier {
   List<UserRoom> get joinedRooms {
     final rooms =
         _userRooms
-            .where((room) => room.isJoined && room.status == 'active')
+            .where(
+              (room) =>
+                  room.isJoined &&
+                  room.status == 'active' &&
+                  !pendingRooms.any((pending) => pending.roomId == room.roomId),
+            )
             .toList();
     print('DEBUG: joinedRooms count: ${rooms.length}');
     print(
@@ -1177,16 +1182,19 @@ class RoomProvider with ChangeNotifier {
 
   Future<void> leaveRoom(String roomId) async {
     try {
-      final membershipId = '${roomId}_$_userId';
+      print('🔄 Starting leave room process...');
+      final batch = _firestore.batch();
 
-      // Get the membership doc outside the transaction
-      final membershipDoc =
-          await _firestore.collection('memberships').doc(membershipId).get();
+      // 1. Get and validate membership
+      final membershipId = '${roomId}_$_userId';
+      final membershipRef = _firestore
+          .collection('memberships')
+          .doc(membershipId);
+      final membershipDoc = await membershipRef.get();
 
       if (!membershipDoc.exists) {
         throw Exception('Membership not found');
       }
-
       final membership = Membership.fromMap(
         membershipId,
         membershipDoc.data()!,
@@ -1196,172 +1204,125 @@ class RoomProvider with ChangeNotifier {
         throw Exception('Room creators cannot leave their rooms');
       }
 
-      // Get room to check current position
-      final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
+      // 2. Get and validate room
+      final roomRef = _firestore.collection('rooms').doc(roomId);
+      final roomDoc = await roomRef.get();
+
       if (!roomDoc.exists) {
         throw Exception('Room not found');
       }
+      final room = Room.fromMap(roomId, roomDoc.data()!);
 
-      final leavingPosition = membership.position;
-
-      // Run in a transaction
-      await _firestore.runTransaction((transaction) async {
-        // First do all READS
-        final userRoomRef = _firestore.collection('user_rooms').doc(_userId);
-        final userRoomDoc = await transaction.get(userRoomRef);
-
-        // Then do all WRITES
-        // 1. Update membership status
-        transaction.update(membershipDoc.reference, {
-          'status': 'left',
-          'timestamps.left': FieldValue.serverTimestamp(),
-        });
-
-        // 2. Update room member count
-        transaction.update(roomDoc.reference, {
-          'memberCount': FieldValue.increment(-1),
-          'lastUpdatedAt': FieldValue.serverTimestamp(),
-        });
-
-        // 3. Update user_rooms
-        if (userRoomDoc.exists) {
-          final data = userRoomDoc.data() as Map<String, dynamic>;
-
-          if (data.containsKey('joined')) {
-            final joinedRooms = List<Map<String, dynamic>>.from(data['joined']);
-            final updatedJoinedRooms =
-                joinedRooms.where((room) => room['roomId'] != roomId).toList();
-            transaction.update(userRoomRef, {'joined': updatedJoinedRooms});
-          }
-        }
-      });
-
-      // After successful leave, adjust positions of remaining members
-      if (leavingPosition > 0) {
-        await _adjustPositionsAfterLeaving(roomId, leavingPosition);
-      }
-    } catch (e) {
-      _handleError(e);
-      throw Exception('Failed to leave room: $e');
-    }
-  }
-
-  Future<void> _adjustPositionsAfterLeaving(
-    String roomId,
-    int leavingPosition,
-  ) async {
-    try {
-      print('Debug - Adjusting positions after position $leavingPosition left');
-
-      // Find all memberships with position greater than the leaving position
-      final affectedMembershipsQuery =
+      print('📊 Getting affected members...');
+      // 3. Get all active members
+      final allMembersQuery =
           await _firestore
               .collection('memberships')
               .where('roomId', isEqualTo: roomId)
-              .where('position', isGreaterThan: leavingPosition)
               .where('status', isEqualTo: 'active')
-              .where('role', isEqualTo: 'member')
-              .orderBy('position') // Add ordering to ensure sequential updates
               .get();
 
-      if (affectedMembershipsQuery.docs.isEmpty) {
-        print('Debug - No members to adjust positions for');
-        return; // No members to adjust
-      }
+      // Filter and sort affected members locally
+      final affectedMembers =
+          allMembersQuery.docs
+              .map((doc) => Membership.fromMap(doc.id, doc.data()))
+              .where(
+                (m) => m.role == 'member' && m.position > membership.position,
+              )
+              .toList()
+            ..sort((a, b) => a.position.compareTo(b.position));
 
-      print(
-        'Debug - Found ${affectedMembershipsQuery.docs.length} members to adjust',
+      print('📝 Found ${affectedMembers.length} members to update');
+
+      // Get current removed positions array or initialize if not exists
+      final roomData = roomDoc.data() as Map<String, dynamic>;
+      final removedPositions = List<int>.from(
+        roomData['removedPositions'] ?? [],
       );
+      removedPositions.add(membership.position);
+      removedPositions.sort();
 
-      // Get room data for current position check
-      final roomDoc = await _firestore.collection('rooms').doc(roomId).get();
-      final room = Room.fromMap(roomId, roomDoc.data()!);
+      // 4. Update leaving member's status
+      batch.update(membershipRef, {
+        'status': 'left',
+        'timestamps.left': FieldValue.serverTimestamp(),
+      });
 
-      // Update positions in batches
-      final batch = _firestore.batch();
-      final affectedUserIds = <String>[];
-      final affectedPositions = <int>[];
+      // 5. Update room document
+      final newCurrentPosition =
+          room.currentPosition == membership.position
+              ? 0
+              : room.currentPosition;
+      batch.update(roomRef, {
+        'memberCount': FieldValue.increment(-1),
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+        'currentPosition': newCurrentPosition,
+        'removedPositions': removedPositions,
+      });
 
-      // First adjust membership positions
-      for (final membershipDoc in affectedMembershipsQuery.docs) {
-        final membership = Membership.fromMap(
-          membershipDoc.id,
-          membershipDoc.data(),
+      // 6. Update positions for affected members
+      for (var affectedMember in affectedMembers) {
+        batch.update(
+          _firestore.collection('memberships').doc(affectedMember.id),
+          {'position': affectedMember.position - 1},
         );
-        affectedUserIds.add(membership.userId);
-        affectedPositions.add(membership.position - 1); // Store new position
-
-        print(
-          'Debug - Adjusting member ${membership.userId} from position ${membership.position} to ${membership.position - 1}',
-        );
-
-        // Decrease position by 1
-        batch.update(membershipDoc.reference, {
-          'position': membership.position - 1,
-        });
       }
 
-      // Also adjust current position if needed
-      if (leavingPosition <= room.currentPosition && room.currentPosition > 0) {
-        print(
-          'Debug - Adjusting room current position from ${room.currentPosition} to ${room.currentPosition - 1}',
-        );
-        batch.update(_firestore.collection('rooms').doc(roomId), {
-          'currentPosition': FieldValue.increment(-1),
-        });
-      }
+      // 7. Update user_rooms documents
+      final affectedUserIds = [
+        _userId,
+        ...affectedMembers.map((m) => m.userId),
+      ];
 
-      await batch.commit();
-      print('Debug - Successfully updated membership positions');
-
-      // Now update user_rooms documents
-      final userRoomsBatch = _firestore.batch();
-
-      for (int i = 0; i < affectedUserIds.length; i++) {
-        final userId = affectedUserIds[i];
-        final newPosition = affectedPositions[i];
-
+      for (final userId in affectedUserIds) {
         final userRoomRef = _firestore.collection('user_rooms').doc(userId);
         final userRoomDoc = await userRoomRef.get();
 
-        if (userRoomDoc.exists) {
-          final data = userRoomDoc.data() as Map<String, dynamic>;
+        if (!userRoomDoc.exists) continue;
 
-          if (data.containsKey('joined')) {
-            final joinedRooms = List<Map<String, dynamic>>.from(data['joined']);
-            bool updated = false;
+        final data = userRoomDoc.data() as Map<String, dynamic>;
+        if (!data.containsKey('joined')) continue;
 
-            for (int j = 0; j < joinedRooms.length; j++) {
-              if (joinedRooms[j]['roomId'] == roomId) {
-                print(
-                  'Debug - Updating user_rooms for user $userId to position $newPosition',
-                );
-                joinedRooms[j] = {
-                  ...joinedRooms[j],
-                  'position': newPosition,
-                  'currentPosition':
-                      room.currentPosition > 0 &&
-                              leavingPosition <= room.currentPosition
-                          ? room.currentPosition - 1
-                          : room.currentPosition,
-                };
-                updated = true;
-                break;
-              }
+        final joinedRooms = List<Map<String, dynamic>>.from(data['joined']);
+
+        if (userId == _userId) {
+          // Remove the room from leaving member's joined rooms
+          final updatedRooms =
+              joinedRooms.where((r) => r['roomId'] != roomId).toList();
+          batch.update(userRoomRef, {'joined': updatedRooms});
+        } else {
+          // Update position for affected members
+          bool updated = false;
+          for (int i = 0; i < joinedRooms.length; i++) {
+            if (joinedRooms[i]['roomId'] == roomId) {
+              joinedRooms[i] = {
+                ...joinedRooms[i],
+                'position': joinedRooms[i]['position'] - 1,
+                'currentPosition': newCurrentPosition,
+              };
+              updated = true;
+              break;
             }
-
-            if (updated) {
-              userRoomsBatch.update(userRoomRef, {'joined': joinedRooms});
-            }
+          }
+          if (updated) {
+            batch.update(userRoomRef, {'joined': joinedRooms});
           }
         }
       }
 
-      await userRoomsBatch.commit();
-      print('Debug - Successfully updated user_rooms documents');
-    } catch (e) {
-      print('Error adjusting positions: $e');
-      throw e; // Rethrow to handle in calling method
+      // 8. Commit all changes
+      print('📝 Committing batch updates...');
+      await batch.commit();
+      print('✅ Successfully left room and adjusted all positions');
+    } catch (e, stackTrace) {
+      print('❌ Error leaving room: $e');
+      print('Stack trace: $stackTrace');
+      if (e is FirebaseException) {
+        print('Firebase error code: ${e.code}');
+        print('Firebase error message: ${e.message}');
+      }
+      _handleError(e);
+      throw Exception('Failed to leave room: ${e.toString()}');
     }
   }
 

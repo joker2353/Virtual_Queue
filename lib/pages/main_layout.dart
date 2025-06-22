@@ -11,9 +11,9 @@ class MainLayout extends StatefulWidget {
 }
 
 class _MainLayoutState extends State<MainLayout> {
-  int _selectedIndex = 0;
+  int _selectedIndex = 1;
 
-  final List<Widget> _pages = [HomePage(), SavedRoomsPage(), CreateRoomPage()];
+  final List<Widget> _pages = [SavedRoomsPage(), HomePage(), CreateRoomPage()];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -24,42 +24,114 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBody: true,
       body: _pages[_selectedIndex],
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: Offset(0, -5),
+        height: 90,
+        color: Colors.transparent,
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Stack(
+          children: [
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(25),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: Offset(0, 0),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    0,
+                    Icons.store_outlined,
+                    Icons.store,
+                    'Saved Shops',
+                  ),
+                  Opacity(
+                    opacity: 0,
+                    child: _buildNavItem(
+                      1,
+                      Icons.home_outlined,
+                      Icons.home,
+                      'Home',
+                    ),
+                  ),
+                  _buildNavItem(
+                    2,
+                    Icons.add_box_outlined,
+                    Icons.add_box,
+                    'Create Shop',
+                  ),
+                ],
+              ),
+            ),
+            Center(
+              child: GestureDetector(
+                onTap: () => _onItemTapped(1),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepPurple.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _selectedIndex == 1 ? Icons.home : Icons.home_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ),
             ),
           ],
         ),
-        child: BottomNavigationBar(
-          items: const <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+      ),
+    );
+  }
+
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    IconData activeIcon,
+    String label,
+  ) {
+    final isSelected = _selectedIndex == index;
+    return Expanded(
+      child: InkWell(
+        onTap: () => _onItemTapped(index),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isSelected ? activeIcon : icon,
+              color: isSelected ? Colors.deepPurple : Colors.grey,
+              size: 24,
             ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.store_outlined),
-              activeIcon: Icon(Icons.store),
-              label: 'Saved Shops',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.add_box_outlined),
-              activeIcon: Icon(Icons.add_box),
-              label: 'Create Room',
+            SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.deepPurple : Colors.grey,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
             ),
           ],
-          currentIndex: _selectedIndex,
-          selectedItemColor: Colors.deepPurple,
-          unselectedItemColor: Colors.grey,
-          onTap: _onItemTapped,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold),
-          elevation: 0,
         ),
       ),
     );
