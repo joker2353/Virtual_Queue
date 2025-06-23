@@ -8,6 +8,7 @@ import '../providers/fcm_provider.dart';
 import '../models/room.dart';
 import '../models/membership.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/qr_share_dialog.dart';
 import 'join_requests_page.dart';
 import 'package:uuid/uuid.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -622,54 +623,55 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
 
   Widget _buildEndDrawer() {
     return Drawer(
-      width: MediaQuery.of(context).size.width * 0.75,
+      width: MediaQuery.of(context).size.width * 0.65,
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.deepPurple.shade50, Colors.white],
+            colors: [Colors.deepPurple.shade50, Colors.white, Colors.white],
+            stops: [0.0, 0.2, 1.0],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.deepPurple.shade50),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                child: Column(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.deepPurple,
-                      child: const Icon(
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurple.shade100,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
                         Icons.meeting_room,
-                        color: Colors.white,
+                        color: Colors.deepPurple.shade700,
+                        size: 32,
                       ),
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Room Settings',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurple.shade900,
-                            ),
-                          ),
-                          if (_room != null)
-                            Text(
-                              _room!.name,
-                              style: TextStyle(
-                                color: Colors.deepPurple.shade700,
-                                fontSize: 14,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                        ],
+                    const SizedBox(height: 16),
+                    if (_room != null)
+                      Text(
+                        _room!.name,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple.shade900,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Room Settings',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.deepPurple.shade600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -678,20 +680,52 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
               const Divider(height: 1),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 8,
+                  ),
                   children: [
                     _buildDrawerItem(
-                      icon: Icons.qr_code,
+                      icon: Icons.qr_code_rounded,
                       title: 'Share QR Code',
+                      subtitle: 'Let members join via QR',
                       onTap: _showQRCodeDialog,
                     ),
                     _buildDrawerItem(
-                      icon: Icons.restart_alt,
+                      icon: Icons.notifications_rounded,
+                      title: 'Notifications',
+                      subtitle: 'Manage room notifications',
+                      onTap: () {
+                        // TODO: Implement notifications settings
+                        Navigator.pop(context);
+                      },
+                    ),
+                    _buildDrawerItem(
+                      icon: Icons.analytics_rounded,
+                      title: 'Analytics',
+                      subtitle: 'View room statistics',
+                      onTap: () {
+                        // TODO: Implement analytics
+                        Navigator.pop(context);
+                      },
+                    ),
+                    const Divider(height: 32),
+                    _buildDrawerItem(
+                      icon: Icons.restart_alt_rounded,
                       title: 'Reset Queue',
+                      subtitle: 'Start queue from position 1',
                       onTap: _resetQueue,
                       color: Colors.red,
+                      isDanger: true,
                     ),
                   ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Room Code: ${_room?.code ?? ""}',
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               ),
             ],
@@ -704,38 +738,60 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,
+    required String subtitle,
     required VoidCallback onTap,
     Color? color,
+    bool isDanger = false,
   }) {
     final itemColor = color ?? Colors.deepPurple;
+    final bgColor = isDanger ? Colors.red.shade50 : itemColor.withOpacity(0.05);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Material(
         color: Colors.transparent,
         child: ListTile(
           onTap: () {
-            Navigator.pop(context); // Close drawer
+            Navigator.pop(context);
             onTap();
           },
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
+          tileColor: bgColor,
+          minLeadingWidth: 0,
           leading: Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: itemColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color:
+                  isDanger ? Colors.red.shade100 : itemColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, color: itemColor, size: 24),
+            child: Icon(
+              icon,
+              color: isDanger ? Colors.red.shade700 : itemColor,
+              size: 22,
+            ),
           ),
           title: Text(
             title,
-            style: TextStyle(color: itemColor, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: isDanger ? Colors.red.shade700 : itemColor,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              color: isDanger ? Colors.red.shade600 : Colors.grey.shade600,
+              fontSize: 12,
+            ),
           ),
           trailing: Icon(
-            Icons.chevron_right,
-            color: itemColor.withOpacity(0.5),
+            Icons.chevron_right_rounded,
+            color: (isDanger ? Colors.red : itemColor).withOpacity(0.5),
+            size: 20,
           ),
         ),
       ),
@@ -1984,158 +2040,8 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
     showDialog(
       context: context,
       builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            elevation: 5,
-            backgroundColor: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(
-                          Icons.qr_code,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Room QR Code',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.15),
-                          blurRadius: 12,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: QrImageView(
-                      data: _room!.code,
-                      version: QrVersions.auto,
-                      size: 200,
-                      backgroundColor: Colors.white,
-                      foregroundColor: Theme.of(context).colorScheme.primary,
-                      eyeStyle: QrEyeStyle(
-                        eyeShape: QrEyeShape.square,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      dataModuleStyle: QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.square,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      embeddedImage: const AssetImage('assets/icon/icon.png'),
-                      embeddedImageStyle: QrEmbeddedImageStyle(
-                        size: const Size(40, 40),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Room Code: ',
-                          style: TextStyle(color: Colors.grey.shade700),
-                        ),
-                        Text(
-                          _room!.code,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.zero,
-                          icon: Icon(
-                            Icons.copy,
-                            size: 18,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          onPressed: () {
-                            Clipboard.setData(ClipboardData(text: _room!.code));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text(
-                                  'Room code copied to clipboard',
-                                ),
-                                behavior: SnackBarBehavior.floating,
-                                backgroundColor: Colors.green.shade800,
-                                margin: const EdgeInsets.all(8),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      ElevatedButton.icon(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close),
-                        label: const Text('Close'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade200,
-                          foregroundColor: Colors.grey.shade800,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          (context) =>
+              QRShareDialog(roomCode: _room!.code, roomName: _room!.name),
     );
   }
 

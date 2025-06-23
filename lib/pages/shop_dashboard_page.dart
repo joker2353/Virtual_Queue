@@ -16,6 +16,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import '../widgets/order_processing_dialog.dart';
 import '../providers/cache_provider.dart';
+import '../widgets/qr_share_dialog.dart';
 
 class ShopDashboardPage extends StatefulWidget {
   final String roomId;
@@ -42,6 +43,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
   String? _error;
   StreamSubscription? _ordersSubscription;
   bool _showQR = false;
+  double _totalSales = 0;
 
   @override
   void initState() {
@@ -105,6 +107,30 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
     print('Setting up orders listener for room: ${widget.roomId}');
 
     try {
+      // Create the query for all orders to calculate total sales
+      final allOrdersQuery = firestore.FirebaseFirestore.instance
+          .collection('orders')
+          .where('roomId', isEqualTo: widget.roomId)
+          .where('status', isEqualTo: 'completed');
+
+      // Listen to all orders for total sales calculation
+      allOrdersQuery.snapshots().listen(
+        (snapshot) {
+          if (mounted) {
+            double totalSales = 0;
+            for (var doc in snapshot.docs) {
+              totalSales += (doc.data()['totalAmount'] ?? 0).toDouble();
+            }
+            setState(() {
+              _totalSales = totalSales;
+            });
+          }
+        },
+        onError: (error) {
+          print('Error calculating total sales: $error');
+        },
+      );
+
       // First check the cache
       final cache = Provider.of<CacheProvider>(context, listen: false);
       final cachedOrders = cache.getRoomOrders(widget.roomId);
@@ -254,53 +280,109 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
         ],
       ),
       endDrawer: Drawer(
+        width: MediaQuery.of(context).size.width * 0.65, // Reduced width
         child: Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(color: Colors.deepPurple),
-                child: Center(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.deepPurple.shade50, Colors.white, Colors.white],
+              stops: [0.0, 0.2, 1.0],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.store_rounded, color: Colors.white, size: 48),
-                      SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.store_rounded,
+                          color: Colors.deepPurple.shade700,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         _room!.name,
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple.shade900,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Shop Settings',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.deepPurple.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              ListTile(
-                leading: Icon(Icons.qr_code, color: Colors.deepPurple),
-                title: Text(
-                  'Share QR',
-                  style: TextStyle(fontSize: 16, color: Colors.deepPurple),
+                const Divider(height: 1),
+                // Menu Items
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
+                    ),
+                    children: [
+                      _buildDrawerItem(
+                        icon: Icons.qr_code_rounded,
+                        title: 'Share QR Code',
+                        subtitle: 'Let customers join via QR',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showQRDialog();
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.history_rounded,
+                        title: 'Order History',
+                        subtitle: 'View past orders',
+                        onTap: () {
+                          Navigator.pop(context);
+                          OrderHistoryPage.navigate(context, widget.roomId);
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.analytics_rounded,
+                        title: 'Analytics',
+                        subtitle: 'View shop statistics',
+                        onTap: () {
+                          // TODO: Implement analytics
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-                onTap: () {
-                  Navigator.pop(context); // Close drawer
-                  _showQRDialog();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.history, color: Colors.deepPurple),
-                title: Text(
-                  'Order History',
-                  style: TextStyle(fontSize: 16, color: Colors.deepPurple),
+                // Footer
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Shop Code: ${_room?.code ?? ""}',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
                 ),
-                onTap: () {
-                  Navigator.pop(context); // Close drawer
-                  OrderHistoryPage.navigate(context, widget.roomId);
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -342,23 +424,30 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                       ),
                     ),
                     SizedBox(height: 16),
-                    QrImageView(
-                      data: _room!.code,
-                      version: QrVersions.auto,
-                      size: 200,
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.deepPurple,
-                      eyeStyle: QrEyeStyle(
-                        eyeShape: QrEyeShape.square,
-                        color: Colors.deepPurple,
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!, width: 1),
                       ),
-                      dataModuleStyle: QrDataModuleStyle(
-                        dataModuleShape: QrDataModuleShape.square,
-                        color: Colors.deepPurple,
-                      ),
-                      embeddedImage: const AssetImage('assets/icon/icon.png'),
-                      embeddedImageStyle: QrEmbeddedImageStyle(
-                        size: const Size(40, 40),
+                      child: QrImageView(
+                        data: "virtualqueue://${_room!.code}",
+                        version: QrVersions.auto,
+                        size: 200,
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        gapless: false,
+                        errorCorrectionLevel: QrErrorCorrectLevel.H,
+                        padding: const EdgeInsets.all(0),
+                        eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: Colors.black,
+                        ),
+                        dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
                   ],
@@ -371,18 +460,29 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
               child: Row(
                 children: [
                   Expanded(
+                    flex: 1,
                     child: _buildStatCard(
                       'Active Orders',
                       _activeOrders.length.toString(),
                       Icons.receipt_long,
                     ),
                   ),
-                  SizedBox(width: 16),
+                  SizedBox(width: 8),
                   Expanded(
+                    flex: 1,
                     child: _buildStatCard(
-                      'Total Pending',
-                      '৳${_calculateTotalPending().toStringAsFixed(2)}',
+                      'Pending',
+                      '৳${_calculateTotalPending().toStringAsFixed(0)}',
                       Icons.account_balance_wallet,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    flex: 1,
+                    child: _buildStatCard(
+                      'Sales',
+                      '৳${_totalSales.toStringAsFixed(0)}',
+                      Icons.payments_rounded,
                     ),
                   ),
                 ],
@@ -649,35 +749,38 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
 
   Widget _buildStatCard(String label, String value, IconData icon) {
     return Card(
-      margin: EdgeInsets.all(8),
+      margin: EdgeInsets.all(4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           // Handle card tap
         },
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 48, color: Colors.deepPurple),
-              SizedBox(height: 16),
+              Icon(icon, size: 32, color: Colors.deepPurple),
+              SizedBox(height: 8),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
                 ),
+                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 8),
+              SizedBox(height: 4),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
                 ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -707,45 +810,55 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
     showDialog(
       context: context,
       builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+          (context) =>
+              QRShareDialog(roomCode: _room!.code, roomName: _room!.name),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: onTap,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          tileColor: Colors.deepPurple.withOpacity(0.05),
+          minLeadingWidth: 0,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.deepPurple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Room QR Code',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  QrImageView(
-                    data: _room!.code,
-                    version: QrVersions.auto,
-                    size: 200,
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.deepPurple,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Room Code: ${_room!.code}',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Close'),
-                  ),
-                ],
-              ),
+            child: Icon(icon, color: Colors.deepPurple, size: 22),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: Colors.deepPurple,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
             ),
           ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+          ),
+          trailing: Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.deepPurple.withOpacity(0.5),
+            size: 20,
+          ),
+        ),
+      ),
     );
   }
 }

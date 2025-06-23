@@ -52,11 +52,6 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
   String? _error;
   DateTime? _waitingSince;
 
-  // For countdown timer
-  Timer? _countdownTimer;
-  String _timeLeft = '00:00';
-  int _estimatedMinutes = 0;
-
   // For animation controller
   late AnimationController _animationController;
   late Animation<Color?> _colorAnimation;
@@ -90,7 +85,6 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
     // Cancel subscriptions when the page is disposed
     _roomSubscription?.cancel();
     _membershipSubscription?.cancel();
-    _countdownTimer?.cancel();
     _animationController.dispose();
     super.dispose();
   }
@@ -132,9 +126,6 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 currentPosition: _room!.currentPosition,
                 memberCount: _room!.memberCount,
               );
-
-              // Update countdown timer when room details change
-              _startCountdownTimer();
             }
           });
         },
@@ -187,9 +178,6 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                     _membership!.timestamps.approved ??
                     _membership!.timestamps.requested,
               );
-
-              // Start countdown timer when membership details are loaded
-              _startCountdownTimer();
             }
 
             _error = null;
@@ -209,62 +197,6 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
         _isLoading = false;
       });
     }
-  }
-
-  void _startCountdownTimer() {
-    // Cancel existing timer if running
-    _countdownTimer?.cancel();
-
-    if (_userRoom == null || _room == null) return;
-
-    final isUserTurn = _userRoom!.isCurrentlyServed;
-
-    if (isUserTurn) {
-      setState(() {
-        _timeLeft = "It's your turn!";
-        _estimatedMinutes = 0;
-      });
-      return;
-    }
-
-    // Calculate estimated minutes based on position and average service time
-    // Using a fixed average service time of 3 minutes per person
-    const int averageServiceTime = 3;
-
-    _estimatedMinutes = _userRoom!.waitingCount * averageServiceTime;
-
-    // Initialize the countdown
-    _updateCountdown();
-
-    // Start a timer to update the countdown every minute
-    _countdownTimer = Timer.periodic(Duration(minutes: 1), (timer) {
-      if (_estimatedMinutes <= 0) {
-        timer.cancel();
-      } else {
-        _estimatedMinutes--;
-        _updateCountdown();
-      }
-    });
-  }
-
-  void _updateCountdown() {
-    if (_estimatedMinutes <= 0) {
-      setState(() {
-        _timeLeft = "Any moment now!";
-      });
-      return;
-    }
-
-    int hours = _estimatedMinutes ~/ 60;
-    int minutes = _estimatedMinutes % 60;
-
-    setState(() {
-      if (hours > 0) {
-        _timeLeft = "${hours}h ${minutes}m";
-      } else {
-        _timeLeft = "${minutes}m";
-      }
-    });
   }
 
   Future<void> _leaveRoom() async {
@@ -870,47 +802,42 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
               ),
             ),
             SizedBox(height: 25),
-            Container(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-              decoration: BoxDecoration(
-                color:
-                    isUserTurn
-                        ? Colors.green.shade100
-                        : Colors.deepPurple.shade100,
-                borderRadius: BorderRadius.circular(50),
-                boxShadow: [
-                  BoxShadow(
-                    color: progressColor.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isUserTurn ? Icons.check_circle_outline : Icons.timer,
-                    color: progressColor,
-                    size: 20,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    isUserTurn
-                        ? 'It\'s your turn now!'
-                        : 'Time left: $_timeLeft',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: progressColor,
+            if (isUserTurn)
+              Container(
+                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade100,
+                  borderRadius: BorderRadius.circular(50),
+                  boxShadow: [
+                    BoxShadow(
+                      color: progressColor.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: progressColor,
+                      size: 20,
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      'It\'s your turn now!',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: progressColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (!isUserTurn) ...[
-              SizedBox(height: 20),
+            if (!isUserTurn)
               AnimatedBuilder(
                 animation: _colorAnimation,
                 builder: (context, child) {
@@ -946,7 +873,6 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   );
                 },
               ),
-            ],
           ],
         ),
       ),

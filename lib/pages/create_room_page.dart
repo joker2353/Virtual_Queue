@@ -83,7 +83,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
                 children: [
                   _buildCreateRoomCard(context),
                   SizedBox(height: 24),

@@ -10,6 +10,7 @@ import 'purchase_history_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/cache_provider.dart';
 import 'edit_order_page.dart';
+import '../widgets/qr_share_dialog.dart';
 
 class CustomerPage extends StatefulWidget {
   final String roomId;
@@ -311,53 +312,98 @@ class _CustomerPageState extends State<CustomerPage> {
         ],
       ),
       endDrawer: Drawer(
+        width: MediaQuery.of(context).size.width * 0.65,
         child: Container(
-          color: Colors.white,
-          child: Column(
-            children: [
-              DrawerHeader(
-                decoration: BoxDecoration(color: Colors.deepPurple),
-                child: Center(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.deepPurple.shade50, Colors.white, Colors.white],
+              stops: [0.0, 0.2, 1.0],
+            ),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.store_rounded, color: Colors.white, size: 48),
-                      SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.deepPurple.shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.store_rounded,
+                          color: Colors.deepPurple.shade700,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       Text(
                         _room!.name,
                         style: TextStyle(
-                          color: Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
+                          color: Colors.deepPurple.shade900,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Customer Menu',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.deepPurple.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-              ),
-              ListTile(
-                leading: Icon(Icons.qr_code, color: Colors.deepPurple),
-                title: Text(
-                  'Share QR',
-                  style: TextStyle(fontSize: 16, color: Colors.deepPurple),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8,
+                      horizontal: 8,
+                    ),
+                    children: [
+                      _buildDrawerItem(
+                        icon: Icons.qr_code_rounded,
+                        title: 'Share QR Code',
+                        subtitle: 'Share shop with others',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showQRDialog();
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.exit_to_app_rounded,
+                        title: 'Leave Shop',
+                        subtitle: 'Remove from saved shops',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showLeaveConfirmation();
+                        },
+                        isDanger: true,
+                      ),
+                    ],
+                  ),
                 ),
-                onTap: () {
-                  Navigator.pop(context); // Close drawer
-                  _showQRDialog();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.exit_to_app, color: Colors.red),
-                title: Text(
-                  'Leave Room',
-                  style: TextStyle(fontSize: 16, color: Colors.red),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Shop Code: ${_room?.code ?? ""}',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
                 ),
-                onTap: () {
-                  Navigator.pop(context); // Close drawer
-                  _showLeaveConfirmation();
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -395,12 +441,31 @@ class _CustomerPageState extends State<CustomerPage> {
                       style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
                     SizedBox(height: 16),
-                    QrImageView(
-                      data: _room!.code,
-                      version: QrVersions.auto,
-                      size: 150,
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.deepPurple,
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[200]!, width: 1),
+                      ),
+                      child: QrImageView(
+                        data: "virtualqueue://${_room!.code}",
+                        version: QrVersions.auto,
+                        size: 150,
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black,
+                        gapless: false,
+                        errorCorrectionLevel: QrErrorCorrectLevel.H,
+                        padding: const EdgeInsets.all(0),
+                        eyeStyle: const QrEyeStyle(
+                          eyeShape: QrEyeShape.square,
+                          color: Colors.black,
+                        ),
+                        dataModuleStyle: const QrDataModuleStyle(
+                          dataModuleShape: QrDataModuleShape.square,
+                          color: Colors.black,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -815,45 +880,8 @@ class _CustomerPageState extends State<CustomerPage> {
     showDialog(
       context: context,
       builder:
-          (context) => Dialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Room QR Code',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.deepPurple,
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  QrImageView(
-                    data: _room!.code,
-                    version: QrVersions.auto,
-                    size: 200,
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.deepPurple,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'Room Code: ${_room!.code}',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-                  ),
-                  SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Close'),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          (context) =>
+              QRShareDialog(roomCode: _room!.code, roomName: _room!.name),
     );
   }
 
@@ -896,6 +924,68 @@ class _CustomerPageState extends State<CustomerPage> {
               customerContact: widget.customerContact,
               existingOrder: order,
             ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerItem({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isDanger = false,
+  }) {
+    final itemColor = isDanger ? Colors.red : Colors.deepPurple;
+    final bgColor =
+        isDanger ? Colors.red.shade50 : Colors.deepPurple.withOpacity(0.05);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: onTap,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          tileColor: bgColor,
+          minLeadingWidth: 0,
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color:
+                  isDanger
+                      ? Colors.red.shade100
+                      : Colors.deepPurple.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: isDanger ? Colors.red.shade700 : Colors.deepPurple,
+              size: 22,
+            ),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: isDanger ? Colors.red.shade700 : Colors.deepPurple,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
+          ),
+          subtitle: Text(
+            subtitle,
+            style: TextStyle(
+              color: isDanger ? Colors.red.shade600 : Colors.grey.shade600,
+              fontSize: 12,
+            ),
+          ),
+          trailing: Icon(
+            Icons.chevron_right_rounded,
+            color: (isDanger ? Colors.red : Colors.deepPurple).withOpacity(0.5),
+            size: 20,
+          ),
+        ),
       ),
     );
   }

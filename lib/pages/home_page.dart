@@ -143,7 +143,7 @@ class _HomePageState extends State<HomePage> {
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
               child: ListView(
-                padding: const EdgeInsets.all(20),
+                padding: EdgeInsets.fromLTRB(20, 20, 20, 100),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   _buildWelcomeCard(context),
@@ -528,6 +528,36 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildStatusChip({
+    required String label,
+    required MaterialColor color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.shade100,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.shade300),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color.shade700),
+          SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color.shade800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPendingRoomCard(BuildContext context, UserRoom room) {
     return Card(
       elevation: 2,
@@ -591,36 +621,6 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip({
-    required String label,
-    required MaterialColor color,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.shade100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.shade300),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color.shade700),
-          SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: color.shade800,
-            ),
-          ),
-        ],
       ),
     );
   }

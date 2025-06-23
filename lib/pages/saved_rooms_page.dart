@@ -113,12 +113,12 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
 
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: shopRooms.length,
-                itemBuilder: (context, index) {
-                  return _buildShopCard(context, shopRooms[index]);
-                },
+              child: ListView(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+                physics: const BouncingScrollPhysics(),
+                children: [
+                  ...shopRooms.map((room) => _buildShopCard(context, room)),
+                ],
               ),
             );
           },

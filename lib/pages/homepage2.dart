@@ -9,7 +9,7 @@ class HomePage2 extends StatelessWidget {
   const HomePage2({super.key});
 
   static void navigate(BuildContext context) {
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const HomePage2()),
     );
@@ -64,12 +64,7 @@ class HomePage2 extends StatelessWidget {
                     if (auth.user != null)
                       TextButton.icon(
                         onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const HomePage(),
-                            ),
-                          );
+                          Navigator.pop(context);
                         },
                         icon: Icon(Icons.dashboard, color: Colors.white),
                         label: Text(

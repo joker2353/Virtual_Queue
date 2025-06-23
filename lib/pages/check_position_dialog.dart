@@ -198,11 +198,11 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                 ),
               ),
               IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: Icon(Icons.close, color: Colors.grey.shade600),
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.close, color: Colors.grey[600]),
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.grey.shade200,
-                  shape: CircleBorder(),
+                  backgroundColor: Colors.grey[50],
+                  padding: EdgeInsets.all(8),
                 ),
               ),
             ],
@@ -403,7 +403,14 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
               children: [
                 IconButton(
                   onPressed: _toggleQRScanner,
-                  icon: Icon(Icons.arrow_back, color: Colors.grey.shade700),
+                  icon: Icon(
+                    Icons.arrow_back_ios_rounded,
+                    color: Colors.grey[700],
+                  ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey[50],
+                    padding: EdgeInsets.all(8),
+                  ),
                 ),
                 Expanded(
                   child: Text(
@@ -416,8 +423,12 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                   ),
                 ),
                 IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: Icon(Icons.close, color: Colors.grey.shade700),
+                  onPressed: () => Navigator.pop(context),
+                  icon: Icon(Icons.close, color: Colors.grey[700]),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey[50],
+                    padding: EdgeInsets.all(8),
+                  ),
                 ),
               ],
             ),

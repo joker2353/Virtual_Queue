@@ -244,10 +244,12 @@ class VirtualQueueApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
-          appBarTheme: const AppBarTheme(
+          appBarTheme: AppBarTheme(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             elevation: 2,
+            iconTheme: IconThemeData(color: Colors.white),
+            actionsIconTheme: IconThemeData(color: Colors.white),
           ),
           cardTheme: CardTheme(
             clipBehavior: Clip.antiAlias,
