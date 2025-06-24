@@ -53,7 +53,6 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   .where('customerContact', isEqualTo: contact)
                   .get();
 
-          String customerName = '';
           DateTime? lastOrderDate;
 
           if (latestOrder.docs.isNotEmpty) {
@@ -76,18 +75,13 @@ class _CustomerListPageState extends State<CustomerListPage> {
                   );
 
             if (sortedOrders.isNotEmpty) {
-              final firstOrder = sortedOrders.first;
-              customerName =
-                  (firstOrder['data'] as Map<String, dynamic>)['customerName']
-                      ?.toString() ??
-                  '';
-              lastOrderDate = firstOrder['createdAt'] as DateTime;
+              lastOrderDate = sortedOrders.first['createdAt'] as DateTime;
             }
           }
 
           customers.add({
             'contact': contact,
-            'name': customerName,
+            'name': data['name'] ?? 'Unknown',
             'pendingAmount': (data['pendingAmount'] ?? 0).toDouble(),
             'lastOrderDate': lastOrderDate,
           });
@@ -96,7 +90,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           // Add customer even if we can't load their orders
           customers.add({
             'contact': contact,
-            'name': 'Unknown',
+            'name': data['name'] ?? 'Unknown',
             'pendingAmount': (data['pendingAmount'] ?? 0).toDouble(),
             'lastOrderDate': null,
           });

@@ -443,6 +443,16 @@ class RoomProvider with ChangeNotifier {
     bool autoApprove = false,
   }) async {
     try {
+      // Get current user's display name from Firebase Auth
+      final currentUser = FirebaseAuth.instance.currentUser;
+      final userName = currentUser?.displayName ?? 'Unknown';
+
+      // Add user's name to form data if not already present
+      if (!formData.containsKey('name') ||
+          formData['name']?.toString().isEmpty == true) {
+        formData = {...formData, 'name': userName};
+      }
+
       // 1. Find room by code
       final roomQuery =
           await _firestore
@@ -565,6 +575,24 @@ class RoomProvider with ChangeNotifier {
     try {
       print('Debug - Starting customer registration with code: $roomCode');
       print('Debug - Current user ID: $_userId');
+
+      // Try to get customer's name from their Firebase account
+      String customerName = 'Unknown';
+      try {
+        final customerDoc =
+            await _firestore.collection('users').doc(customerId).get();
+        if (customerDoc.exists) {
+          customerName = customerDoc.data()?['displayName'] ?? 'Unknown';
+        }
+      } catch (e) {
+        print('Error fetching customer name: $e');
+      }
+
+      // Add customer's name to form data if not already present
+      if (!formData.containsKey('name') ||
+          formData['name']?.toString().isEmpty == true) {
+        formData = {...formData, 'name': customerName};
+      }
 
       // 1. Find room by code
       final roomQuery =
@@ -777,6 +805,31 @@ class RoomProvider with ChangeNotifier {
         // First do all READS
         final userRoomRef = _firestore.collection('user_rooms').doc(userId);
         final userRoomDoc = await transaction.get(userRoomRef);
+
+        // Get customer contact from membership form data
+        final customerContact =
+            membership.formData['contact'] ??
+            membership.formData['phone'] ??
+            membership.formData['phoneNumber'];
+        if (customerContact == null || customerContact.isEmpty) {
+          throw Exception(
+            'Customer contact information not found in form data',
+          );
+        }
+
+        // Get customer name from membership form data
+        final customerName = membership.formData['name'] ?? 'Unknown';
+
+        // Create or update customer record
+        final customerRef = _firestore
+            .collection('customers')
+            .doc(customerContact);
+        transaction.set(customerRef, {
+          'roomId': roomId,
+          'name': customerName,
+          'pendingAmount': 0.0,
+          'lastUpdated': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
         // Then do all WRITES
         // 1. Update membership status and position
