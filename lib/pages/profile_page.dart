@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../providers/auth_provider.dart' as app_auth;
 import '../providers/room_provider.dart';
 import '../providers/fcm_provider.dart';
 import '../widgets/loading_indicator.dart';
+import '../pages/master_sku_page.dart'; // Added import
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -12,7 +15,10 @@ class ProfilePage extends StatefulWidget {
   // Use this method to navigate to ProfilePage properly
   static void navigate(BuildContext context) {
     // First capture all providers outside of the navigation
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final authProvider = Provider.of<app_auth.AuthProvider>(
+      context,
+      listen: false,
+    );
     final roomProvider = Provider.of<RoomProvider>(context, listen: false);
     final fcmProvider = Provider.of<FCMProvider>(context, listen: false);
 
@@ -22,7 +28,9 @@ class ProfilePage extends StatefulWidget {
         builder:
             (context) => MultiProvider(
               providers: [
-                ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+                ChangeNotifierProvider<app_auth.AuthProvider>.value(
+                  value: authProvider,
+                ),
                 ChangeNotifierProvider<RoomProvider>.value(value: roomProvider),
                 ChangeNotifierProvider<FCMProvider>.value(value: fcmProvider),
               ],
@@ -118,11 +126,11 @@ class _ProfilePageState extends State<ProfilePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Consumer<AuthProvider>(
+      body: Consumer<app_auth.AuthProvider>(
         builder: (context, auth, _) {
-          final user = auth.user;
+          final user = auth.user!;
 
-          if (user == null) {
+          if (auth.user == null) {
             return Center(child: Text('Not signed in.'));
           }
 
@@ -195,6 +203,42 @@ class _ProfilePageState extends State<ProfilePage>
                       FadeTransition(
                         opacity: _fadeAnimation,
                         child: _buildActivitySection(),
+                      ),
+
+                      SizedBox(height: 20),
+
+                      // Contact Information Section
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: _buildContactSection(user),
+                      ),
+
+                      SizedBox(height: 20),
+
+                      // Master SKU Management Button
+                      FadeTransition(
+                        opacity: _fadeAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MasterSKUPage(),
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.deepPurple,
+                              minimumSize: const Size(double.infinity, 50),
+                            ),
+                            child: const Text(
+                              'Manage Master SKU List',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
                       ),
 
                       SizedBox(height: 20),
@@ -589,7 +633,7 @@ class _ProfilePageState extends State<ProfilePage>
     );
   }
 
-  Widget _buildSignOutButton(AuthProvider auth, BuildContext context) {
+  Widget _buildSignOutButton(app_auth.AuthProvider auth, BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -682,5 +726,207 @@ class _ProfilePageState extends State<ProfilePage>
     } catch (e) {
       print('Error refreshing rooms: $e');
     }
+  }
+
+  Widget _buildContactSection(User user) {
+    final TextEditingController phoneController = TextEditingController();
+    bool isUpdating = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return Container(
+          margin: EdgeInsets.symmetric(horizontal: 20),
+          padding: EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                spreadRadius: 2,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.phone_android, color: Colors.deepPurple),
+                  SizedBox(width: 10),
+                  Text(
+                    'Contact Information',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurple,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              StreamBuilder<DocumentSnapshot>(
+                stream:
+                    FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(user.uid)
+                        .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Text('Error loading contact information');
+                  }
+
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return LoadingIndicator();
+                  }
+
+                  final data = snapshot.data?.data() as Map<String, dynamic>?;
+                  final currentPhone = data?['contactNumber'] as String?;
+
+                  if (!phoneController.text.isNotEmpty) {
+                    phoneController.text = currentPhone ?? '';
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mobile Number',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                      SizedBox(height: 8),
+                      TextFormField(
+                        controller: phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          hintText: 'Enter your mobile number',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.deepPurple),
+                          ),
+                          suffixIcon:
+                              isUpdating
+                                  ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.deepPurple,
+                                      ),
+                                    ),
+                                  )
+                                  : Icon(Icons.edit, color: Colors.deepPurple),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed:
+                              isUpdating
+                                  ? null
+                                  : () async {
+                                    final newPhone =
+                                        phoneController.text.trim();
+                                    if (newPhone.isEmpty) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Please enter a mobile number',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Validate phone number format (simple validation)
+                                    if (newPhone.length < 11) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Please enter a valid mobile number',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    setState(() => isUpdating = true);
+                                    try {
+                                      // Update user's contact number in Firestore
+                                      await FirebaseFirestore.instance
+                                          .collection('users')
+                                          .doc(user.uid)
+                                          .set({
+                                            'contactNumber': newPhone,
+                                            'lastUpdated':
+                                                FieldValue.serverTimestamp(),
+                                          }, SetOptions(merge: true));
+
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Mobile number updated successfully',
+                                          ),
+                                          backgroundColor: Colors.green,
+                                        ),
+                                      );
+                                    } catch (e) {
+                                      print('Error updating mobile number: $e');
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            'Failed to update mobile number',
+                                          ),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    } finally {
+                                      if (mounted) {
+                                        setState(() => isUpdating = false);
+                                      }
+                                    }
+                                  },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepPurple,
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Update Mobile Number',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

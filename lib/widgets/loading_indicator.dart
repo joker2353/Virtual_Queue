@@ -1,57 +1,53 @@
 import 'package:flutter/material.dart';
 
 class LoadingIndicator extends StatefulWidget {
+  final double size;
   final String? message;
   final Color primaryColor;
   final Color backgroundColor;
-  final double size;
   final IconData? icon;
 
   const LoadingIndicator({
-    super.key, 
-    this.message,
-    this.primaryColor = const Color(0xFF673AB7), // Deep Purple
-    this.backgroundColor = Colors.white,
+    super.key,
     this.size = 100,
+    this.message,
+    this.primaryColor = Colors.deepPurple,
+    this.backgroundColor = Colors.white,
     this.icon,
   });
 
   @override
-  State<LoadingIndicator> createState() => _LoadingIndicatorState();
+  _LoadingIndicatorState createState() => _LoadingIndicatorState();
 }
 
-class _LoadingIndicatorState extends State<LoadingIndicator> 
+class _LoadingIndicatorState extends State<LoadingIndicator>
     with SingleTickerProviderStateMixin {
-  
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Setup pulsating animation
     _pulseController = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 1500),
     );
-    
+
     _pulseAnimation = Tween<double>(begin: 0.4, end: 0.8).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeInOut,
-      ),
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-    
+
     _pulseController.repeat(reverse: true);
   }
-  
+
   @override
   void dispose() {
     _pulseController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -69,8 +65,8 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
                 color: widget.primaryColor.withOpacity(0.2),
                 blurRadius: widget.size / 5,
                 spreadRadius: 5,
-              )
-            ]
+              ),
+            ],
           ),
           child: Center(
             child: Stack(
@@ -82,7 +78,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
                   height: widget.size * 0.8,
                   child: CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      widget.primaryColor.withOpacity(0.7)
+                      widget.primaryColor.withOpacity(0.7),
                     ),
                     strokeWidth: 4,
                   ),
@@ -140,4 +136,4 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
       ],
     );
   }
-} 
+}

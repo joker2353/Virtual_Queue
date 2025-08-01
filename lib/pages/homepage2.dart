@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../providers/room_provider.dart';
 import 'check_position_dialog.dart';
 import 'home_page.dart';
+import 'shop_search_page.dart';
 
 class HomePage2 extends StatelessWidget {
   const HomePage2({super.key});
@@ -45,7 +46,7 @@ class HomePage2 extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Virtual Queue',
+                          'ShopFlow Pro',
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
@@ -53,7 +54,7 @@ class HomePage2 extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Check Your Position',
+                          'Find and Join Shops',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white.withOpacity(0.8),
@@ -116,7 +117,7 @@ class HomePage2 extends StatelessWidget {
 
                         // Title
                         Text(
-                          'Check Your Queue Position',
+                          'Find and Join Shops',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 28,
@@ -130,7 +131,7 @@ class HomePage2 extends StatelessWidget {
 
                         // Subtitle
                         Text(
-                          'Enter your room code and phone number to see your current position in the queue from any device',
+                          'Search for your favorite shops and send join requests directly without entering codes',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
@@ -147,28 +148,20 @@ class HomePage2 extends StatelessWidget {
                           constraints: BoxConstraints(maxWidth: 300),
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder:
-                                    (dialogContext) => MultiProvider(
-                                      providers: [
-                                        ChangeNotifierProvider(
-                                          create:
-                                              (_) => RoomProvider(userId: ''),
-                                        ),
-                                      ],
-                                      child: CheckPositionDialog(),
-                                    ),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ShopSearchPage(),
+                                ),
                               );
                             },
                             icon: Icon(
-                              Icons.queue_rounded,
+                              Icons.search_rounded,
                               size: 24,
                               color: Colors.deepPurple.shade800,
                             ),
                             label: Text(
-                              'Check My Position',
+                              'Search Shops',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -197,19 +190,19 @@ class HomePage2 extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
                             _buildFeatureCard(
-                              icon: Icons.qr_code_scanner,
-                              title: 'QR Scan',
-                              subtitle: 'Quick access',
+                              icon: Icons.store,
+                              title: 'Find Shops',
+                              subtitle: 'Search by name',
                             ),
                             _buildFeatureCard(
-                              icon: Icons.phone_android,
-                              title: 'Any Device',
-                              subtitle: 'Cross platform',
+                              icon: Icons.send,
+                              title: 'Direct Join',
+                              subtitle: 'No codes needed',
                             ),
                             _buildFeatureCard(
-                              icon: Icons.update,
-                              title: 'Real-time',
-                              subtitle: 'Live updates',
+                              icon: Icons.local_pharmacy,
+                              title: 'Medical Shops',
+                              subtitle: 'Pharmacy support',
                             ),
                           ],
                         ),
@@ -225,7 +218,7 @@ class HomePage2 extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(20),
                 child: Text(
-                  'No account needed • Just your room code and phone number',
+                  'Search and join shops directly • No room codes required',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.7),

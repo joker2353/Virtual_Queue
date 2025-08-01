@@ -46,6 +46,10 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
   String? _error;
   double _totalBakiAmount = 0;
 
+  double _getBakiAmount(Order order) {
+    return (order.metadata?['bakiAmount'] as num?)?.toDouble() ?? 0;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -58,25 +62,17 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
         'Loading purchase history for customer: ${widget.customerContact} in room: ${widget.roomId}',
       );
 
-      // Get customer's current baki amount first
-      final customerDoc =
-          await firestore.FirebaseFirestore.instance
-              .collection('customers')
-              .doc(widget.customerContact)
-              .get();
+      // First, get all completed orders for this customer in this room
+      final ordersQuery = firestore.FirebaseFirestore.instance
+          .collection('orders')
+          .where('customerContact', isEqualTo: widget.customerContact)
+          .where('roomId', isEqualTo: widget.roomId)
+          .where('status', isEqualTo: 'completed');
 
-      // Fetch from Firestore
-      final querySnapshot =
-          await firestore.FirebaseFirestore.instance
-              .collection('orders')
-              .where('customerContact', isEqualTo: widget.customerContact)
-              .where('roomId', isEqualTo: widget.roomId)
-              .where('status', isEqualTo: 'completed')
-              .get();
-
+      final querySnapshot = await ordersQuery.get();
       print('Firestore query returned ${querySnapshot.docs.length} orders');
 
-      // Process all orders
+      // Process and sort orders locally
       final completedOrders =
           querySnapshot.docs
               .map((doc) {
@@ -89,18 +85,29 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
               })
               .where((order) => order != null)
               .cast<Order>()
-              .toList()
-            ..sort(
-              (a, b) => b.createdAt.compareTo(a.createdAt),
-            ); // Sort in memory
+              .toList();
+
+      // Sort orders by updatedAt timestamp locally, falling back to createdAt if updatedAt is null
+      completedOrders.sort((a, b) {
+        final aTime = a.updatedAt ?? a.createdAt;
+        final bTime = b.updatedAt ?? b.createdAt;
+        return bTime.compareTo(aTime);
+      });
 
       print('Successfully parsed ${completedOrders.length} completed orders');
+
+      // Calculate total baki amount by summing up all orders' baki amounts
+      double totalBakiAmount = 0.0;
+      for (final order in completedOrders) {
+        final bakiAmount = _getBakiAmount(order);
+        totalBakiAmount += bakiAmount;
+      }
+      print('Total baki amount from all orders: $totalBakiAmount');
 
       if (mounted) {
         setState(() {
           _orders = completedOrders;
-          _totalBakiAmount =
-              (customerDoc.data()?['pendingAmount'] ?? 0).toDouble();
+          _totalBakiAmount = totalBakiAmount;
           _isLoading = false;
         });
       }
@@ -124,6 +131,8 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
   }
 
   void _showOrderDetails(Order order) {
+    final bakiAmount = _getBakiAmount(order);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -242,7 +251,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                       Card(
                         elevation: 2,
                         color:
-                            _totalBakiAmount > 0
+                            bakiAmount > 0
                                 ? Colors.red.shade50
                                 : Colors.green.shade50,
                         shape: RoundedRectangleBorder(
@@ -257,19 +266,19 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Current Baki (Due):',
+                                    'Baki After This Order:',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                   Text(
-                                    '৳${_totalBakiAmount.toStringAsFixed(2)}',
+                                    '৳${bakiAmount.toStringAsFixed(2)}',
                                     style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color:
-                                          _totalBakiAmount > 0
+                                          bakiAmount > 0
                                               ? Colors.red
                                               : Colors.green,
                                     ),
@@ -376,7 +385,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Total Baki (Due)',
+                          'Total Baki (All Orders)',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -445,6 +454,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                           itemCount: _orders.length,
                           itemBuilder: (context, index) {
                             final order = _orders[index];
+                            final bakiAmount = _getBakiAmount(order);
                             return GestureDetector(
                               onTap: () => _showOrderDetails(order),
                               child: Card(
@@ -493,40 +503,53 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                         ],
                                       ),
                                       Divider(height: 24),
-                                      ...order.items.map(
-                                        (item) => Padding(
-                                          padding: EdgeInsets.only(bottom: 8),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                '${item.quantity}x ${item.name}',
-                                                style: TextStyle(fontSize: 15),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                      Divider(height: 24),
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
                                         children: [
-                                          Text(
-                                            'Total:',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Total Amount',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                '৳${order.totalAmount.toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                          Text(
-                                            '৳${order.totalAmount.toStringAsFixed(2)}',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.deepPurple,
-                                            ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                'Baki After Order',
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              Text(
+                                                '৳${bakiAmount.toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                      bakiAmount > 0
+                                                          ? Colors.red
+                                                          : Colors.green,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),

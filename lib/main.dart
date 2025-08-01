@@ -3,9 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'providers/auth_provider.dart';
 import 'providers/room_provider.dart';
 import 'providers/fcm_provider.dart';
+import 'providers/master_sku_provider.dart';
+import 'providers/inventory_provider.dart';
 import 'pages/login_page.dart';
 import 'pages/home_page.dart';
 import 'pages/homepage2.dart';
@@ -16,6 +19,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'providers/cache_provider.dart';
 import 'pages/main_layout.dart';
+import 'providers/debt_provider.dart';
 
 // Define notification channel for Android
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -138,6 +142,15 @@ Future<void> main() async {
       );
       debugPrint('Firebase Mobile initialization complete');
 
+      // Initialize Firebase Storage with custom settings
+      FirebaseStorage.instance.setMaxUploadRetryTime(
+        const Duration(seconds: 30),
+      );
+      FirebaseStorage.instance.setMaxOperationRetryTime(
+        const Duration(seconds: 30),
+      );
+      debugPrint('Firebase Storage initialized with custom settings');
+
       // Initialize notification settings for background messages
       await _initializeNotifications();
 
@@ -227,7 +240,10 @@ class VirtualQueueApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => DebtProvider()),
         ChangeNotifierProvider(create: (_) => FCMProvider()),
+        ChangeNotifierProvider(create: (_) => MasterSKUProvider()),
+        ChangeNotifierProvider(create: (_) => InventoryProvider()),
         ChangeNotifierProxyProvider<AuthProvider, RoomProvider>(
           create: (context) => RoomProvider(userId: ''),
           update: (context, auth, previous) {
@@ -279,7 +295,9 @@ class MyAppWithProviders extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => DebtProvider()),
         ChangeNotifierProvider(create: (_) => FCMProvider()),
+        ChangeNotifierProvider(create: (_) => InventoryProvider()),
         ChangeNotifierProxyProvider<AuthProvider, RoomProvider>(
           create: (context) => RoomProvider(userId: ''),
           update: (context, auth, previous) {

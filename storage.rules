@@ -1,0 +1,26 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /sku_images/{imageId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+                   request.resource.size < 5 * 1024 * 1024 && // 5MB max
+                   request.resource.contentType.matches('image/.*');
+    }
+    
+    // Prescription files - images and audio
+    match /prescriptions/{roomId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+                   (
+                     // Allow prescription images (up to 10MB)
+                     (request.resource.contentType.matches('image/.*') && 
+                      request.resource.size < 10 * 1024 * 1024) ||
+                     
+                     // Allow audio files (up to 5MB)
+                     (request.resource.contentType.matches('audio/.*') && 
+                      request.resource.size < 5 * 1024 * 1024)
+                   );
+    }
+  }
+} 

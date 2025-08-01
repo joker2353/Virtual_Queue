@@ -18,6 +18,7 @@ import 'shop_order_page.dart';
 import '../models/order.dart' as app_models;
 import 'customer_page.dart';
 import 'homepage2.dart';
+import 'shop_search_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -294,10 +295,15 @@ class _HomePageState extends State<HomePage> {
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.search,
-                    label: 'Check Position',
+                    label: 'Search Shops',
                     color: Colors.deepPurple,
                     onPressed: () {
-                      HomePage2.navigate(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ShopSearchPage(),
+                        ),
+                      );
                     },
                   ),
                 ),

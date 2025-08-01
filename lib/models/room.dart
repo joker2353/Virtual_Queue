@@ -40,6 +40,7 @@ class Room {
 
   bool get isShop => category == 'shop';
   bool get isQueue => category == 'queue';
+  bool get isMedical => category == 'medical';
 
   Map<String, dynamic> toMap() {
     return {

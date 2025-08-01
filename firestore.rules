@@ -10,6 +10,16 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
+    function isShopOwner(roomId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/rooms/$(roomId)).data.creatorId == request.auth.uid;
+    }
+
+    function canAccessDebt(roomId, customerContact) {
+      return isShopOwner(roomId) || 
+        (isAuthenticated() && request.auth.uid == customerContact);
+    }
+
     // Rooms collection
     match /rooms/{roomId} {
       allow read: if isAuthenticated();
@@ -56,6 +66,100 @@ service cloud.firestore {
     match /user_rooms/{userId} {
       allow read: if isOwner(userId);
       allow write: if isOwner(userId);
+    }
+
+    // Customer debts collection
+    match /customer_debts/{debtId} {
+      allow read: if isAuthenticated() && canAccessDebt(
+        resource.data.roomId,
+        resource.data.customerContact
+      );
+      allow create, update: if isAuthenticated() && isShopOwner(
+        resource.data.roomId
+      );
+
+      // Debt history subcollection
+      match /debt_history/{historyId} {
+        allow read: if isAuthenticated() && canAccessDebt(
+          get(/databases/$(database)/documents/customer_debts/$(debtId)).data.roomId,
+          get(/databases/$(database)/documents/customer_debts/$(debtId)).data.customerContact
+        );
+        allow write: if isAuthenticated() && isShopOwner(
+          get(/databases/$(database)/documents/customer_debts/$(debtId)).data.roomId
+        );
+      }
+
+      // Payment history subcollection
+      match /payment_history/{paymentId} {
+        allow read: if isAuthenticated() && canAccessDebt(
+          get(/databases/$(database)/documents/customer_debts/$(debtId)).data.roomId,
+          get(/databases/$(database)/documents/customer_debts/$(debtId)).data.customerContact
+        );
+        allow write: if isAuthenticated() && isShopOwner(
+          get(/databases/$(database)/documents/customer_debts/$(debtId)).data.roomId
+        );
+      }
+    }
+
+    match /master_skus/{skuId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Menu items collection with inventory management
+    match /menu_items/{itemId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && (
+        // Allow shop owner to manage menu items and inventory
+        get(/databases/$(database)/documents/rooms/$(request.resource.data.roomId)).data.creatorId == request.auth.uid ||
+        // Allow admin to manage menu items and inventory
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true
+      );
+
+      // Validate inventory fields
+      function isValidInventoryUpdate() {
+        let incomingData = request.resource.data;
+        return (
+          // Current stock must be a non-negative number if provided
+          (!('currentStock' in incomingData) || 
+           (incomingData.currentStock is number && 
+            incomingData.currentStock >= 0)) &&
+          
+          // Minimum stock must be a non-negative number if provided
+          (!('minimumStock' in incomingData) || 
+           (incomingData.minimumStock is number && 
+            incomingData.minimumStock >= 0)) &&
+          
+          // Price must be a non-negative number
+          incomingData.price is number && 
+          incomingData.price >= 0
+        );
+      }
+
+      // Additional validation for inventory updates
+      allow update: if isAuthenticated() && 
+        (isShopOwner(resource.data.roomId) || 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true) && 
+        isValidInventoryUpdate();
+    }
+
+    // Prescription orders collection
+    match /prescription_orders/{orderId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        // Allow room creator to update orders
+        get(/databases/$(database)/documents/rooms/$(resource.data.roomId)).data.creatorId == request.auth.uid ||
+        // Allow order creator to update their own orders
+        resource.data.customerContact == request.auth.uid
+      );
+    }
+
+    // Saved prescriptions collection
+    match /saved_prescriptions/{prescriptionId} {
+      allow read, write: if isAuthenticated() && 
+        resource.data.userId == request.auth.uid;
     }
   }
 }

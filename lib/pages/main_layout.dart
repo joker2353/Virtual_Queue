@@ -55,14 +55,12 @@ class _MainLayoutState extends State<MainLayout> {
                     Icons.store,
                     'Saved Shops',
                   ),
-                  Opacity(
+                  _buildNavItem(
+                    1,
+                    Icons.home_outlined,
+                    Icons.home,
+                    'Home',
                     opacity: 0,
-                    child: _buildNavItem(
-                      1,
-                      Icons.home_outlined,
-                      Icons.home,
-                      'Home',
-                    ),
                   ),
                   _buildNavItem(
                     2,
@@ -108,30 +106,34 @@ class _MainLayoutState extends State<MainLayout> {
     int index,
     IconData icon,
     IconData activeIcon,
-    String label,
-  ) {
+    String label, {
+    double opacity = 1.0,
+  }) {
     final isSelected = _selectedIndex == index;
     return Expanded(
-      child: InkWell(
-        onTap: () => _onItemTapped(index),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isSelected ? activeIcon : icon,
-              color: isSelected ? Colors.deepPurple : Colors.grey,
-              size: 24,
-            ),
-            SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
+      child: Opacity(
+        opacity: opacity,
+        child: InkWell(
+          onTap: () => _onItemTapped(index),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? activeIcon : icon,
                 color: isSelected ? Colors.deepPurple : Colors.grey,
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                size: 24,
               ),
-            ),
-          ],
+              SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.deepPurple : Colors.grey,
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
