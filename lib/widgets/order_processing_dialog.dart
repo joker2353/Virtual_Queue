@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart' show SetOptions;
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:provider/provider.dart';
 import '../models/order.dart';
 import '../providers/fcm_provider.dart';
-import 'loading_indicator.dart';
 import '../providers/debt_provider.dart';
 
 class OrderProcessingDialog extends StatefulWidget {
@@ -23,7 +21,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
   bool _isProcessing = false;
   String? _error;
   double bakiAmount = 0.0;
-  List<OrderItem> _processedItems = [];
+  final List<OrderItem> _processedItems = [];
 
   @override
   void initState() {
@@ -145,12 +143,12 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               'Order Details',
               style: TextStyle(
                 fontSize: 24,
@@ -158,17 +156,17 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 color: Colors.deepPurple,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               'Customer: ${widget.order.customerName}',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
             Text(
               'Contact: ${widget.order.customerContact}',
-              style: TextStyle(fontSize: 16),
+              style: const TextStyle(fontSize: 16),
             ),
-            Divider(height: 24),
-            Text(
+            const Divider(height: 24),
+            const Text(
               'Items:',
               style: TextStyle(
                 fontSize: 18,
@@ -176,7 +174,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 color: Colors.deepPurple,
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             ...widget.order.items.asMap().entries.map(
               (entry) => CheckboxListTile(
                 value: _items[entry.key].isChecked,
@@ -198,13 +196,13 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                     if (entry.value.notes?.isNotEmpty ?? false)
                       Text(
                         'Notes: ${entry.value.notes}',
-                        style: TextStyle(fontStyle: FontStyle.italic),
+                        style: const TextStyle(fontStyle: FontStyle.italic),
                       ),
                   ],
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             if (!isReadyForPickup) ...[
               if (allItemsChecked) ...[
                 TextFormField(
@@ -218,7 +216,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                   ),
                   keyboardType: TextInputType.number,
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed:
                       _isProcessing
@@ -226,14 +224,14 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                           : () => _updateOrder(markAsReady: true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   child:
                       _isProcessing
-                          ? SizedBox(
+                          ? const SizedBox(
                             height: 20,
                             width: 20,
                             child: CircularProgressIndicator(
@@ -243,7 +241,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                               ),
                             ),
                           )
-                          : Text(
+                          : const Text(
                             'Mark as Ready for Pickup',
                             style: TextStyle(fontSize: 16),
                           ),
@@ -258,7 +256,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                   color: Colors.grey[700],
                 ),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               TextFormField(
                 controller: _bakiAmountController,
                 decoration: InputDecoration(
@@ -270,7 +268,7 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 ),
                 keyboardType: TextInputType.number,
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed:
                     _isProcessing
@@ -278,14 +276,14 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                         : () => _updateOrder(markAsCompleted: true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
                 child:
                     _isProcessing
-                        ? SizedBox(
+                        ? const SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
@@ -295,16 +293,16 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                             ),
                           ),
                         )
-                        : Text(
+                        : const Text(
                           'Complete Order',
                           style: TextStyle(fontSize: 16),
                         ),
               ),
               if (double.parse(_bakiAmountController.text) > 0) ...[
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   'Amount to be added to baki: ৳${double.parse(_bakiAmountController.text).toStringAsFixed(2)}',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Colors.orange,
                     fontWeight: FontWeight.bold,
@@ -312,10 +310,10 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 ),
               ],
             ],
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
+              child: const Text('Close'),
             ),
           ],
         ),

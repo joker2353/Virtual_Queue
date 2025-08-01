@@ -14,10 +14,10 @@ class MenuItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             Expanded(
@@ -26,19 +26,19 @@ class MenuItemCard extends StatelessWidget {
                 children: [
                   Text(
                     menuItem.name,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   if (menuItem.description.isNotEmpty) ...[
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
                       menuItem.description,
                       style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                   ],
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     '৳${menuItem.price.toStringAsFixed(2)}',
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.deepPurple,
                       fontWeight: FontWeight.bold,
                     ),
@@ -48,7 +48,7 @@ class MenuItemCard extends StatelessWidget {
             ),
             if (menuItem.isAvailable)
               IconButton(
-                icon: Icon(Icons.add_circle),
+                icon: const Icon(Icons.add_circle),
                 color: Colors.deepPurple,
                 onPressed: onAddToCart,
                 tooltip: 'Add to cart',

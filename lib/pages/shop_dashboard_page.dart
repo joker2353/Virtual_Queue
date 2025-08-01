@@ -2,21 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'dart:async';
-import '../providers/room_provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/debt_provider.dart';
 import '../models/room.dart';
 import '../models/order.dart';
-import '../models/customer_debt.dart';
 import '../widgets/loading_indicator.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'join_requests_page.dart';
 import 'customer_list_page.dart'; // New page for customer list
 import 'order_history_page.dart';
 import 'inventory_management_page.dart'; // Add this import
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
 import '../widgets/order_processing_dialog.dart';
 import '../providers/cache_provider.dart';
 import '../widgets/qr_share_dialog.dart';
@@ -293,18 +287,18 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Loading...'),
+          title: const Text('Loading...'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Error'),
+          title: const Text('Error'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -314,7 +308,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_room!.name, style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(_room!.name, style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -323,7 +317,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
           Builder(
             builder:
                 (context) => IconButton(
-                  icon: Icon(Icons.menu),
+                  icon: const Icon(Icons.menu),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 ),
           ),
@@ -337,7 +331,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [Colors.deepPurple.shade50, Colors.white, Colors.white],
-              stops: [0.0, 0.2, 1.0],
+              stops: const [0.0, 0.2, 1.0],
             ),
           ),
           child: SafeArea(
@@ -467,8 +461,8 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
             // QR Code Section (Collapsible)
             if (_showQR)
               Container(
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.all(16),
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -476,7 +470,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -490,9 +484,9 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -534,7 +528,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                       Icons.receipt_long,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 1,
                     child: _buildStatCard(
@@ -543,7 +537,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                       Icons.account_balance_wallet,
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     flex: 1,
                     child: _buildStatCard(
@@ -576,7 +570,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                           ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: _buildActionButton(
                       icon: Icons.inventory,
@@ -593,7 +587,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                           ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: _buildActionButton(
                       icon: Icons.person_add,
@@ -616,7 +610,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
             // Orders List
             Expanded(
               child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 16),
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -630,7 +624,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                 ),
                 child: Column(
                   children: [
-                    Padding(
+                    const Padding(
                       padding: EdgeInsets.all(16),
                       child: Row(
                         children: [
@@ -659,7 +653,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                                       size: 64,
                                       color: Colors.grey[400],
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
                                     Text(
                                       'No active orders',
                                       style: TextStyle(
@@ -671,7 +665,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                                 ),
                               )
                               : ListView.builder(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
                                 itemCount: _activeOrders.length,
                                 itemBuilder: (context, index) {
                                   final order = _activeOrders[index];
@@ -691,13 +685,13 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
 
   Widget _buildOrderCard(Order order) {
     return Card(
-      margin: EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => _showOrderDetails(order),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -709,12 +703,12 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                     children: [
                       Text(
                         order.customerName,
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         order.customerContact,
                         style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -722,7 +716,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                     ],
                   ),
                   Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: _getStatusColor(order.status).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
@@ -738,7 +732,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                   ),
                 ],
               ),
-              Divider(height: 24),
+              const Divider(height: 24),
               Text(
                 'Items:',
                 style: TextStyle(
@@ -746,16 +740,16 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                   color: Colors.grey[700],
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               ...order.items.map(
                 (item) => Padding(
-                  padding: EdgeInsets.only(bottom: 4),
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         '${item.quantity}x ${item.name}',
-                        style: TextStyle(fontSize: 15),
+                        style: const TextStyle(fontSize: 15),
                       ),
                     ],
                   ),
@@ -764,11 +758,11 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
               if (order.status != 'pending' && order.totalAmount > 0)
                 Column(
                   children: [
-                    Divider(height: 24),
+                    const Divider(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
+                        const Text(
                           'Total:',
                           style: TextStyle(
                             fontSize: 16,
@@ -777,7 +771,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                         ),
                         Text(
                           '৳${order.totalAmount.toStringAsFixed(2)}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.deepPurple,
@@ -823,32 +817,32 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
 
   Widget _buildStatCard(String label, String value, IconData icon) {
     return Card(
-      margin: EdgeInsets.all(4),
+      margin: const EdgeInsets.all(4),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
           // Handle card tap
         },
         child: Padding(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(8),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 32, color: Colors.deepPurple),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 label,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 value,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.deepPurple,
@@ -916,7 +910,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
           ),
           title: Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.deepPurple,
               fontWeight: FontWeight.w600,
               fontSize: 15,

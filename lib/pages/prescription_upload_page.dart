@@ -23,27 +23,27 @@ class PrescriptionUploadPage extends StatefulWidget {
 
 class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
   final ImagePicker _picker = ImagePicker();
-  List<String> _imagePaths = [];
+  final List<String> _imagePaths = [];
   bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Upload Prescription'),
+        title: const Text('Upload Prescription'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header section
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [Colors.teal.shade300, Colors.teal.shade500],
@@ -52,7 +52,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                 ),
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(Icons.local_pharmacy, size: 32, color: Colors.white),
@@ -74,7 +74,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
               ),
             ),
 
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Upload options
             Text(
@@ -86,7 +86,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
               ),
             ),
 
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Camera scan option
             Card(
@@ -98,11 +98,11 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                 onTap: _isLoading ? null : _scanWithCamera,
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.blue.shade100,
                           borderRadius: BorderRadius.circular(12),
@@ -113,19 +113,19 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                           color: Colors.blue.shade700,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Scan with Camera',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               'Use camera to scan prescription documents directly',
                               style: TextStyle(
@@ -146,7 +146,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
               ),
             ),
 
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             // Gallery upload option
             Card(
@@ -158,11 +158,11 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                 onTap: _isLoading ? null : _pickFromGallery,
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.green.shade100,
                           borderRadius: BorderRadius.circular(12),
@@ -173,19 +173,19 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                           color: Colors.green.shade700,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Upload from Gallery',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               'Select multiple images from your device gallery',
                               style: TextStyle(
@@ -206,7 +206,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
               ),
             ),
 
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
 
             // Take photo option
             Card(
@@ -218,11 +218,11 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                 onTap: _isLoading ? null : _takePhoto,
                 borderRadius: BorderRadius.circular(12),
                 child: Padding(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   child: Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.purple.shade100,
                           borderRadius: BorderRadius.circular(12),
@@ -233,19 +233,19 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                           color: Colors.purple.shade700,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Take Photo',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
                               'Use camera to take individual photos of prescription',
                               style: TextStyle(
@@ -266,7 +266,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
               ),
             ),
 
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Selected images preview
             if (_imagePaths.isNotEmpty) ...[
@@ -278,15 +278,15 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                   color: Colors.teal.shade800,
                 ),
               ),
-              SizedBox(height: 12),
-              Container(
+              const SizedBox(height: 12),
+              SizedBox(
                 height: 100,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: _imagePaths.length,
                   itemBuilder: (context, index) {
                     return Container(
-                      margin: EdgeInsets.only(right: 8),
+                      margin: const EdgeInsets.only(right: 8),
                       width: 80,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8),
@@ -313,12 +313,12 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                                 });
                               },
                               child: Container(
-                                padding: EdgeInsets.all(2),
-                                decoration: BoxDecoration(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
                                   color: Colors.red,
                                   shape: BoxShape.circle,
                                 ),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.close,
                                   size: 16,
                                   color: Colors.white,
@@ -332,21 +332,21 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                   },
                 ),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
             ],
 
-            Spacer(),
+            const Spacer(),
 
             // Continue button
             if (_imagePaths.isNotEmpty)
-              Container(
+              SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _proceedToPreview,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal,
                     foregroundColor: Colors.white,
-                    padding: EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -354,7 +354,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                   ),
                   icon:
                       _isLoading
-                          ? SizedBox(
+                          ? const SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
@@ -364,10 +364,10 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
                               ),
                             ),
                           )
-                          : Icon(Icons.arrow_forward),
+                          : const Icon(Icons.arrow_forward),
                   label: Text(
                     _isLoading ? 'Processing...' : 'Continue to Preview',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -500,7 +500,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
           _imagePaths.add(photo.path);
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Photo captured successfully'),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
@@ -528,21 +528,21 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Permission Required'),
+            title: const Text('Permission Required'),
             content: Text(
               '$permissionType permission is required to upload prescription images. Please grant permission in app settings.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
                   openAppSettings();
                 },
-                child: Text('Open Settings'),
+                child: const Text('Open Settings'),
               ),
             ],
           ),
@@ -552,7 +552,7 @@ class _PrescriptionUploadPageState extends State<PrescriptionUploadPage> {
   void _proceedToPreview() {
     if (_imagePaths.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please select at least one image'),
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,

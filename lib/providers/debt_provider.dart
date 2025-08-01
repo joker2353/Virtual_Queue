@@ -5,7 +5,7 @@ import '../models/order.dart' as app_models;
 
 class DebtProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  Map<String, CustomerDebt> _debts = {};
+  final Map<String, CustomerDebt> _debts = {};
   bool _isLoading = false;
   String? _error;
 

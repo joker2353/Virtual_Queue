@@ -140,7 +140,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
       builder:
           (context) => Container(
             height: MediaQuery.of(context).size.height * 0.85,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
@@ -148,7 +148,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
               children: [
                 // Handle bar
                 Container(
-                  margin: EdgeInsets.only(top: 12),
+                  margin: const EdgeInsets.only(top: 12),
                   height: 4,
                   width: 40,
                   decoration: BoxDecoration(
@@ -161,14 +161,14 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      Text(
+                      const Text(
                         'Order Details',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'Order #${order.id.substring(0, 8)}',
                         style: TextStyle(color: Colors.grey[600], fontSize: 16),
@@ -180,11 +180,11 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                     ],
                   ),
                 ),
-                Divider(height: 1),
+                const Divider(height: 1),
                 // Items List
                 Expanded(
                   child: ListView(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     children: [
                       // Order Items Section
                       Card(
@@ -193,39 +193,39 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Items (${order.items.length})',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               ...order.items.map(
                                 (item) => Padding(
-                                  padding: EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.only(bottom: 8),
                                   child: Row(
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceBetween,
                                     children: [
                                       Text(
                                         '${item.quantity}x ${item.name}',
-                                        style: TextStyle(fontSize: 15),
+                                        style: const TextStyle(fontSize: 15),
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-                              Divider(height: 24),
+                              const Divider(height: 24),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Total Amount:',
                                     style: TextStyle(
                                       fontSize: 18,
@@ -234,7 +234,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                   ),
                                   Text(
                                     '৳${order.totalAmount.toStringAsFixed(2)}',
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.deepPurple,
@@ -246,7 +246,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // Baki Amount Card
                       Card(
                         elevation: 2,
@@ -258,14 +258,14 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Padding(
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           child: Column(
                             children: [
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Baki After This Order:',
                                     style: TextStyle(
                                       fontSize: 18,
@@ -303,18 +303,18 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Purchase History'),
+          title: const Text('Purchase History'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Purchase History'),
+          title: const Text('Purchase History'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -324,17 +324,17 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: Colors.red),
-                SizedBox(height: 16),
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
                 Text(
                   'Error loading purchase history',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.red),
+                  style: const TextStyle(color: Colors.red),
                 ),
               ],
             ),
@@ -345,7 +345,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Purchase History'),
+        title: const Text('Purchase History'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -365,8 +365,8 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
             children: [
               // Total Baki Amount Card
               Container(
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.all(16),
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -374,7 +374,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -391,7 +391,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                             color: Colors.grey[600],
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           '৳${_totalBakiAmount.toStringAsFixed(2)}',
                           style: TextStyle(
@@ -406,7 +406,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                       ],
                     ),
                     Container(
-                      padding: EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color:
                             _totalBakiAmount > 0
@@ -438,7 +438,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                 size: 64,
                                 color: Colors.grey[400],
                               ),
-                              SizedBox(height: 16),
+                              const SizedBox(height: 16),
                               Text(
                                 'No completed orders yet',
                                 style: TextStyle(
@@ -450,7 +450,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                           ),
                         )
                         : ListView.builder(
-                          padding: EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(16),
                           itemCount: _orders.length,
                           itemBuilder: (context, index) {
                             final order = _orders[index];
@@ -458,12 +458,12 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                             return GestureDetector(
                               onTap: () => _showOrderDetails(order),
                               child: Card(
-                                margin: EdgeInsets.only(bottom: 12),
+                                margin: const EdgeInsets.only(bottom: 12),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Padding(
-                                  padding: EdgeInsets.all(16),
+                                  padding: const EdgeInsets.all(16),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -474,13 +474,13 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                         children: [
                                           Text(
                                             'Order #${order.id.substring(0, 8)}',
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
                                             ),
                                           ),
                                           Container(
-                                            padding: EdgeInsets.symmetric(
+                                            padding: const EdgeInsets.symmetric(
                                               horizontal: 12,
                                               vertical: 6,
                                             ),
@@ -491,7 +491,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                               borderRadius:
                                                   BorderRadius.circular(20),
                                             ),
-                                            child: Text(
+                                            child: const Text(
                                               'COMPLETED',
                                               style: TextStyle(
                                                 color: Colors.green,
@@ -502,7 +502,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                           ),
                                         ],
                                       ),
-                                      Divider(height: 24),
+                                      const Divider(height: 24),
                                       Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.spaceBetween,
@@ -520,7 +520,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                               ),
                                               Text(
                                                 '৳${order.totalAmount.toStringAsFixed(2)}',
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -553,7 +553,7 @@ class _PurchaseHistoryPageState extends State<PurchaseHistoryPage> {
                                           ),
                                         ],
                                       ),
-                                      SizedBox(height: 8),
+                                      const SizedBox(height: 8),
                                       Text(
                                         'Completed on ${_formatDate(order.createdAt)}',
                                         style: TextStyle(

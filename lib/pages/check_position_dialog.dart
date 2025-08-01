@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../providers/room_provider.dart';
-import '../widgets/loading_indicator.dart';
 import 'position_details_page.dart';
 
 class CheckPositionDialog extends StatefulWidget {
@@ -169,7 +168,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(12),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple.shade100,
                   borderRadius: BorderRadius.circular(15),
@@ -180,7 +179,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                   size: 24,
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,13 +207,13 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                 icon: Icon(Icons.close, color: Colors.grey[600]),
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.grey[50],
-                  padding: EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(8),
                 ),
               ),
             ],
           ),
 
-          SizedBox(height: 32),
+          const SizedBox(height: 32),
 
           // Form
           Form(
@@ -246,12 +245,12 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                         tooltip: 'Scan QR Code',
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
                     ),
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     textCapitalization: TextCapitalization.characters,
                     inputFormatters: [
                       LengthLimitingTextInputFormatter(6),
@@ -269,7 +268,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                   ),
                 ),
 
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                 // Phone Number Field
                 Container(
@@ -288,12 +287,12 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                         color: Colors.deepPurple.shade600,
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 16,
                       ),
                     ),
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     keyboardType: TextInputType.phone,
                     inputFormatters: [
                       FilteringTextInputFormatter.digitsOnly,
@@ -312,9 +311,9 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                 ),
 
                 if (_errorMessage.isNotEmpty) ...[
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
                       borderRadius: BorderRadius.circular(10),
@@ -327,7 +326,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                           color: Colors.red.shade600,
                           size: 20,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             _errorMessage,
@@ -342,7 +341,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                   ),
                 ],
 
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
 
                 // Check Position Button
                 SizedBox(
@@ -351,7 +350,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                     onPressed: _isLoading ? null : _checkPosition,
                     icon:
                         _isLoading
-                            ? SizedBox(
+                            ? const SizedBox(
                               width: 20,
                               height: 20,
                               child: CircularProgressIndicator(
@@ -361,10 +360,10 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                                 ),
                               ),
                             )
-                            : Icon(Icons.search, size: 20),
+                            : const Icon(Icons.search, size: 20),
                     label: Text(
                       _isLoading ? 'Checking...' : 'Check My Position',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -372,7 +371,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple.shade600,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(15),
                       ),
@@ -384,7 +383,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
             ),
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Help text
           Text(
@@ -398,13 +397,13 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
   }
 
   Widget _buildQRScanner() {
-    return Container(
+    return SizedBox(
       height: 400,
       child: Column(
         children: [
           // Scanner Header
           Container(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Row(
               children: [
                 IconButton(
@@ -415,7 +414,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                   ),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.grey[50],
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                   ),
                 ),
                 Expanded(
@@ -433,7 +432,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
                   icon: Icon(Icons.close, color: Colors.grey[700]),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.grey[50],
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                   ),
                 ),
               ],
@@ -443,7 +442,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
           // QR Scanner
           Expanded(
             child: Container(
-              margin: EdgeInsets.all(20),
+              margin: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15),
                 border: Border.all(color: Colors.deepPurple.shade300, width: 2),
@@ -467,7 +466,7 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
 
           // Scanner instructions
           Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Text(
               'Position the QR code within the frame to scan',
               textAlign: TextAlign.center,

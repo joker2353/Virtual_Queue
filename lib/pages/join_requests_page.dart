@@ -83,7 +83,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Row(
+            content: const Row(
               children: [
                 Icon(Icons.check_circle, color: Colors.white),
                 SizedBox(width: 12),
@@ -114,8 +114,8 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.error_outline, color: Colors.white),
-                SizedBox(width: 12),
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
                 Expanded(child: Text('Error: ${e.toString()}')),
               ],
             ),
@@ -146,7 +146,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
+          content: const Row(
             children: [
               Icon(Icons.block, color: Colors.white),
               SizedBox(width: 12),
@@ -169,8 +169,8 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
         SnackBar(
           content: Row(
             children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 12),
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12),
               Expanded(child: Text('Error: ${e.toString()}')),
             ],
           ),
@@ -188,13 +188,13 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Join Requests'),
+        title: const Text('Join Requests'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
             onPressed: _isLoading ? null : _loadPendingRequests,
           ),
@@ -211,7 +211,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
         ),
         child:
             _isLoading && _pendingRequests.isEmpty
-                ? Center(
+                ? const Center(
                   child: LoadingIndicator(
                     primaryColor: Colors.white,
                     size: 40,
@@ -230,8 +230,8 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
   Widget _buildErrorView() {
     return Center(
       child: Container(
-        margin: EdgeInsets.all(24),
-        padding: EdgeInsets.all(24),
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -248,7 +248,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
               'Error Loading Requests',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -256,21 +256,21 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               _error!,
               style: TextStyle(color: Colors.red.shade300),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: _loadPendingRequests,
-              icon: Icon(Icons.refresh),
-              label: Text('Retry'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red.shade400,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -285,8 +285,8 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
   Widget _buildEmptyView() {
     return Center(
       child: Container(
-        margin: EdgeInsets.all(24),
-        padding: EdgeInsets.all(24),
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -303,7 +303,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.green.shade50,
                 shape: BoxShape.circle,
@@ -314,7 +314,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                 color: Colors.green.shade400,
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             Text(
               'All Caught Up!',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -322,7 +322,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            SizedBox(height: 12),
+            const SizedBox(height: 12),
             Text(
               'There are no pending join requests\nfor this room at the moment.',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
@@ -338,7 +338,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
     return RefreshIndicator(
       onRefresh: _loadPendingRequests,
       child: ListView.builder(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         itemCount: _pendingRequests.length,
         itemBuilder: (context, index) {
           final request = _pendingRequests[index];
@@ -352,7 +352,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
     final isProcessing = _processingRequests.contains(request.id);
 
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -360,7 +360,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -369,7 +369,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -377,18 +377,18 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: Colors.deepPurple.shade50,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.person,
                           color: Colors.deepPurple,
                           size: 28,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,7 +402,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                               ),
                             ),
                             if (request.formData['email'] != null) ...[
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
                                   Icon(
@@ -410,7 +410,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                                     size: 16,
                                     color: Colors.grey.shade600,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     request.formData['email'],
                                     style: TextStyle(
@@ -421,7 +421,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                               ),
                             ],
                             if (request.formData['phone'] != null) ...[
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Row(
                                 children: [
                                   Icon(
@@ -429,7 +429,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                                     size: 16,
                                     color: Colors.grey.shade600,
                                   ),
-                                  SizedBox(width: 8),
+                                  const SizedBox(width: 8),
                                   Text(
                                     request.formData['phone'],
                                     style: TextStyle(
@@ -439,7 +439,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                                 ],
                               ),
                             ],
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Row(
                               children: [
                                 Icon(
@@ -447,7 +447,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                                   size: 16,
                                   color: Colors.grey.shade500,
                                 ),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text(
                                   _formatDate(request.timestamps.requested),
                                   style: TextStyle(
@@ -464,9 +464,9 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                   ),
 
                   if (request.formData['purpose'] != null) ...[
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
@@ -475,7 +475,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(
+                          const Row(
                             children: [
                               Icon(
                                 Icons.description_outlined,
@@ -493,7 +493,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                               ),
                             ],
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             request.formData['purpose'],
                             style: TextStyle(
@@ -511,7 +511,7 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
             ),
 
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
                 border: Border(top: BorderSide(color: Colors.grey.shade200)),
@@ -521,8 +521,8 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                 children: [
                   if (isProcessing)
                     Container(
-                      margin: EdgeInsets.only(right: 16),
-                      child: LoadingIndicator(
+                      margin: const EdgeInsets.only(right: 16),
+                      child: const LoadingIndicator(
                         size: 24,
                         primaryColor: Colors.deepPurple,
                       ),
@@ -533,11 +533,11 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                           isProcessing
                               ? null
                               : () => _handleRejectRequest(request),
-                      icon: Icon(Icons.close),
-                      label: Text('Reject'),
+                      icon: const Icon(Icons.close),
+                      label: const Text('Reject'),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.red.shade400,
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 12,
                         ),
@@ -546,19 +546,19 @@ class _JoinRequestsPageState extends State<JoinRequestsPage> {
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
                     ElevatedButton.icon(
                       onPressed:
                           isProcessing
                               ? null
                               : () => _handleAcceptRequest(request),
-                      icon: Icon(Icons.check),
-                      label: Text('Approve'),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Approve'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green.shade400,
                         foregroundColor: Colors.white,
                         elevation: 0,
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 12,
                         ),

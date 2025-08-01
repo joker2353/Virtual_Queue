@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import '../models/room.dart';
 import '../models/prescription_order.dart';
 import '../widgets/loading_indicator.dart';
-import 'package:provider/provider.dart';
-import '../providers/cache_provider.dart';
 import '../widgets/qr_share_dialog.dart';
 import 'prescription_upload_page.dart';
 
@@ -219,18 +216,18 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Loading...'),
+          title: const Text('Loading...'),
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Error'),
+          title: const Text('Error'),
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
         ),
@@ -238,16 +235,16 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.error_outline, size: 64, color: Colors.red),
+              const SizedBox(height: 16),
+              const Text(
                 'Error loading medical shop',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(_error!),
-              SizedBox(height: 16),
-              ElevatedButton(onPressed: _refreshOrders, child: Text('Retry')),
+              const SizedBox(height: 16),
+              ElevatedButton(onPressed: _refreshOrders, child: const Text('Retry')),
             ],
           ),
         ),
@@ -258,29 +255,29 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
       appBar: AppBar(
         title: Text(
           '${_room!.name} - Medical',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         actions: [
-          IconButton(onPressed: _showQRDialog, icon: Icon(Icons.qr_code)),
+          IconButton(onPressed: _showQRDialog, icon: const Icon(Icons.qr_code)),
         ],
       ),
       body: RefreshIndicator(
         onRefresh: _refreshOrders,
         child: SingleChildScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Welcome section
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [Colors.teal.shade400, Colors.teal.shade600],
@@ -294,44 +291,44 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                     children: [
                       Text(
                         'Welcome to ${_room!.name}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(height: 8),
-                      Text(
+                      const SizedBox(height: 8),
+                      const Text(
                         'Medical Pharmacy',
                         style: TextStyle(color: Colors.white70, fontSize: 16),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       Text(
                         'Customer: ${widget.customerName}',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
+                        style: const TextStyle(color: Colors.white, fontSize: 16),
                       ),
                     ],
                   ),
                 ),
 
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
 
                 // Order prescription button
-                Container(
+                SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _navigateToUploadPrescription,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 4,
                     ),
-                    icon: Icon(Icons.local_pharmacy, size: 28),
-                    label: Text(
+                    icon: const Icon(Icons.local_pharmacy, size: 28),
+                    label: const Text(
                       'Upload Prescription',
                       style: TextStyle(
                         fontSize: 18,
@@ -341,7 +338,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                   ),
                 ),
 
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
 
                 // Recent orders section
                 Row(
@@ -360,18 +357,18 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                         onPressed: () {
                           // Navigate to full order history if needed
                         },
-                        child: Text('View All'),
+                        child: const Text('View All'),
                       ),
                   ],
                 ),
 
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
 
                 // Orders list or empty state
                 _recentOrders.isEmpty
                     ? Container(
                       width: double.infinity,
-                      padding: EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(32),
                       decoration: BoxDecoration(
                         color: Colors.grey.shade50,
                         borderRadius: BorderRadius.circular(12),
@@ -384,7 +381,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                             size: 64,
                             color: Colors.grey.shade400,
                           ),
-                          SizedBox(height: 16),
+                          const SizedBox(height: 16),
                           Text(
                             'No prescription orders yet',
                             style: TextStyle(
@@ -393,7 +390,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'Upload your prescription to place your first order',
                             style: TextStyle(color: Colors.grey.shade500),
@@ -406,7 +403,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                       children:
                           _recentOrders.take(5).map((order) {
                             return Container(
-                              margin: EdgeInsets.only(bottom: 12),
+                              margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(12),
@@ -415,14 +412,14 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                     color: Colors.grey.withOpacity(0.1),
                                     spreadRadius: 1,
                                     blurRadius: 4,
-                                    offset: Offset(0, 2),
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
                               child: ListTile(
-                                contentPadding: EdgeInsets.all(16),
+                                contentPadding: const EdgeInsets.all(16),
                                 leading: Container(
-                                  padding: EdgeInsets.all(8),
+                                  padding: const EdgeInsets.all(8),
                                   decoration: BoxDecoration(
                                     color: _getStatusColor(
                                       order.status,
@@ -435,7 +432,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                     size: 24,
                                   ),
                                 ),
-                                title: Text(
+                                title: const Text(
                                   'Prescription Order',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
@@ -445,11 +442,11 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    SizedBox(height: 4),
+                                    const SizedBox(height: 4),
                                     Row(
                                       children: [
                                         Container(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 8,
                                             vertical: 4,
                                           ),
@@ -463,7 +460,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                           ),
                                           child: Text(
                                             _getStatusText(order.status),
-                                            style: TextStyle(
+                                            style: const TextStyle(
                                               color: Colors.white,
                                               fontSize: 12,
                                               fontWeight: FontWeight.bold,
@@ -472,7 +469,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 8),
+                                    const SizedBox(height: 8),
                                     Text(
                                       'Images: ${order.prescriptionImageUrls.length}',
                                       style: TextStyle(
@@ -506,12 +503,12 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                 trailing:
                                     order.isReadyForPickup
                                         ? Container(
-                                          padding: EdgeInsets.all(4),
-                                          decoration: BoxDecoration(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: const BoxDecoration(
                                             color: Colors.green,
                                             shape: BoxShape.circle,
                                           ),
-                                          child: Icon(
+                                          child: const Icon(
                                             Icons.check,
                                             color: Colors.white,
                                             size: 16,
@@ -523,7 +520,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                           }).toList(),
                     ),
 
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
               ],
             ),
           ),
@@ -612,12 +609,12 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Leave Medical Shop'),
-            content: Text('Are you sure you want to leave this medical shop?'),
+            title: const Text('Leave Medical Shop'),
+            content: const Text('Are you sure you want to leave this medical shop?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -625,7 +622,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                   Navigator.pop(context); // Go back to previous screen
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: Text('Leave'),
+                child: const Text('Leave'),
               ),
             ],
           ),

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/room_provider.dart';
-import '../providers/auth_provider.dart';
-import '../providers/fcm_provider.dart';
 import '../widgets/loading_indicator.dart';
-import '../utils/navigation_helper.dart';
 
 class JoinRoomDetailsDialog extends StatefulWidget {
   final String roomCode;
@@ -121,7 +118,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                     color: Colors.black.withOpacity(0.1),
                     blurRadius: 25,
                     spreadRadius: 5,
-                    offset: Offset(0, 10),
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
@@ -133,7 +130,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                     // Header with gradient
                     Container(
                       width: double.infinity,
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -143,17 +140,17 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                       ),
                       child: Column(
                         children: [
-                          Icon(Icons.person_add, color: Colors.white, size: 56),
-                          SizedBox(height: 12),
+                          const Icon(Icons.person_add, color: Colors.white, size: 56),
+                          const SizedBox(height: 12),
                           Text(
                             'Join ${widget.roomName}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 6),
+                          const SizedBox(height: 6),
                           Text(
                             'Please provide your information to join the queue',
                             style: TextStyle(
@@ -170,7 +167,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                     Flexible(
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Form(
                             key: _formKey,
                             child: Column(
@@ -188,7 +185,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                     return null;
                                   },
                                 ),
-                                SizedBox(height: 20),
+                                const SizedBox(height: 20),
                                 _buildInputField(
                                   label: 'Contact Number',
                                   hint: 'Enter your contact number',
@@ -209,7 +206,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                     return null;
                                   },
                                 ),
-                                SizedBox(height: 20),
+                                const SizedBox(height: 20),
                                 _buildInputField(
                                   label: 'Address',
                                   hint: 'Enter your address',
@@ -226,7 +223,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                   Padding(
                                     padding: const EdgeInsets.only(top: 20),
                                     child: Container(
-                                      padding: EdgeInsets.symmetric(
+                                      padding: const EdgeInsets.symmetric(
                                         vertical: 12,
                                         horizontal: 16,
                                       ),
@@ -239,11 +236,11 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.error_outline,
                                             color: Colors.red,
                                           ),
-                                          SizedBox(width: 10),
+                                          const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
                                               _error!,
@@ -256,7 +253,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                       ),
                                     ),
                                   ),
-                                SizedBox(height: 30),
+                                const SizedBox(height: 30),
                                 Row(
                                   children: [
                                     Expanded(
@@ -274,7 +271,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                           side: BorderSide(
                                             color: Colors.grey.shade300,
                                           ),
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             vertical: 16,
                                           ),
                                         ),
@@ -287,7 +284,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: 16),
+                                    const SizedBox(width: 16),
                                     Expanded(
                                       child: ElevatedButton(
                                         onPressed:
@@ -300,21 +297,21 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                               12,
                                             ),
                                           ),
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             vertical: 16,
                                           ),
                                           elevation: 0,
                                         ),
                                         child:
                                             _isLoading
-                                                ? LoadingIndicator(
+                                                ? const LoadingIndicator(
                                                   size: 24,
                                                   message: null,
                                                   primaryColor: Colors.white,
                                                   backgroundColor:
                                                       Colors.transparent,
                                                 )
-                                                : Text(
+                                                : const Text(
                                                   'Join Queue',
                                                   style: TextStyle(
                                                     fontSize: 16,
@@ -359,7 +356,7 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
             color: Colors.grey.shade800,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           decoration: InputDecoration(
             hintText: hint,
@@ -377,9 +374,9 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.teal, width: 2),
+              borderSide: const BorderSide(color: Colors.teal, width: 2),
             ),
-            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           ),
           validator: validator,
           onSaved: onSaved,

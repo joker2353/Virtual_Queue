@@ -13,10 +13,12 @@ void main() async {
     iconDir.createSync(recursive: true);
   }
 
-  runApp(MaterialApp(home: IconGenerator()));
+  runApp(const MaterialApp(home: IconGenerator()));
 }
 
 class IconGenerator extends StatefulWidget {
+  const IconGenerator({super.key});
+
   @override
   _IconGeneratorState createState() => _IconGeneratorState();
 }
@@ -89,7 +91,7 @@ class _IconGeneratorState extends State<IconGenerator> {
               width: 1024,
               height: 1024,
               color: Colors.transparent,
-              child: Center(
+              child: const Center(
                 child: SizedBox(
                   width: 720,
                   height: 720,

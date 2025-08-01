@@ -5,18 +5,9 @@ import '../providers/room_provider.dart';
 import '../widgets/loading_indicator.dart';
 import '../widgets/virtual_queue_logo.dart';
 import '../models/user_room.dart';
-import '../models/room.dart';
 import 'join_room_code_dialog.dart';
-import 'create_room_dialog.dart';
 import 'member_details_page.dart';
-import 'creator_dashboard_page.dart';
 import 'profile_page.dart';
-import '../providers/fcm_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'shop_dashboard_page.dart';
-import 'shop_order_page.dart';
-import '../models/order.dart' as app_models;
-import 'customer_page.dart';
 import 'homepage2.dart';
 
 class HomePage extends StatefulWidget {
@@ -59,11 +50,11 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const VirtualQueueLogo(size: 32, showText: false),
-            const SizedBox(width: 12),
+            VirtualQueueLogo(size: 32, showText: false),
+            SizedBox(width: 12),
             Text(
               'Virtual Queue',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
@@ -99,7 +90,7 @@ class _HomePageState extends State<HomePage> {
                           : null,
                   child:
                       Provider.of<AuthProvider>(context).user?.photoURL == null
-                          ? Icon(Icons.person, color: Colors.white)
+                          ? const Icon(Icons.person, color: Colors.white)
                           : null,
                 ),
               ),
@@ -143,11 +134,11 @@ class _HomePageState extends State<HomePage> {
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
               child: ListView(
-                padding: EdgeInsets.fromLTRB(20, 20, 20, 100),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   _buildWelcomeCard(context),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   _buildRoomSection(
                     context,
                     'Joined Queues',
@@ -155,7 +146,7 @@ class _HomePageState extends State<HomePage> {
                     (room) => _buildJoinedRoomCard(context, room),
                     Colors.blue,
                   ),
-                  SizedBox(height: 32),
+                  const SizedBox(height: 32),
                   _buildRoomSection(
                     context,
                     'Pending Requests',
@@ -163,7 +154,7 @@ class _HomePageState extends State<HomePage> {
                     (room) => _buildPendingRoomCard(context, room),
                     Colors.amber,
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                 ],
               ),
             );
@@ -176,8 +167,8 @@ class _HomePageState extends State<HomePage> {
   Widget _buildErrorView(BuildContext context, RoomProvider roomProvider) {
     return Center(
       child: Container(
-        margin: EdgeInsets.all(20),
-        padding: EdgeInsets.all(20),
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -193,9 +184,9 @@ class _HomePageState extends State<HomePage> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 70, color: Colors.red),
-            SizedBox(height: 20),
-            Text(
+            const Icon(Icons.error_outline, size: 70, color: Colors.red),
+            const SizedBox(height: 20),
+            const Text(
               'Error Loading Rooms',
               style: TextStyle(
                 fontSize: 24,
@@ -203,7 +194,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.red,
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(
@@ -212,14 +203,14 @@ class _HomePageState extends State<HomePage> {
                 style: TextStyle(fontSize: 16, color: Colors.grey[800]),
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             ElevatedButton.icon(
               onPressed: _handlePullToRefresh,
-              icon: Icon(Icons.refresh),
-              label: Text('Try Again'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple,
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -258,7 +249,7 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.deepPurple.shade800,
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Manage your virtual queues with ease.',
               style: TextStyle(
@@ -267,7 +258,7 @@ class _HomePageState extends State<HomePage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               children: [
                 Expanded(
@@ -290,7 +281,7 @@ class _HomePageState extends State<HomePage> {
                     },
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildActionButton(
                     icon: Icons.search,
@@ -322,7 +313,7 @@ class _HomePageState extends State<HomePage> {
           BoxShadow(
             color: color.withOpacity(0.3),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -330,12 +321,12 @@ class _HomePageState extends State<HomePage> {
         icon: Icon(icon, size: 24),
         label: Text(
           label,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -365,14 +356,14 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(_getSectionIcon(title), color: accentColor, size: 24),
-              SizedBox(width: 10),
+              const SizedBox(width: 10),
               Text(
                 title,
                 style: TextStyle(
@@ -406,7 +397,7 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           children: [
             Icon(Icons.inbox, size: 48, color: color.shade300),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'No rooms to display',
               style: TextStyle(
@@ -433,7 +424,7 @@ class _HomePageState extends State<HomePage> {
 
     return Card(
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () {
@@ -462,7 +453,7 @@ class _HomePageState extends State<HomePage> {
                     BoxShadow(
                       color: color.withOpacity(0.2),
                       blurRadius: 5,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -491,7 +482,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -504,7 +495,7 @@ class _HomePageState extends State<HomePage> {
                         color: Colors.grey.shade800,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         _buildStatusChip(
@@ -534,7 +525,7 @@ class _HomePageState extends State<HomePage> {
     required IconData icon,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.shade100,
         borderRadius: BorderRadius.circular(20),
@@ -544,7 +535,7 @@ class _HomePageState extends State<HomePage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color.shade700),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
@@ -561,7 +552,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildPendingRoomCard(BuildContext context, UserRoom room) {
     return Card(
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Container(
         decoration: BoxDecoration(
@@ -585,7 +576,7 @@ class _HomePageState extends State<HomePage> {
                   BoxShadow(
                     color: Colors.amber.withOpacity(0.2),
                     blurRadius: 5,
-                    offset: Offset(0, 2),
+                    offset: const Offset(0, 2),
                   ),
                 ],
               ),
@@ -597,7 +588,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            SizedBox(width: 16),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -610,7 +601,7 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.grey.shade800,
                     ),
                   ),
-                  SizedBox(height: 6),
+                  const SizedBox(height: 6),
                   _buildStatusChip(
                     label: 'Waiting for approval',
                     color: Colors.amber,

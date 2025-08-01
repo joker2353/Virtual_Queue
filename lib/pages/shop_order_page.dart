@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'package:provider/provider.dart';
 import '../models/room.dart';
 import '../models/order.dart';
-import '../models/menu_item.dart';
-import '../models/master_sku.dart';
-import '../providers/master_sku_provider.dart';
-import '../providers/inventory_provider.dart';
 import '../widgets/loading_indicator.dart';
-import '../widgets/cart_item_card.dart';
 
 class ShopOrderPage extends StatefulWidget {
   final String roomId;
@@ -47,7 +41,7 @@ class ShopOrderPage extends StatefulWidget {
 
 class _ShopOrderPageState extends State<ShopOrderPage> {
   Room? _room;
-  List<OrderItem> _items = [];
+  final List<OrderItem> _items = [];
   bool _isLoading = true;
   String? _error;
   final _formKey = GlobalKey<FormState>();
@@ -237,7 +231,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
   Future<void> _placeOrder() async {
     if (_items.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Please add at least one item to your order'),
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
@@ -299,7 +293,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
       print('Order created with ID: ${docRef.id}');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Order placed successfully'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
@@ -324,18 +318,18 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Loading...'),
+          title: const Text('Loading...'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Error'),
+          title: const Text('Error'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -345,17 +339,17 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: Colors.red),
-                SizedBox(height: 16),
+                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const SizedBox(height: 16),
                 Text(
                   'Error loading room details',
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.red),
+                  style: const TextStyle(color: Colors.red),
                 ),
               ],
             ),
@@ -366,7 +360,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Place Order',
           style: TextStyle(
             fontWeight: FontWeight.w600,
@@ -391,8 +385,8 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
           children: [
             // Add Item Form
             Container(
-              margin: EdgeInsets.fromLTRB(16, 24, 16, 16),
-              padding: EdgeInsets.all(20),
+              margin: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(20),
@@ -401,7 +395,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                     color: Colors.deepPurple.withOpacity(0.1),
                     blurRadius: 20,
                     spreadRadius: 5,
-                    offset: Offset(0, 4),
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -419,7 +413,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     TextFormField(
                       controller: _itemNameController,
                       decoration: InputDecoration(
@@ -442,7 +436,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.deepPurple,
                             width: 2,
                           ),
@@ -461,7 +455,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _itemQuantityController,
                       decoration: InputDecoration(
@@ -484,7 +478,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.deepPurple,
                             width: 2,
                           ),
@@ -504,7 +498,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextFormField(
                       controller: _itemNotesController,
                       decoration: InputDecoration(
@@ -527,7 +521,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
+                          borderSide: const BorderSide(
                             color: Colors.deepPurple,
                             width: 2,
                           ),
@@ -541,14 +535,14 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                       ),
                       maxLines: 2,
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton.icon(
                         onPressed: _addItem,
-                        icon: Icon(Icons.add_circle_outline, size: 24),
-                        label: Text(
+                        icon: const Icon(Icons.add_circle_outline, size: 24),
+                        label: const Text(
                           'Add to Order',
                           style: TextStyle(
                             fontSize: 16,
@@ -574,7 +568,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
             // Order Items List
             Expanded(
               child: Container(
-                margin: EdgeInsets.fromLTRB(16, 0, 16, 16),
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
@@ -583,14 +577,14 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                       color: Colors.deepPurple.withOpacity(0.1),
                       blurRadius: 20,
                       spreadRadius: 5,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         border: Border(
                           bottom: BorderSide(
@@ -606,7 +600,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                             color: Colors.deepPurple.shade400,
                             size: 26,
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 12),
                           Text(
                             'Order Items',
                             style: TextStyle(
@@ -616,9 +610,9 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                               letterSpacing: 0.5,
                             ),
                           ),
-                          Spacer(),
+                          const Spacer(),
                           Container(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 12,
                               vertical: 6,
                             ),
@@ -654,7 +648,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                       size: 72,
                                       color: Colors.deepPurple.shade200,
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
                                     Text(
                                       'No items added yet',
                                       style: TextStyle(
@@ -663,7 +657,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    SizedBox(height: 8),
+                                    const SizedBox(height: 8),
                                     Text(
                                       'Add items using the form above',
                                       style: TextStyle(
@@ -675,12 +669,12 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                 ),
                               )
                               : ListView.builder(
-                                padding: EdgeInsets.all(16),
+                                padding: const EdgeInsets.all(16),
                                 itemCount: _items.length,
                                 itemBuilder: (context, index) {
                                   final item = _items[index];
                                   return Card(
-                                    margin: EdgeInsets.only(bottom: 12),
+                                    margin: const EdgeInsets.only(bottom: 12),
                                     elevation: 2,
                                     shadowColor: Colors.deepPurple.shade100,
                                     shape: RoundedRectangleBorder(
@@ -691,7 +685,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                       ),
                                     ),
                                     child: ListTile(
-                                      contentPadding: EdgeInsets.all(16),
+                                      contentPadding: const EdgeInsets.all(16),
                                       leading: Container(
                                         width: 48,
                                         height: 48,
@@ -727,7 +721,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                       subtitle:
                                           item.notes?.isNotEmpty ?? false
                                               ? Padding(
-                                                padding: EdgeInsets.only(
+                                                padding: const EdgeInsets.only(
                                                   top: 4,
                                                 ),
                                                 child: Text(
@@ -763,7 +757,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                                 context,
                                               ).showSnackBar(
                                                 SnackBar(
-                                                  content: Text('Item removed'),
+                                                  content: const Text('Item removed'),
                                                   backgroundColor:
                                                       Colors.red.shade400,
                                                   behavior:
@@ -781,14 +775,14 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                     ),
                     if (_items.isNotEmpty)
                       Padding(
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         child: SizedBox(
                           width: double.infinity,
                           height: 54,
                           child: ElevatedButton.icon(
                             onPressed: _placeOrder,
-                            icon: Icon(Icons.check_circle_outline, size: 24),
-                            label: Text(
+                            icon: const Icon(Icons.check_circle_outline, size: 24),
+                            label: const Text(
                               'Place Order',
                               style: TextStyle(
                                 fontSize: 16,

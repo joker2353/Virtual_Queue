@@ -6,11 +6,11 @@ void main() {
   final iconDir = Directory('assets/icon');
   final resDir = Directory('android/app/src/main/res');
 
-  [iconDir, resDir].forEach((dir) {
+  for (var dir in [iconDir, resDir]) {
     if (!dir.existsSync()) {
       dir.createSync(recursive: true);
     }
-  });
+  }
 
   // Create a simple icon (purple circle)
   final baseIcon = _createIcon(1024);

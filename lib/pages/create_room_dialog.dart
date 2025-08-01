@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/room_provider.dart';
-import '../providers/auth_provider.dart';
-import '../providers/fcm_provider.dart';
 import '../models/form_field.dart';
 import '../widgets/loading_indicator.dart';
-import '../utils/navigation_helper.dart';
 
 class CreateRoomDialog extends StatefulWidget {
   const CreateRoomDialog({super.key});
@@ -137,7 +134,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
             color: Colors.black.withOpacity(0.1),
             blurRadius: 25,
             spreadRadius: 5,
-            offset: Offset(0, 10),
+            offset: const Offset(0, 10),
           ),
         ],
       ),
@@ -149,7 +146,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
               // Header with gradient
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -161,16 +158,16 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                   children: [
                     FadeTransition(
                       opacity: _fadeInAnimation,
-                      child: Icon(
+                      child: const Icon(
                         Icons.add_circle,
                         color: Colors.white,
                         size: 56,
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     FadeTransition(
                       opacity: _fadeInAnimation,
-                      child: Text(
+                      child: const Text(
                         'Create a Room',
                         style: TextStyle(
                           fontSize: 24,
@@ -179,7 +176,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                         ),
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     FadeTransition(
                       opacity: _fadeInAnimation,
                       child: Text(
@@ -195,7 +192,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
               ),
               // Form content
               Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Form(
                   key: _formKey,
                   child: FadeTransition(
@@ -212,7 +209,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                             color: Colors.grey.shade800,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.grey.shade50,
@@ -231,7 +228,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                                       'Create a virtual queue for customers',
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  const SizedBox(width: 12),
                                   Expanded(
                                     child: _buildCategoryOption(
                                       'shop',
@@ -242,7 +239,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
                               Row(
                                 children: [
                                   Expanded(
@@ -253,7 +250,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                                       'Create a medical shop for prescriptions',
                                     ),
                                   ),
-                                  Expanded(
+                                  const Expanded(
                                     child: SizedBox(),
                                   ), // Empty space for balance
                                 ],
@@ -261,7 +258,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                             ],
                           ),
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         _buildInputField(
                           controller: _nameController,
                           label: 'Room Name',
@@ -274,7 +271,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                             return null;
                           },
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         _buildInputField(
                           controller: _capacityController,
                           label: 'Room Capacity',
@@ -292,7 +289,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                             return null;
                           },
                         ),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         _buildInputField(
                           controller: _noticeController,
                           label: 'Room Notice',
@@ -306,13 +303,13 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                             return null;
                           },
                         ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         _buildFormFieldsCard(),
                         if (_error != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 16),
                             child: Container(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 vertical: 10,
                                 horizontal: 16,
                               ),
@@ -323,8 +320,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red),
-                                  SizedBox(width: 10),
+                                  const Icon(Icons.error_outline, color: Colors.red),
+                                  const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
                                       _error!,
@@ -337,7 +334,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                               ),
                             ),
                           ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         // Action buttons
                         Row(
                           children: [
@@ -352,7 +349,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   side: BorderSide(color: Colors.grey.shade300),
-                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                 ),
                                 child: Text(
                                   'Cancel',
@@ -363,7 +360,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                                 ),
                               ),
                             ),
-                            SizedBox(width: 16),
+                            const SizedBox(width: 16),
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _isLoading ? null : _createRoom,
@@ -373,18 +370,18 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
                                   elevation: 0,
                                 ),
                                 child:
                                     _isLoading
-                                        ? LoadingIndicator(
+                                        ? const LoadingIndicator(
                                           size: 24,
                                           message: null,
                                           primaryColor: Colors.white,
                                           backgroundColor: Colors.transparent,
                                         )
-                                        : Text(
+                                        : const Text(
                                           'Create Room',
                                           style: TextStyle(
                                             fontSize: 16,
@@ -417,7 +414,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
     return InkWell(
       onTap: () => setState(() => _selectedCategory = value),
       child: Container(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color:
               isSelected
@@ -436,7 +433,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
               color: isSelected ? Colors.deepPurple : Colors.grey.shade600,
               size: 32,
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
@@ -444,7 +441,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                 color: isSelected ? Colors.deepPurple : Colors.grey.shade800,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               description,
               textAlign: TextAlign.center,
@@ -476,7 +473,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
             color: Colors.grey.shade800,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           controller: controller,
           decoration: InputDecoration(
@@ -495,9 +492,9 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.deepPurple, width: 2),
+              borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
             ),
-            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           ),
           keyboardType: keyboardType,
           maxLines: maxLines,
@@ -510,7 +507,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
   Widget _buildFormFieldsCard() {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -532,8 +529,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
           Row(
             children: [
               Container(
-                padding: EdgeInsets.all(10),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
                   color: Colors.white,
                   shape: BoxShape.circle,
                 ),
@@ -543,7 +540,7 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                   size: 24,
                 ),
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 'Default Form Fields',
                 style: TextStyle(
@@ -554,12 +551,12 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
               ),
             ],
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Text(
             'Members will need to provide the following information:',
             style: TextStyle(fontSize: 14, color: Colors.blue.shade900),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           _buildFormFieldInfo('Name', true),
           _buildFormFieldInfo('Contact Number', true),
           _buildFormFieldInfo('Address', true),
@@ -574,14 +571,14 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(6),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(6),
+            decoration: const BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.check, color: Colors.green, size: 16),
+            child: const Icon(Icons.check, color: Colors.green, size: 16),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           Text(
             name,
             style: TextStyle(
@@ -591,8 +588,8 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
             ),
           ),
           if (isRequired)
-            Padding(
-              padding: const EdgeInsets.only(left: 4.0),
+            const Padding(
+              padding: EdgeInsets.only(left: 4.0),
               child: Text(
                 '*',
                 style: TextStyle(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
 import '../providers/room_provider.dart';
 import '../widgets/loading_indicator.dart';
 import '../models/user_room.dart';
@@ -51,7 +50,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Create Room',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -84,11 +83,11 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
               child: ListView(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 children: [
                   _buildCreateRoomCard(context),
-                  SizedBox(height: 24),
-                  Text(
+                  const SizedBox(height: 24),
+                  const Text(
                     'Created Rooms',
                     style: TextStyle(
                       fontSize: 20,
@@ -96,7 +95,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   if (roomProvider.createdRooms.isEmpty)
                     _buildEmptyState()
                   else
@@ -120,7 +119,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
         onTap: () {
           showDialog(
             context: context,
-            builder: (context) => CreateRoomDialog(),
+            builder: (context) => const CreateRoomDialog(),
           ).then((roomId) async {
             if (roomId != null) {
               final roomDoc =
@@ -155,7 +154,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
         },
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
@@ -166,9 +165,9 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
           ),
           child: Column(
             children: [
-              Icon(Icons.add_box_rounded, size: 48, color: Colors.white),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.add_box_rounded, size: 48, color: Colors.white),
+              const SizedBox(height: 16),
+              const Text(
                 'Create New Room',
                 style: TextStyle(
                   fontSize: 24,
@@ -176,7 +175,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 'Create a queue or shop room',
                 style: TextStyle(
@@ -201,8 +200,8 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
             size: 64,
             color: Colors.white.withOpacity(0.8),
           ),
-          SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 16),
+          const Text(
             'No rooms created yet',
             style: TextStyle(
               fontSize: 18,
@@ -210,7 +209,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
               color: Colors.white,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             'Create your first room to get started',
             style: TextStyle(color: Colors.white.withOpacity(0.8)),
@@ -223,7 +222,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
   Widget _buildCreatedRoomCard(BuildContext context, UserRoom room) {
     return Card(
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () async {
@@ -278,7 +277,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                     BoxShadow(
                       color: Colors.green.withOpacity(0.2),
                       blurRadius: 5,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -290,7 +289,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                   ),
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -303,7 +302,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                         color: Colors.grey.shade800,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         _buildStatusChip(
@@ -311,7 +310,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                           color: Colors.green,
                           icon: Icons.verified_user,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         _buildStatusChip(
                           label: '${room.memberCount} members',
                           color: Colors.blue,
@@ -340,7 +339,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
     required IconData icon,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.shade100,
         borderRadius: BorderRadius.circular(20),
@@ -350,7 +349,7 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color.shade700),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(

@@ -60,27 +60,27 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.0, 0.5, curve: Curves.easeIn),
+        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
       ),
     );
 
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.0, 0.5, curve: Curves.easeOutCubic),
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOutCubic),
       ),
     );
 
     _rotationAnimation = Tween<double>(begin: -0.05, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Interval(0.3, 0.8, curve: Curves.elasticOut),
+        curve: const Interval(0.3, 0.8, curve: Curves.elasticOut),
       ),
     );
 
     _controller.forward();
 
-    Timer(Duration(milliseconds: 2800), () {
+    Timer(const Duration(milliseconds: 2800), () {
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
@@ -88,7 +88,7 @@ class _SplashScreenState extends State<SplashScreen>
           transitionsBuilder: (_, animation, __, child) {
             return FadeTransition(opacity: animation, child: child);
           },
-          transitionDuration: Duration(milliseconds: 800),
+          transitionDuration: const Duration(milliseconds: 800),
         ),
       );
     });
@@ -108,7 +108,7 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   void _startParticleAnimation() {
-    _particleTimer = Timer.periodic(Duration(milliseconds: 30), (timer) {
+    _particleTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
       if (mounted) {
         setState(() {
           for (var particle in particles) {
@@ -185,7 +185,7 @@ class _SplashScreenState extends State<SplashScreen>
                                   BoxShadow(
                                     color: Colors.black.withOpacity(0.3),
                                     blurRadius: 15,
-                                    offset: Offset(0, 8),
+                                    offset: const Offset(0, 8),
                                   ),
                                 ],
                               ),
@@ -200,7 +200,7 @@ class _SplashScreenState extends State<SplashScreen>
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ).createShader(bounds),
-                                  child: Icon(
+                                  child: const Icon(
                                     Icons.queue,
                                     size: 90,
                                     color: Colors.white,
@@ -208,7 +208,7 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
                               ),
                             ),
-                            SizedBox(height: 30),
+                            const SizedBox(height: 30),
                             ShaderMask(
                               shaderCallback:
                                   (bounds) => LinearGradient(
@@ -231,16 +231,16 @@ class _SplashScreenState extends State<SplashScreen>
                                     Shadow(
                                       color: Colors.black.withOpacity(0.5),
                                       blurRadius: 10,
-                                      offset: Offset(0, 5),
+                                      offset: const Offset(0, 5),
                                     ),
                                   ],
                                 ),
                               ),
                             ),
-                            SizedBox(height: 20),
+                            const SizedBox(height: 20),
                             AnimatedOpacity(
                               opacity: _controller.value > 0.6 ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
                               child: Text(
                                 'Manage Your Queues Effortlessly',
                                 style: TextStyle(
@@ -250,10 +250,10 @@ class _SplashScreenState extends State<SplashScreen>
                                 ),
                               ),
                             ),
-                            SizedBox(height: 80),
+                            const SizedBox(height: 80),
                             AnimatedOpacity(
                               opacity: _controller.value > 0.7 ? 1.0 : 0.0,
-                              duration: Duration(milliseconds: 500),
+                              duration: const Duration(milliseconds: 500),
                               child: _buildLoadingIndicator(),
                             ),
                           ],
@@ -286,7 +286,7 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
           // Animated progress indicator
-          Positioned.fill(
+          const Positioned.fill(
             child: CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               strokeWidth: 3,
@@ -297,7 +297,7 @@ class _SplashScreenState extends State<SplashScreen>
             child: Container(
               width: 10,
               height: 10,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
               ),

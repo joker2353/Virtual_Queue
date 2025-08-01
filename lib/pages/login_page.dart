@@ -15,7 +15,7 @@ class LoginPage extends StatelessWidget {
 
     // Show Firebase initialization state information
     if (auth.isLoading) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: LoadingIndicator(message: "Initializing authentication..."),
         ),
@@ -27,10 +27,10 @@ class LoginPage extends StatelessWidget {
       Future.microtask(() {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => MainLayout()),
+          MaterialPageRoute(builder: (_) => const MainLayout()),
         );
       });
-      return Scaffold(body: Center(child: LoadingIndicator()));
+      return const Scaffold(body: Center(child: LoadingIndicator()));
     }
 
     return Scaffold(
@@ -44,7 +44,7 @@ class LoginPage extends StatelessWidget {
               Colors.deepPurple.shade600,
               Colors.deepPurple.shade400,
             ],
-            stops: [0.0, 0.4, 1.0],
+            stops: const [0.0, 0.4, 1.0],
           ),
         ),
         child: SafeArea(
@@ -58,7 +58,7 @@ class LoginPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _buildLogoContainer(),
-                      SizedBox(height: 30),
+                      const SizedBox(height: 30),
                       Text(
                         'Virtual Queue',
                         style: TextStyle(
@@ -68,16 +68,16 @@ class LoginPage extends StatelessWidget {
                           letterSpacing: 1.2,
                           shadows: [
                             Shadow(
-                              offset: Offset(0, 2),
+                              offset: const Offset(0, 2),
                               blurRadius: 6,
                               color: Colors.black.withOpacity(0.3),
                             ),
                           ],
                         ),
                       ),
-                      SizedBox(height: 12),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 8,
                         ),
@@ -105,10 +105,10 @@ class LoginPage extends StatelessWidget {
                 flex: 1,
                 child: Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(30),
+                  padding: const EdgeInsets.all(30),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.only(
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(40),
                       topRight: Radius.circular(40),
                     ),
@@ -116,7 +116,7 @@ class LoginPage extends StatelessWidget {
                       BoxShadow(
                         color: Colors.black.withOpacity(0.2),
                         blurRadius: 20,
-                        offset: Offset(0, -5),
+                        offset: const Offset(0, -5),
                       ),
                     ],
                   ),
@@ -132,7 +132,7 @@ class LoginPage extends StatelessWidget {
                           color: Colors.deepPurple.shade800,
                         ),
                       ),
-                      SizedBox(height: 10),
+                      const SizedBox(height: 10),
                       Text(
                         'Get started with your account',
                         style: TextStyle(
@@ -146,7 +146,7 @@ class LoginPage extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 12.0),
                           child: Container(
                             width: double.infinity,
-                            padding: EdgeInsets.all(8),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.red[50],
                               borderRadius: BorderRadius.circular(8),
@@ -162,7 +162,7 @@ class LoginPage extends StatelessWidget {
                             ),
                           ),
                         ),
-                      SizedBox(height: 35),
+                      const SizedBox(height: 35),
                       _buildGoogleSignInButton(auth),
                     ],
                   ),
@@ -185,7 +185,7 @@ class LoginPage extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.2),
             blurRadius: 15,
-            offset: Offset(0, 8),
+            offset: const Offset(0, 8),
           ),
         ],
       ),
@@ -202,33 +202,33 @@ class LoginPage extends StatelessWidget {
           BoxShadow(
             color: Colors.blue.withOpacity(0.3),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ElevatedButton.icon(
         icon: Container(
-          padding: EdgeInsets.all(4),
-          decoration: BoxDecoration(
+          padding: const EdgeInsets.all(4),
+          decoration: const BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
           ),
           child:
               kIsWeb
-                  ? Icon(Icons.g_mobiledata, size: 24, color: Colors.blue)
+                  ? const Icon(Icons.g_mobiledata, size: 24, color: Colors.blue)
                   : Image.asset(
                     'assets/google_logo.png',
                     height: 24,
                     // If you don't have the Google logo asset, use this instead:
                     errorBuilder:
-                        (context, error, stackTrace) => Icon(
+                        (context, error, stackTrace) => const Icon(
                           Icons.g_mobiledata,
                           size: 24,
                           color: Colors.blue,
                         ),
                   ),
         ),
-        label: Text(
+        label: const Text(
           'Sign in with Google',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -238,7 +238,7 @@ class LoginPage extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           elevation: 0,
         ),
         onPressed: () async {

@@ -4,7 +4,6 @@ import '../providers/auth_provider.dart';
 import '../providers/room_provider.dart';
 import '../widgets/loading_indicator.dart';
 import '../models/user_room.dart';
-import 'shop_order_page.dart';
 import 'customer_page.dart';
 import 'medical_customer_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -49,7 +48,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Saved Shops',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -93,9 +92,9 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.store_outlined, size: 64, color: Colors.white),
-                    SizedBox(height: 16),
-                    Text(
+                    const Icon(Icons.store_outlined, size: 64, color: Colors.white),
+                    const SizedBox(height: 16),
+                    const Text(
                       'No saved shops',
                       style: TextStyle(
                         fontSize: 20,
@@ -103,7 +102,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                         color: Colors.white,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Join a shop to see it here',
                       style: TextStyle(color: Colors.white.withOpacity(0.8)),
@@ -116,7 +115,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
             return RefreshIndicator(
               onRefresh: _handlePullToRefresh,
               child: ListView(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                 physics: const BouncingScrollPhysics(),
                 children: [
                   ...shopRooms.map((room) => _buildShopCard(context, room)),
@@ -132,7 +131,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
   Widget _buildShopCard(BuildContext context, UserRoom room) {
     return Card(
       elevation: 2,
-      margin: EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () async {
@@ -198,7 +197,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                               : Colors.blue)
                           .withOpacity(0.2),
                       blurRadius: 5,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -215,7 +214,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                   ),
                 ),
               ),
-              SizedBox(width: 16),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +227,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                         color: Colors.grey.shade800,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     _buildStatusChip(
                       label:
                           room.category == 'medical' ? 'Medical Shop' : 'Shop',
@@ -265,7 +264,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
     required IconData icon,
   }) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.shade100,
         borderRadius: BorderRadius.circular(20),
@@ -275,7 +274,7 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color.shade700),
-          SizedBox(width: 4),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(

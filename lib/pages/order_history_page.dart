@@ -97,12 +97,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading orders. Please try again.'),
+            content: const Text('Error loading orders. Please try again.'),
             action: SnackBarAction(
               label: 'Retry',
               onPressed: _loadCompletedOrders,
             ),
-            duration: Duration(seconds: 8),
+            duration: const Duration(seconds: 8),
             backgroundColor: Colors.red,
           ),
         );
@@ -118,7 +118,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
-            title: Row(
+            title: const Row(
               children: [
                 Icon(Icons.receipt_long, color: Colors.deepPurple),
                 SizedBox(width: 8),
@@ -144,7 +144,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       color: Colors.grey[700],
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Customer: ${order.customerName}',
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
@@ -153,7 +153,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     'Contact: ${order.customerContact}',
                     style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
-                  Divider(height: 24),
+                  const Divider(height: 24),
                   Text(
                     'Items:',
                     style: TextStyle(
@@ -162,10 +162,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       color: Colors.grey[700],
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   ...order.items.map(
                     (item) => Padding(
-                      padding: EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -175,7 +175,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                               children: [
                                 Text(
                                   '${item.quantity}x ${item.name}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -193,7 +193,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                             ),
                           ),
                           Container(
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               horizontal: 8,
                               vertical: 4,
                             ),
@@ -219,14 +219,14 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       ),
                     ),
                   ),
-                  Divider(height: 24),
+                  const Divider(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Total Amount:', style: TextStyle(fontSize: 14)),
+                      const Text('Total Amount:', style: TextStyle(fontSize: 14)),
                       Text(
                         '৳${order.totalAmount.toStringAsFixed(2)}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
@@ -234,14 +234,14 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     ],
                   ),
                   if ((order.metadata?['bakiAmount'] ?? 0) > 0) ...[
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Unpaid Amount:', style: TextStyle(fontSize: 14)),
+                        const Text('Unpaid Amount:', style: TextStyle(fontSize: 14)),
                         Text(
                           '৳${(order.metadata?['bakiAmount'] ?? 0).toStringAsFixed(2)}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
                             color: Colors.orange,
@@ -250,7 +250,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       ],
                     ),
                   ],
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     'Completed on: ${_formatDate(order.updatedAt ?? order.createdAt)}',
                     style: TextStyle(
@@ -265,7 +265,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Close'),
+                child: const Text('Close'),
               ),
             ],
           ),
@@ -281,7 +281,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Order History'),
+          title: const Text('Order History'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -289,8 +289,8 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              LoadingIndicator(),
-              SizedBox(height: 16),
+              const LoadingIndicator(),
+              const SizedBox(height: 16),
               Text(
                 'Loading completed orders...',
                 style: TextStyle(color: Colors.grey[600]),
@@ -304,7 +304,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Order History'),
+          title: const Text('Order History'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -312,29 +312,29 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: Colors.red),
-              SizedBox(height: 16),
-              Text(
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              const Text(
                 'Failed to load orders',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
                 'Please try again later',
                 style: TextStyle(color: Colors.grey[600]),
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _loadCompletedOrders,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text('Retry'),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -344,7 +344,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Order History'),
+        title: const Text('Order History'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
@@ -359,7 +359,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         ),
         child:
             _completedOrders.isEmpty
-                ? Center(
+                ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -379,12 +379,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                 : RefreshIndicator(
                   onRefresh: _loadCompletedOrders,
                   child: ListView.builder(
-                    padding: EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(16),
                     itemCount: _completedOrders.length,
                     itemBuilder: (context, index) {
                       final order = _completedOrders[index];
                       return Card(
-                        margin: EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -392,7 +392,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           onTap: () => _showOrderDetails(order),
                           borderRadius: BorderRadius.circular(12),
                           child: Padding(
-                            padding: EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(16),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -406,12 +406,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                       children: [
                                         Text(
                                           order.customerName,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        SizedBox(height: 4),
+                                        const SizedBox(height: 4),
                                         Text(
                                           order.customerContact,
                                           style: TextStyle(
@@ -422,7 +422,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                       ],
                                     ),
                                     Container(
-                                      padding: EdgeInsets.symmetric(
+                                      padding: const EdgeInsets.symmetric(
                                         horizontal: 12,
                                         vertical: 6,
                                       ),
@@ -430,7 +430,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                         color: Colors.green.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(20),
                                       ),
-                                      child: Text(
+                                      child: const Text(
                                         'COMPLETED',
                                         style: TextStyle(
                                           color: Colors.green,
@@ -441,7 +441,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                     ),
                                   ],
                                 ),
-                                Divider(height: 24),
+                                const Divider(height: 24),
                                 Text(
                                   '${order.items.length} items',
                                   style: TextStyle(
@@ -449,12 +449,12 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                     fontSize: 14,
                                   ),
                                 ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Row(
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
+                                    const Text(
                                       'Total Amount:',
                                       style: TextStyle(
                                         fontSize: 14,
@@ -463,7 +463,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                     ),
                                     Text(
                                       '৳${order.totalAmount.toStringAsFixed(2)}',
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.deepPurple,
@@ -473,7 +473,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                 ),
                                 if ((order.metadata?['bakiAmount'] ?? 0) > 0)
                                   Padding(
-                                    padding: EdgeInsets.only(top: 4),
+                                    padding: const EdgeInsets.only(top: 4),
                                     child: Row(
                                       mainAxisAlignment: MainAxisAlignment.end,
                                       children: [
@@ -486,7 +486,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                         ),
                                         Text(
                                           '৳${(order.metadata?['bakiAmount'] ?? 0).toStringAsFixed(2)}',
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 12,
                                             color: Colors.orange,
                                             fontWeight: FontWeight.bold,
@@ -495,7 +495,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                       ],
                                     ),
                                   ),
-                                SizedBox(height: 8),
+                                const SizedBox(height: 8),
                                 Text(
                                   _formatDate(
                                     order.updatedAt ?? order.createdAt,

@@ -182,6 +182,7 @@ class FCMProvider extends ChangeNotifier {
     }
   }
 
+  @override
   void dispose() {
     _isInitialized = false;
     _userId = null;

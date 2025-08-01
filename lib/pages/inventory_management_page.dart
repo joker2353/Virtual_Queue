@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:data_table_2/data_table_2.dart';
 import '../models/menu_item.dart';
 import '../models/master_sku.dart';
 import '../providers/inventory_provider.dart';
@@ -449,7 +448,7 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
                           dataRowHeight: 56,
                           horizontalMargin: 16,
                           columnSpacing: 24,
-                          headingRowColor: MaterialStateProperty.all(
+                          headingRowColor: WidgetStateProperty.all(
                             Theme.of(context).primaryColor.withOpacity(0.05),
                           ),
                           headingTextStyle: TextStyle(

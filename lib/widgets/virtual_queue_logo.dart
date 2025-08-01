@@ -48,15 +48,15 @@ class VirtualQueueLogoPainter extends CustomPainter {
     final radius = size.width / 2;
 
     // Create gradient for background
-    final gradient = RadialGradient(
+    const gradient = RadialGradient(
       center: Alignment.topLeft,
       radius: 1.2,
       colors: [
-        const Color(0xFF6366F1), // Indigo
-        const Color(0xFF8B5CF6), // Purple
-        const Color(0xFFA855F7), // Purple
+        Color(0xFF6366F1), // Indigo
+        Color(0xFF8B5CF6), // Purple
+        Color(0xFFA855F7), // Purple
       ],
-      stops: const [0.0, 0.5, 1.0],
+      stops: [0.0, 0.5, 1.0],
     );
 
     // Paint background circle

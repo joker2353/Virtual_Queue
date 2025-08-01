@@ -166,7 +166,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Could not launch phone call'),
             backgroundColor: Colors.red,
           ),
@@ -241,7 +241,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     ),
                     if (customer['email'] != null)
                       Padding(
-                        padding: EdgeInsets.only(top: 4),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           'Email: ${customer['email']}',
                           style: TextStyle(
@@ -250,7 +250,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                           ),
                         ),
                       ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Text(
                       'Total Baki: ৳${customer['pendingAmount'].toStringAsFixed(2)}',
                       style: TextStyle(
@@ -263,15 +263,15 @@ class _CustomerListPageState extends State<CustomerListPage> {
                       ),
                     ),
                     if (customer['lastOrderDate'] != null) ...[
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'Last Order: ${_formatDate(customer['lastOrderDate'])}',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                     ],
                     if (debtHistory.isNotEmpty) ...[
-                      SizedBox(height: 16),
-                      Text(
+                      const SizedBox(height: 16),
+                      const Text(
                         'Recent Debts:',
                         style: TextStyle(
                           fontSize: 16,
@@ -285,14 +285,14 @@ class _CustomerListPageState extends State<CustomerListPage> {
                           subtitle: Text(_formatDate(debt.timestamp)),
                           trailing: Text(
                             '৳${debt.amount.toStringAsFixed(2)}',
-                            style: TextStyle(color: Colors.red),
+                            style: const TextStyle(color: Colors.red),
                           ),
                         ),
                       ),
                     ],
                     if (paymentHistory.isNotEmpty) ...[
-                      SizedBox(height: 16),
-                      Text(
+                      const SizedBox(height: 16),
+                      const Text(
                         'Recent Payments:',
                         style: TextStyle(
                           fontSize: 16,
@@ -306,7 +306,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                           subtitle: Text(_formatDate(payment.timestamp)),
                           trailing: Text(
                             '৳${payment.amount.toStringAsFixed(2)}',
-                            style: TextStyle(color: Colors.green),
+                            style: const TextStyle(color: Colors.green),
                           ),
                         ),
                       ),
@@ -317,7 +317,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Close'),
+                  child: const Text('Close'),
                 ),
               ],
             ),
@@ -325,7 +325,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
     } catch (e) {
       print('Error showing customer details: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Error loading customer details'),
           backgroundColor: Colors.red,
         ),
@@ -338,18 +338,18 @@ class _CustomerListPageState extends State<CustomerListPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Customer List'),
+          title: const Text('Customer List'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Customer List'),
+          title: const Text('Customer List'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -357,16 +357,16 @@ class _CustomerListPageState extends State<CustomerListPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 48, color: Colors.red),
-              SizedBox(height: 16),
-              Text(_error!, style: TextStyle(color: Colors.red)),
-              SizedBox(height: 16),
+              const Icon(Icons.error_outline, size: 48, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+              const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _loadCustomers,
-                child: Text('Retry'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                 ),
+                child: const Text('Retry'),
               ),
             ],
           ),
@@ -376,7 +376,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Customer List'),
+        title: const Text('Customer List'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
       ),
@@ -384,11 +384,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
         children: [
           // Search Bar
           Padding(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: TextField(
               controller: _searchController,
               onChanged: _filterCustomers,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 hintText: 'Search by name or phone',
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
@@ -398,7 +398,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
           // Stats
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 Expanded(
@@ -408,7 +408,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     Icons.people,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: _buildStatCard(
                     'Total Baki',
@@ -423,7 +423,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
           // Customer List
           Expanded(
             child: ListView.builder(
-              padding: EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8),
               itemCount: _filteredCustomers.length,
               itemBuilder: (context, index) {
                 final customer = _filteredCustomers[index];
@@ -431,7 +431,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     (customer['pendingAmount'] as double) > 0;
 
                 return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor:
@@ -445,7 +445,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     ),
                     title: Text(
                       customer['name'],
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(customer['phoneNumber']),
                     trailing: Column(
@@ -481,7 +481,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   Widget _buildStatCard(String title, String value, IconData icon) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -496,9 +496,9 @@ class _CustomerListPageState extends State<CustomerListPage> {
       child: Column(
         children: [
           Icon(icon, color: Colors.deepPurple, size: 32),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(

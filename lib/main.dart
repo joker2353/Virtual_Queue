@@ -172,7 +172,7 @@ Future<void> _initializeNotifications() async {
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
   // iOS initialization
-  final DarwinInitializationSettings initializationSettingsDarwin =
+  const DarwinInitializationSettings initializationSettingsDarwin =
       DarwinInitializationSettings(
         requestSoundPermission: true,
         requestBadgePermission: true,
@@ -180,7 +180,7 @@ Future<void> _initializeNotifications() async {
       );
 
   // Initialization settings
-  final InitializationSettings initializationSettings = InitializationSettings(
+  const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
     iOS: initializationSettingsDarwin,
   );
@@ -260,7 +260,7 @@ class VirtualQueueApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
-          appBarTheme: AppBarTheme(
+          appBarTheme: const AppBarTheme(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             elevation: 2,
@@ -281,7 +281,7 @@ class VirtualQueueApp extends StatelessWidget {
             ),
           ),
         ),
-        home: SplashScreen(nextScreen: const MyAppWithProviders()),
+        home: const SplashScreen(nextScreen: MyAppWithProviders()),
       ),
     );
   }
@@ -333,7 +333,7 @@ class MyAppWithProviders extends StatelessWidget {
             roomProvider.setFCMProvider(fcmProvider);
           }
 
-          return MyApp();
+          return const MyApp();
         },
       ),
     );

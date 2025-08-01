@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'dart:async';
-import '../providers/room_provider.dart';
-import '../providers/auth_provider.dart';
 import '../models/room.dart';
 import '../models/prescription_order.dart';
 import '../widgets/loading_indicator.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'join_requests_page.dart';
 import 'customer_list_page.dart';
 import 'order_history_page.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
-import '../providers/cache_provider.dart';
 import '../widgets/qr_share_dialog.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 
@@ -235,7 +227,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
     } catch (e) {
       print('Error updating order status: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Error updating order status'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
@@ -251,27 +243,27 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Update Order Amount'),
+            title: const Text('Update Order Amount'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text('Customer: ${order.customerName}'),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 TextField(
                   controller: amountController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     labelText: 'Total Amount',
                     prefixText: '₹ ',
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
               ],
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -289,7 +281,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
 
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text('Order amount updated successfully'),
                           backgroundColor: Colors.green,
                           behavior: SnackBarBehavior.floating,
@@ -298,7 +290,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                     } catch (e) {
                       print('Error updating order amount: $e');
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                        const SnackBar(
                           content: Text('Error updating order amount'),
                           backgroundColor: Colors.red,
                           behavior: SnackBarBehavior.floating,
@@ -307,7 +299,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                     }
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
+                      const SnackBar(
                         content: Text('Please enter a valid amount'),
                         backgroundColor: Colors.orange,
                         behavior: SnackBarBehavior.floating,
@@ -315,7 +307,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                     );
                   }
                 },
-                child: Text('Update'),
+                child: const Text('Update'),
               ),
             ],
           ),
@@ -330,14 +322,14 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
             child: Container(
               width: MediaQuery.of(context).size.width * 0.9,
               height: MediaQuery.of(context).size.height * 0.8,
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      const Text(
                         'Prescription Details',
                         style: TextStyle(
                           fontSize: 20,
@@ -346,24 +338,24 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close),
+                        icon: const Icon(Icons.close),
                       ),
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text('Customer: ${order.customerName}'),
                   Text('Contact: ${order.customerContact}'),
                   Text('Status: ${order.status.toUpperCase()}'),
                   Text('Amount: ₹${order.totalAmount.toStringAsFixed(2)}'),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
                   // Audio instructions section
                   if (order.hasAudioInstructions) ...[
-                    Text(
+                    const Text(
                       'Audio Instructions:',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         ElevatedButton.icon(
@@ -378,35 +370,35 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                             } catch (e) {
                               print('Error playing audio: $e');
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error playing audio')),
+                                const SnackBar(content: Text('Error playing audio')),
                               );
                             }
                           },
-                          icon: Icon(Icons.play_arrow),
-                          label: Text('Play Audio'),
+                          icon: const Icon(Icons.play_arrow),
+                          label: const Text('Play Audio'),
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         ElevatedButton.icon(
                           onPressed: () async {
                             await _audioPlayer!.stopPlayer();
                           },
-                          icon: Icon(Icons.stop),
-                          label: Text('Stop'),
+                          icon: const Icon(Icons.stop),
+                          label: const Text('Stop'),
                         ),
                       ],
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                   ],
 
                   // Prescription images section
-                  Text(
+                  const Text(
                     'Prescription Images:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Expanded(
                     child: GridView.builder(
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
                         crossAxisSpacing: 8,
                         mainAxisSpacing: 8,
@@ -445,12 +437,12 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                                   loadingProgress,
                                 ) {
                                   if (loadingProgress == null) return child;
-                                  return Center(
+                                  return const Center(
                                     child: CircularProgressIndicator(),
                                   );
                                 },
                                 errorBuilder: (context, error, stackTrace) {
-                                  return Center(
+                                  return const Center(
                                     child: Icon(Icons.error, color: Colors.red),
                                   );
                                 },
@@ -462,7 +454,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                     ),
                   ),
 
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
@@ -472,7 +464,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                             Navigator.pop(context);
                             _updateOrderStatus(order, 'processing');
                           },
-                          child: Text('Start Processing'),
+                          child: const Text('Start Processing'),
                         ),
                       if (order.isProcessing)
                         ElevatedButton(
@@ -480,7 +472,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                             Navigator.pop(context);
                             _updateOrderAmount(order);
                           },
-                          child: Text('Set Amount'),
+                          child: const Text('Set Amount'),
                         ),
                       if (order.isReadyForPickup)
                         ElevatedButton(
@@ -488,7 +480,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                             Navigator.pop(context);
                             _updateOrderStatus(order, 'completed');
                           },
-                          child: Text('Mark Completed'),
+                          child: const Text('Mark Completed'),
                         ),
                     ],
                   ),
@@ -504,18 +496,18 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Loading...'),
+          title: const Text('Loading...'),
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Error'),
+          title: const Text('Error'),
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
         ),
@@ -527,7 +519,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
       appBar: AppBar(
         title: Text(
           '${_room!.name} - Medical',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
@@ -537,7 +529,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
           Builder(
             builder:
                 (context) => IconButton(
-                  icon: Icon(Icons.menu),
+                  icon: const Icon(Icons.menu),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 ),
           ),
@@ -549,29 +541,29 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(color: Colors.teal),
+              decoration: const BoxDecoration(color: Colors.teal),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
+                  const Text(
                     'Medical Shop',
                     style: TextStyle(color: Colors.white, fontSize: 24),
                   ),
                   Text(
                     _room!.name,
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Total Sales: ₹${_totalSales.toStringAsFixed(2)}',
-                    style: TextStyle(color: Colors.white, fontSize: 14),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ],
               ),
             ),
             ListTile(
-              leading: Icon(Icons.people),
-              title: Text('Join Requests'),
+              leading: const Icon(Icons.people),
+              title: const Text('Join Requests'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -584,8 +576,8 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.group),
-              title: Text('Customer List'),
+              leading: const Icon(Icons.group),
+              title: const Text('Customer List'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -598,8 +590,8 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.history),
-              title: Text('Order History'),
+              leading: const Icon(Icons.history),
+              title: const Text('Order History'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(
@@ -612,8 +604,8 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.qr_code),
-              title: Text('Show QR Code'),
+              leading: const Icon(Icons.qr_code),
+              title: const Text('Show QR Code'),
               onTap: () {
                 Navigator.pop(context);
                 showDialog(
@@ -635,14 +627,14 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
           children: [
             // Stats cards
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   Expanded(
                     child: Card(
                       color: Colors.teal.shade50,
                       child: Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             Text(
@@ -665,12 +657,12 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Card(
                       color: Colors.green.shade50,
                       child: Padding(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
                             Text(
@@ -705,20 +697,20 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.local_pharmacy,
                               size: 64,
                               color: Colors.grey,
                             ),
-                            SizedBox(height: 16),
-                            Text(
+                            const SizedBox(height: 16),
+                            const Text(
                               'No active prescription orders',
                               style: TextStyle(
                                 fontSize: 18,
                                 color: Colors.grey,
                               ),
                             ),
-                            SizedBox(height: 8),
+                            const SizedBox(height: 8),
                             Text(
                               'Orders will appear here when customers place them',
                               style: TextStyle(color: Colors.grey.shade600),
@@ -727,23 +719,23 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                         ),
                       )
                       : ListView.builder(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         itemCount: _activeOrders.length,
                         itemBuilder: (context, index) {
                           final order = _activeOrders[index];
                           return Card(
-                            margin: EdgeInsets.only(bottom: 12),
+                            margin: const EdgeInsets.only(bottom: 12),
                             child: ListTile(
                               leading: CircleAvatar(
                                 backgroundColor: _getStatusColor(order.status),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.local_pharmacy,
                                   color: Colors.white,
                                 ),
                               ),
                               title: Text(
                                 order.customerName,
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: const TextStyle(fontWeight: FontWeight.bold),
                               ),
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -754,14 +746,14 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                                     'Images: ${order.prescriptionImageUrls.length}',
                                   ),
                                   if (order.hasAudioInstructions)
-                                    Text('Has audio instructions'),
+                                    const Text('Has audio instructions'),
                                   if (order.totalAmount > 0)
                                     Text(
                                       'Amount: ₹${order.totalAmount.toStringAsFixed(2)}',
                                     ),
                                 ],
                               ),
-                              trailing: Icon(Icons.arrow_forward_ios),
+                              trailing: const Icon(Icons.arrow_forward_ios),
                               onTap: () => _showPrescriptionDetails(order),
                             ),
                           );

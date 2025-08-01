@@ -232,7 +232,7 @@ class MasterSKUProvider with ChangeNotifier {
               snapshot.docs
                   .map(
                     (doc) => MasterSKU.fromJson(
-                      doc.data() as Map<String, dynamic>,
+                      doc.data(),
                       id: doc.id,
                     ),
                   )

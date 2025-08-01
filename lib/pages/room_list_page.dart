@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
-import 'dart:async';
-import '../providers/room_provider.dart';
 import '../providers/auth_provider.dart';
-import '../providers/fcm_provider.dart';
 import '../models/room.dart';
-import '../widgets/loading_indicator.dart';
 import 'create_room_dialog.dart';
 import 'shop_dashboard_page.dart';
-import 'shop_order_page.dart';
 import 'creator_dashboard_page.dart';
 import 'medical_dashboard_page.dart';
 
@@ -21,7 +16,7 @@ class RoomListPage extends StatefulWidget {
 }
 
 class _RoomListPageState extends State<RoomListPage> {
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String _selectedCategory = 'all';
 
   void _showCreateRoomDialog() {
@@ -248,10 +243,10 @@ class _RoomListPageState extends State<RoomListPage> {
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
               ),
-              if (room.notice != null && room.notice!.isNotEmpty) ...[
+              if (room.notice.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  room.notice!,
+                  room.notice,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.grey[600],
                     fontStyle: FontStyle.italic,

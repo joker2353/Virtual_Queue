@@ -67,7 +67,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 2),
     );
 
     _colorAnimation = ColorTween(
@@ -207,15 +207,15 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: Text('Leave Room'),
-            content: Text(
+            title: const Text('Leave Room'),
+            content: const Text(
               'Are you sure you want to leave this room? You will lose your position in the queue.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel'),
                 style: TextButton.styleFrom(foregroundColor: Colors.grey[700]),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context, true),
@@ -224,9 +224,9 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
-                child: Text('Leave Room'),
+                child: const Text('Leave Room'),
               ),
             ],
           ),
@@ -244,7 +244,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('You have left the room'),
+          content: const Text('You have left the room'),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -276,7 +276,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Queue Details',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
@@ -290,7 +290,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [Colors.deepPurple, Colors.deepPurple.shade50],
-            stops: [0.0, 0.3],
+            stops: const [0.0, 0.3],
           ),
         ),
         child:
@@ -313,8 +313,8 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
   Widget _buildErrorView() {
     return Center(
       child: Container(
-        margin: EdgeInsets.all(20),
-        padding: EdgeInsets.all(20),
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -330,9 +330,9 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline, size: 70, color: Colors.red),
-            SizedBox(height: 20),
-            Text(
+            const Icon(Icons.error_outline, size: 70, color: Colors.red),
+            const SizedBox(height: 20),
+            const Text(
               'Error',
               style: TextStyle(
                 fontSize: 24,
@@ -340,7 +340,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 color: Colors.red,
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               child: Text(
@@ -349,14 +349,14 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 style: TextStyle(fontSize: 16, color: Colors.grey[800]),
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             ElevatedButton.icon(
               onPressed: _setupRealtimeUpdates,
-              icon: Icon(Icons.refresh),
-              label: Text('Try Again'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Try Again'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple,
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -404,21 +404,21 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
     final isBeingServed = userRoom.isCurrentlyServed;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
-      physics: BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildRoomHeader(room),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildStatusCard(userRoom, isBeingServed),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildProgressCard(waitingTime, userRoom),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildNoticeBoard(room),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _buildActionButtons(),
-          SizedBox(height: 20), // Extra padding at bottom
+          const SizedBox(height: 20), // Extra padding at bottom
         ],
       ),
     );
@@ -439,7 +439,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Row(
             children: [
               Container(
@@ -452,17 +452,17 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                     BoxShadow(
                       color: Colors.deepPurple.withOpacity(0.2),
                       blurRadius: 8,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.meeting_room,
                   color: Colors.deepPurple,
                   size: 36,
                 ),
               ),
-              SizedBox(width: 20),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,7 +475,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                         color: Colors.deepPurple.shade800,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Icon(
@@ -483,7 +483,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                           size: 16,
                           color: Colors.deepPurple.shade400,
                         ),
-                        SizedBox(width: 4),
+                        const SizedBox(width: 4),
                         Text(
                           'Capacity: ${room.capacity} members',
                           style: TextStyle(
@@ -518,14 +518,14 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
           ),
         ),
         child: Padding(
-          padding: EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  Icon(Icons.info_outline, color: Colors.deepPurple, size: 24),
-                  SizedBox(width: 10),
+                  const Icon(Icons.info_outline, color: Colors.deepPurple, size: 24),
+                  const SizedBox(width: 10),
                   Text(
                     'Your Queue Status',
                     style: TextStyle(
@@ -536,7 +536,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -560,10 +560,10 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Container(
                 width: double.infinity,
-                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
                 decoration: BoxDecoration(
                   color:
                       isBeingServed
@@ -582,7 +582,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                       color: (isBeingServed ? Colors.green : Colors.orange)
                           .withOpacity(0.1),
                       blurRadius: 6,
-                      offset: Offset(0, 3),
+                      offset: const Offset(0, 3),
                     ),
                   ],
                 ),
@@ -596,7 +596,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                               : Colors.orange.shade700,
                       size: 24,
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         isBeingServed
@@ -631,7 +631,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
     Color color,
   ) {
     return Container(
-      padding: EdgeInsets.all(10),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -639,7 +639,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
       child: Column(
         children: [
           Icon(icon, color: color, size: 30),
-          SizedBox(height: 10),
+          const SizedBox(height: 10),
           Text(
             value,
             style: TextStyle(
@@ -648,7 +648,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
               color: color,
             ),
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Text(
             label,
             style: TextStyle(
@@ -709,7 +709,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
             colors: [Colors.white, bgColor],
           ),
         ),
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -720,7 +720,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   color: progressColor,
                   size: 24,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Text(
                   'Queue Progress',
                   style: TextStyle(
@@ -731,13 +731,13 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 ),
               ],
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
             Center(
               child: Stack(
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: bgColor,
@@ -801,10 +801,10 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 ],
               ),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             if (isUserTurn)
               Container(
-                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                 decoration: BoxDecoration(
                   color: Colors.green.shade100,
                   borderRadius: BorderRadius.circular(50),
@@ -812,7 +812,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                     BoxShadow(
                       color: progressColor.withOpacity(0.1),
                       blurRadius: 4,
-                      offset: Offset(0, 2),
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -824,7 +824,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                       color: progressColor,
                       size: 20,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'It\'s your turn now!',
                       style: TextStyle(
@@ -842,7 +842,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 animation: _colorAnimation,
                 builder: (context, child) {
                   return Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
@@ -859,7 +859,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                           color: _colorAnimation.value,
                           size: 18,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Text(
                           'We\'ll notify you when it\'s almost your turn',
                           style: TextStyle(
@@ -922,7 +922,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
             ),
             // Content
             Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -930,7 +930,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   Row(
                     children: [
                       Container(
-                        padding: EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -945,17 +945,17 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                             BoxShadow(
                               color: Colors.amber.shade400.withOpacity(0.4),
                               blurRadius: 8,
-                              offset: Offset(0, 3),
+                              offset: const Offset(0, 3),
                             ),
                           ],
                         ),
-                        child: Icon(
+                        child: const Icon(
                           Icons.campaign_rounded,
                           color: Colors.white,
                           size: 24,
                         ),
                       ),
-                      SizedBox(width: 16),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -969,7 +969,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                                 letterSpacing: 0.3,
                               ),
                             ),
-                            SizedBox(height: 3),
+                            const SizedBox(height: 3),
                             Container(
                               height: 3,
                               width: 50,
@@ -988,11 +988,11 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   // Notice content
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.9),
                       borderRadius: BorderRadius.circular(16),
@@ -1005,7 +1005,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                           color: Colors.amber.withOpacity(0.1),
                           blurRadius: 8,
                           spreadRadius: 1,
-                          offset: Offset(0, 2),
+                          offset: const Offset(0, 2),
                         ),
                       ],
                     ),
@@ -1024,7 +1024,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                                       : Colors.grey.shade500,
                               size: 22,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               room.notice.isNotEmpty
                                   ? 'Important Information'
@@ -1042,7 +1042,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                           ],
                         ),
                         if (room.notice.isNotEmpty) ...[
-                          SizedBox(height: 12),
+                          const SizedBox(height: 12),
                           Text(
                             room.notice,
                             style: TextStyle(
@@ -1053,7 +1053,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                             ),
                           ),
                         ] else ...[
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           Text(
                             'The room creator hasn\'t posted any notice yet.',
                             style: TextStyle(
@@ -1090,14 +1090,14 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
             colors: [Colors.white, Colors.red.shade50],
           ),
         ),
-        padding: EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Icon(Icons.settings, color: Colors.red.shade700, size: 24),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Text(
                   'Actions',
                   style: TextStyle(
@@ -1108,7 +1108,7 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                 ),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
@@ -1116,21 +1116,21 @@ class _MemberDetailsPageState extends State<MemberDetailsPage>
                   BoxShadow(
                     color: Colors.red.withOpacity(0.2),
                     blurRadius: 6,
-                    offset: Offset(0, 3),
+                    offset: const Offset(0, 3),
                   ),
                 ],
               ),
               child: ElevatedButton.icon(
-                icon: Icon(Icons.exit_to_app, size: 22),
-                label: Text(
+                icon: const Icon(Icons.exit_to_app, size: 22),
+                label: const Text(
                   'Leave Queue',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red.shade600,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-                  minimumSize: Size(double.infinity, 54),
+                  padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                  minimumSize: const Size(double.infinity, 54),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

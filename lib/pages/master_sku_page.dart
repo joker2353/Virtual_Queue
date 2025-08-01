@@ -498,8 +498,9 @@ class _MasterSKUPageState extends State<MasterSKUPage> {
                                             child,
                                             loadingProgress,
                                           ) {
-                                            if (loadingProgress == null)
+                                            if (loadingProgress == null) {
                                               return child;
+                                            }
                                             return const LoadingIndicator();
                                           },
                                           errorBuilder:

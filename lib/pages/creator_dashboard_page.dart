@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
@@ -11,10 +10,7 @@ import '../widgets/loading_indicator.dart';
 import '../widgets/qr_share_dialog.dart';
 import 'join_requests_page.dart';
 import 'package:uuid/uuid.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
-import 'dart:math' as math;
 import 'package:url_launcher/url_launcher.dart';
 
 class CreatorDashboardPage extends StatefulWidget {
@@ -200,8 +196,8 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
                 Text(e.toString()),
               ],
             ),
@@ -630,7 +626,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [Colors.deepPurple.shade50, Colors.white, Colors.white],
-            stops: [0.0, 0.2, 1.0],
+            stops: const [0.0, 0.2, 1.0],
           ),
         ),
         child: SafeArea(
@@ -1295,7 +1291,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                                 ),
                               ],
                             ),
-                            child: Icon(
+                            child: const Icon(
                               Icons.campaign_rounded,
                               color: Colors.white,
                               size: 28,
@@ -1314,7 +1310,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                                   letterSpacing: 0.3,
                                 ),
                               ),
-                              SizedBox(height: 3),
+                              const SizedBox(height: 3),
                               Container(
                                 height: 3,
                                 width: 60,
@@ -1384,7 +1380,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                           color: Colors.amber.withOpacity(0.1),
                           blurRadius: 12,
                           spreadRadius: 1,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
@@ -1400,7 +1396,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                                       color: Colors.amber.shade700,
                                       size: 20,
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
                                       'Current Notice',
                                       style: TextStyle(
@@ -1412,7 +1408,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: 12),
+                                const SizedBox(height: 12),
                                 Text(
                                   room.notice,
                                   style: TextStyle(
@@ -1428,7 +1424,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                               child: Column(
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.all(16),
+                                    padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       color: Colors.amber.shade100.withOpacity(
                                         0.7,
@@ -1469,7 +1465,7 @@ class _CreatorDashboardPageState extends State<CreatorDashboardPage>
                                           color: Colors.amber.shade400
                                               .withOpacity(0.3),
                                           blurRadius: 8,
-                                          offset: Offset(0, 3),
+                                          offset: const Offset(0, 3),
                                         ),
                                       ],
                                     ),

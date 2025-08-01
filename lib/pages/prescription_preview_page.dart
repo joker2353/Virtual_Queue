@@ -27,7 +27,7 @@ class PrescriptionPreviewPage extends StatefulWidget {
 }
 
 class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   int _currentIndex = 0;
 
   // Audio recording
@@ -67,7 +67,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Review Prescription'),
+        title: const Text('Review Prescription'),
         backgroundColor: Colors.teal,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -76,7 +76,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
             onPressed: _isUploading ? null : _submitPrescription,
             icon:
                 _isUploading
-                    ? SizedBox(
+                    ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
@@ -84,7 +84,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                    : Icon(Icons.check),
+                    : const Icon(Icons.check),
           ),
         ],
       ),
@@ -93,18 +93,18 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
           // Progress indicator for upload
           if (_isUploading)
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   LinearProgressIndicator(
                     value: _uploadProgress,
                     backgroundColor: Colors.grey.shade300,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.teal),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Uploading prescription... ${(_uploadProgress * 100).toInt()}%',
-                    style: TextStyle(color: Colors.teal),
+                    style: const TextStyle(color: Colors.teal),
                   ),
                 ],
               ),
@@ -112,7 +112,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
 
           // Image counter
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -125,7 +125,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                   ),
                 ),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.teal.shade50,
                     borderRadius: BorderRadius.circular(12),
@@ -141,8 +141,8 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
 
           // Audio recording section
           Container(
-            margin: EdgeInsets.symmetric(horizontal: 16),
-            padding: EdgeInsets.all(16),
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.blue.shade50,
               borderRadius: BorderRadius.circular(12),
@@ -154,7 +154,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                 Row(
                   children: [
                     Icon(Icons.mic, color: Colors.blue.shade700),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Voice Instructions (Optional)',
                       style: TextStyle(
@@ -164,7 +164,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     // Record button
@@ -183,7 +183,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                       label: Text(_isRecording ? 'Stop Recording' : 'Record'),
                     ),
 
-                    SizedBox(width: 12),
+                    const SizedBox(width: 12),
 
                     // Play button (if recording exists)
                     if (_hasRecording && !_isRecording)
@@ -204,14 +204,14 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                     if (_hasRecording && !_isRecording)
                       IconButton(
                         onPressed: _deleteRecording,
-                        icon: Icon(Icons.delete, color: Colors.red),
+                        icon: const Icon(Icons.delete, color: Colors.red),
                         tooltip: 'Delete recording',
                       ),
                   ],
                 ),
 
                 if (_isRecording)
-                  Padding(
+                  const Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
@@ -230,7 +230,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                   ),
 
                 if (_hasRecording && !_isRecording)
-                  Padding(
+                  const Padding(
                     padding: EdgeInsets.only(top: 8),
                     child: Row(
                       children: [
@@ -247,7 +247,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
             ),
           ),
 
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
 
           // Image preview with zoom
           Expanded(
@@ -261,7 +261,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
               itemCount: widget.imagePaths.length,
               itemBuilder: (context, index) {
                 return Container(
-                  margin: EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
@@ -270,7 +270,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                         color: Colors.grey.withOpacity(0.2),
                         spreadRadius: 2,
                         blurRadius: 8,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
@@ -294,13 +294,13 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
 
           // Navigation dots
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(
                 widget.imagePaths.length,
                 (index) => Container(
-                  margin: EdgeInsets.symmetric(horizontal: 4),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
@@ -317,7 +317,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
 
           // Submit button
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(16),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -325,7 +325,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
                   foregroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -333,7 +333,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                 ),
                 icon:
                     _isUploading
-                        ? SizedBox(
+                        ? const SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
@@ -343,10 +343,10 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
                             ),
                           ),
                         )
-                        : Icon(Icons.send),
+                        : const Icon(Icons.send),
                 label: Text(
                   _isUploading ? 'Submitting...' : 'Submit Prescription',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -394,7 +394,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Recording saved successfully'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
@@ -423,7 +423,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
 
     if (!await audioFile.exists()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Audio file not found'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
@@ -444,7 +444,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
         // Minimum file size for audio
         print('Recording file is too small or empty');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Recording file is too small or empty'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
@@ -505,7 +505,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Recording deleted'),
         backgroundColor: Colors.orange,
         behavior: SnackBarBehavior.floating,
@@ -518,21 +518,21 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Permission Required'),
+            title: const Text('Permission Required'),
             content: Text(
               '$permissionType permission is required to record audio instructions. Please grant permission in app settings.',
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
                   Navigator.pop(context);
                   openAppSettings();
                 },
-                child: Text('Open Settings'),
+                child: const Text('Open Settings'),
               ),
             ],
           ),
@@ -624,7 +624,7 @@ class _PrescriptionPreviewPageState extends State<PrescriptionPreviewPage> {
       print('Prescription order created with ID: ${docRef.id}');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Prescription submitted successfully!'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,

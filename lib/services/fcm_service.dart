@@ -37,7 +37,7 @@ Future<void> showLocalNotification(FlutterLocalNotificationsPlugin plugin, Remot
       message.hashCode,
       title,
       body,
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           'high_importance_channel',
           'Queue Notifications',
@@ -49,7 +49,7 @@ Future<void> showLocalNotification(FlutterLocalNotificationsPlugin plugin, Remot
           enableVibration: true,
           fullScreenIntent: true,
         ),
-        iOS: const DarwinNotificationDetails(
+        iOS: DarwinNotificationDetails(
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
@@ -153,14 +153,14 @@ class FCMService {
         AndroidInitializationSettings('@mipmap/ic_launcher');
         
     // iOS initialization
-    final DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings(
+    const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings(
       requestSoundPermission: true,
       requestBadgePermission: true,
       requestAlertPermission: true,
     );
     
     // Initialization settings
-    final InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
@@ -399,13 +399,9 @@ class FCMService {
         notificationData['position'] = '1';  // Position is always 1 for your turn
       } else {
         // For queue_advanced notification type
-        if (notification.userPosition != null) {
-          notificationData['userPosition'] = notification.userPosition.toString();
-        }
-        if (notification.currentPosition != null) {
-          notificationData['currentPosition'] = notification.currentPosition.toString();
-        }
-      }
+        notificationData['userPosition'] = notification.userPosition.toString();
+              notificationData['currentPosition'] = notification.currentPosition.toString();
+            }
       
       // For terminated app notifications, simply show a direct notification
       // This is useful for local testing without Cloud Functions
@@ -415,8 +411,8 @@ class FCMService {
           notification.hashCode,
           notificationTitle,
           notificationBody,
-          NotificationDetails(
-            android: const AndroidNotificationDetails(
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
               _channelId,
               _channelName,
               channelDescription: _channelDesc,
@@ -424,7 +420,7 @@ class FCMService {
               priority: Priority.high,
               fullScreenIntent: true,
             ),
-            iOS: const DarwinNotificationDetails(
+            iOS: DarwinNotificationDetails(
               presentAlert: true,
               presentBadge: true,
               presentSound: true,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import '../providers/room_provider.dart';
 import '../models/room.dart';
 import '../models/membership.dart';
 import '../widgets/loading_indicator.dart';
@@ -141,7 +139,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
         _room = Room.fromMap(roomDoc.id, roomDoc.data()!);
         _membership = Membership.fromMap(
           membershipDoc!.id,
-          membershipDoc!.data()! as Map<String, dynamic>,
+          membershipDoc.data()! as Map<String, dynamic>,
         );
         _isLoading = false;
       });
@@ -263,8 +261,8 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
   Widget _buildErrorView() {
     return Center(
       child: Container(
-        margin: EdgeInsets.all(20),
-        padding: EdgeInsets.all(30),
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(30),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -279,9 +277,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline, size: 70, color: Colors.red),
-            SizedBox(height: 20),
-            Text(
+            const Icon(Icons.error_outline, size: 70, color: Colors.red),
+            const SizedBox(height: 20),
+            const Text(
               'Error',
               style: TextStyle(
                 fontSize: 24,
@@ -289,30 +287,30 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                 color: Colors.red,
               ),
             ),
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
             Text(
               _error!,
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, color: Colors.grey[800]),
             ),
-            SizedBox(height: 25),
+            const SizedBox(height: 25),
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 ElevatedButton.icon(
                   onPressed: _loadData,
-                  icon: Icon(Icons.refresh),
-                  label: Text('Try Again'),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try Again'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
                   ),
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 OutlinedButton.icon(
                   onPressed: () => HomePage2.navigate(context),
-                  icon: Icon(Icons.home),
-                  label: Text('Go Back'),
+                  icon: const Icon(Icons.home),
+                  label: const Text('Go Back'),
                 ),
               ],
             ),
@@ -331,28 +329,28 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
     final currentPosition = _room!.currentPosition;
 
     return SingleChildScrollView(
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           // Header
           _buildHeader(),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
 
           // Position Card
           _buildPositionCard(position, currentPosition, isActive, isPending),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Room Info Card
           _buildRoomInfoCard(),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Member Info Card
           _buildMemberInfoCard(),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Status Info
           _buildStatusInfo(isActive, isPending),
-          SizedBox(height: 30),
+          const SizedBox(height: 30),
 
           // Actions
           _buildActions(),
@@ -363,7 +361,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
 
   Widget _buildHeader() {
     return Container(
-      padding: EdgeInsets.all(0),
+      padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -381,7 +379,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
             color: Colors.deepPurple.withOpacity(0.15),
             blurRadius: 20,
             spreadRadius: 3,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -414,11 +412,11 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
           ),
           // Content
           Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(18),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -433,17 +431,17 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                       BoxShadow(
                         color: Colors.deepPurple.shade400.withOpacity(0.4),
                         blurRadius: 12,
-                        offset: Offset(0, 4),
+                        offset: const Offset(0, 4),
                       ),
                     ],
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.queue_rounded,
                     color: Colors.white,
                     size: 32,
                   ),
                 ),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -458,9 +456,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           height: 1.1,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Container(
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
                         ),
@@ -485,7 +483,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                               size: 16,
                               color: Colors.deepPurple.shade600,
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
                               'Code: ${_room!.code}',
                               style: TextStyle(
@@ -507,7 +505,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                     onTap: () => HomePage2.navigate(context),
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.9),
                         borderRadius: BorderRadius.circular(16),
@@ -519,7 +517,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           BoxShadow(
                             color: Colors.deepPurple.withOpacity(0.1),
                             blurRadius: 8,
-                            offset: Offset(0, 3),
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
@@ -599,7 +597,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                   : 1.0,
           child: Container(
             width: double.infinity,
-            padding: EdgeInsets.all(0),
+            padding: const EdgeInsets.all(0),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
@@ -613,7 +611,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                   color: primaryColor.withOpacity(0.25),
                   blurRadius: 20,
                   spreadRadius: 4,
-                  offset: Offset(0, 8),
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
@@ -646,12 +644,12 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                 ),
                 // Content
                 Padding(
-                  padding: EdgeInsets.all(32),
+                  padding: const EdgeInsets.all(32),
                   child: Column(
                     children: [
                       // Status icon and text
                       Container(
-                        padding: EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topLeft,
@@ -663,13 +661,13 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                             BoxShadow(
                               color: primaryColor.withOpacity(0.4),
                               blurRadius: 15,
-                              offset: Offset(0, 5),
+                              offset: const Offset(0, 5),
                             ),
                           ],
                         ),
                         child: Icon(statusIcon, size: 48, color: Colors.white),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                       Text(
                         statusText,
                         style: TextStyle(
@@ -682,10 +680,10 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                         textAlign: TextAlign.center,
                       ),
                       if (!isPending) ...[
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         // Position display
                         Container(
-                          padding: EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 24,
                             vertical: 16,
                           ),
@@ -700,7 +698,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.05),
                                 blurRadius: 10,
-                                offset: Offset(0, 3),
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
@@ -730,9 +728,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 12),
+                              const SizedBox(height: 12),
                               Container(
-                                padding: EdgeInsets.symmetric(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 8,
                                 ),
@@ -750,9 +748,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                 ),
                               ),
                               if (position > currentPosition) ...[
-                                SizedBox(height: 10),
+                                const SizedBox(height: 10),
                                 Container(
-                                  padding: EdgeInsets.symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 6,
                                   ),
@@ -787,7 +785,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
 
   Widget _buildRoomInfoCard() {
     return Container(
-      padding: EdgeInsets.all(0),
+      padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -801,7 +799,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
             color: Colors.indigo.withOpacity(0.15),
             blurRadius: 15,
             spreadRadius: 2,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -834,7 +832,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
           ),
           // Content
           Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -842,7 +840,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -857,17 +855,17 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           BoxShadow(
                             color: Colors.indigo.shade400.withOpacity(0.4),
                             blurRadius: 10,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.info_rounded,
                         color: Colors.white,
                         size: 28,
                       ),
                     ),
-                    SizedBox(width: 18),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -881,7 +879,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                               letterSpacing: 0.3,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Container(
                             height: 3,
                             width: 60,
@@ -900,10 +898,10 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                     ),
                   ],
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 // Info items
                 Container(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(18),
@@ -917,14 +915,14 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                         '${_room!.memberCount}',
                         Colors.indigo.shade600,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       _buildInfoRow(
                         Icons.group_work_rounded,
                         'Capacity',
                         '${_room!.capacity}',
                         Colors.blue.shade600,
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       _buildInfoRow(
                         Icons.info_outline_rounded,
                         'Status',
@@ -935,11 +933,11 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                   ),
                 ),
                 if (_room!.notice.isNotEmpty) ...[
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   // Enhanced elegant notice display
                   Container(
                     width: double.infinity,
-                    padding: EdgeInsets.all(0),
+                    padding: const EdgeInsets.all(0),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -949,7 +947,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           Colors.orange.shade50,
                           Colors.deepOrange.shade50,
                         ],
-                        stops: [0.0, 0.6, 1.0],
+                        stops: const [0.0, 0.6, 1.0],
                       ),
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
@@ -961,13 +959,13 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           color: Colors.amber.withOpacity(0.25),
                           blurRadius: 20,
                           spreadRadius: 3,
-                          offset: Offset(0, 8),
+                          offset: const Offset(0, 8),
                         ),
                         BoxShadow(
                           color: Colors.orange.withOpacity(0.15),
                           blurRadius: 30,
                           spreadRadius: 1,
-                          offset: Offset(0, 12),
+                          offset: const Offset(0, 12),
                         ),
                       ],
                     ),
@@ -1049,7 +1047,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                         ),
                         // Main content
                         Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1058,7 +1056,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                 children: [
                                   // Elegant icon container
                                   Container(
-                                    padding: EdgeInsets.all(12),
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         begin: Alignment.topLeft,
@@ -1075,23 +1073,23 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                           color: Colors.amber.shade500
                                               .withOpacity(0.4),
                                           blurRadius: 12,
-                                          offset: Offset(0, 6),
+                                          offset: const Offset(0, 6),
                                         ),
                                         BoxShadow(
                                           color: Colors.orange.shade400
                                               .withOpacity(0.2),
                                           blurRadius: 20,
-                                          offset: Offset(0, 10),
+                                          offset: const Offset(0, 10),
                                         ),
                                       ],
                                     ),
-                                    child: Icon(
+                                    child: const Icon(
                                       Icons.auto_awesome_rounded,
                                       color: Colors.white,
                                       size: 24,
                                     ),
                                   ),
-                                  SizedBox(width: 16),
+                                  const SizedBox(width: 16),
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment:
@@ -1106,7 +1104,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                             letterSpacing: 0.5,
                                           ),
                                         ),
-                                        SizedBox(height: 4),
+                                        const SizedBox(height: 4),
                                         Row(
                                           children: [
                                             Container(
@@ -1123,7 +1121,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                                     BorderRadius.circular(1.5),
                                               ),
                                             ),
-                                            SizedBox(width: 4),
+                                            const SizedBox(width: 4),
                                             Container(
                                               height: 3,
                                               width: 15,
@@ -1133,7 +1131,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                                     BorderRadius.circular(1.5),
                                               ),
                                             ),
-                                            SizedBox(width: 4),
+                                            const SizedBox(width: 4),
                                             Container(
                                               height: 3,
                                               width: 8,
@@ -1150,7 +1148,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                   ),
                                   // Elegant status indicator
                                   Container(
-                                    padding: EdgeInsets.symmetric(
+                                    padding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 6,
                                     ),
@@ -1167,11 +1165,11 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                           color: Colors.green.shade400
                                               .withOpacity(0.3),
                                           blurRadius: 8,
-                                          offset: Offset(0, 3),
+                                          offset: const Offset(0, 3),
                                         ),
                                       ],
                                     ),
-                                    child: Row(
+                                    child: const Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
@@ -1194,11 +1192,11 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                   ),
                                 ],
                               ),
-                              SizedBox(height: 20),
+                              const SizedBox(height: 20),
                               // Elegant content container
                               Container(
                                 width: double.infinity,
-                                padding: EdgeInsets.all(20),
+                                padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
                                   borderRadius: BorderRadius.circular(20),
@@ -1211,13 +1209,13 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                       color: Colors.amber.withOpacity(0.1),
                                       blurRadius: 15,
                                       spreadRadius: 2,
-                                      offset: Offset(0, 5),
+                                      offset: const Offset(0, 5),
                                     ),
                                     BoxShadow(
                                       color: Colors.white.withOpacity(0.9),
                                       blurRadius: 10,
                                       spreadRadius: -2,
-                                      offset: Offset(0, -2),
+                                      offset: const Offset(0, -2),
                                     ),
                                   ],
                                 ),
@@ -1228,7 +1226,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                     Row(
                                       children: [
                                         Container(
-                                          padding: EdgeInsets.all(8),
+                                          padding: const EdgeInsets.all(8),
                                           decoration: BoxDecoration(
                                             color: Colors.amber.shade100,
                                             borderRadius: BorderRadius.circular(
@@ -1241,7 +1239,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                             size: 18,
                                           ),
                                         ),
-                                        SizedBox(width: 12),
+                                        const SizedBox(width: 12),
                                         Expanded(
                                           child: Column(
                                             crossAxisAlignment:
@@ -1269,7 +1267,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                         ),
                                         // Priority indicator
                                         Container(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 8,
                                             vertical: 4,
                                           ),
@@ -1295,7 +1293,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
                                     // Divider
                                     Container(
                                       height: 1,
@@ -1311,10 +1309,10 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                         ),
                                       ),
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
                                     // Notice content with elegant typography
                                     Container(
-                                      padding: EdgeInsets.all(16),
+                                      padding: const EdgeInsets.all(16),
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           begin: Alignment.topLeft,
@@ -1346,7 +1344,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                         ),
                                       ),
                                     ),
-                                    SizedBox(height: 12),
+                                    const SizedBox(height: 12),
                                     // Elegant footer
                                     Row(
                                       children: [
@@ -1355,7 +1353,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                           color: Colors.amber.shade600,
                                           size: 14,
                                         ),
-                                        SizedBox(width: 6),
+                                        const SizedBox(width: 6),
                                         Text(
                                           'Posted by Room Creator',
                                           style: TextStyle(
@@ -1364,9 +1362,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                             fontStyle: FontStyle.italic,
                                           ),
                                         ),
-                                        Spacer(),
+                                        const Spacer(),
                                         Container(
-                                          padding: EdgeInsets.symmetric(
+                                          padding: const EdgeInsets.symmetric(
                                             horizontal: 6,
                                             vertical: 2,
                                           ),
@@ -1408,7 +1406,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
 
   Widget _buildMemberInfoCard() {
     return Container(
-      padding: EdgeInsets.all(0),
+      padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1422,7 +1420,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
             color: Colors.teal.withOpacity(0.15),
             blurRadius: 15,
             spreadRadius: 2,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -1455,7 +1453,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
           ),
           // Content
           Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1463,7 +1461,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -1475,17 +1473,17 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           BoxShadow(
                             color: Colors.teal.shade400.withOpacity(0.4),
                             blurRadius: 10,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.person_rounded,
                         color: Colors.white,
                         size: 28,
                       ),
                     ),
-                    SizedBox(width: 18),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1499,7 +1497,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                               letterSpacing: 0.3,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Container(
                             height: 3,
                             width: 60,
@@ -1518,10 +1516,10 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                     ),
                   ],
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 // Info items
                 Container(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(18),
@@ -1538,7 +1536,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                       if (_membership!.formData.isNotEmpty) ...[
                         ..._membership!.formData.entries.map(
                           (entry) => Padding(
-                            padding: EdgeInsets.only(top: 16),
+                            padding: const EdgeInsets.only(top: 16),
                             child: _buildInfoRow(
                               Icons.info_rounded,
                               entry.key.toUpperCase(),
@@ -1548,7 +1546,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           ),
                         ),
                       ],
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       _buildInfoRow(
                         Icons.access_time_rounded,
                         'Joined At',
@@ -1570,18 +1568,18 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
 
   Widget _buildInfoRow(IconData icon, String label, String value, Color color) {
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(8),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(icon, size: 20, color: color),
           ),
-          SizedBox(width: 14),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1595,7 +1593,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                     letterSpacing: 0.5,
                   ),
                 ),
-                SizedBox(height: 2),
+                const SizedBox(height: 2),
                 Text(
                   value,
                   style: TextStyle(
@@ -1617,7 +1615,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
     if (isPending) {
       return Container(
         width: double.infinity,
-        padding: EdgeInsets.all(0),
+        padding: const EdgeInsets.all(0),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -1631,7 +1629,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
               color: Colors.orange.withOpacity(0.15),
               blurRadius: 10,
               spreadRadius: 2,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 3),
             ),
           ],
         ),
@@ -1664,12 +1662,12 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
             ),
             // Content
             Padding(
-              padding: EdgeInsets.all(18),
+              padding: const EdgeInsets.all(18),
               child: Row(
                 children: [
                   // Animated icon container
                   Container(
-                    padding: EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
@@ -1681,17 +1679,17 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                         BoxShadow(
                           color: Colors.orange.shade400.withOpacity(0.4),
                           blurRadius: 8,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.schedule_rounded,
                       color: Colors.white,
                       size: 24,
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1707,9 +1705,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                 letterSpacing: 0.3,
                               ),
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Container(
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 2,
                               ),
@@ -1717,7 +1715,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                 color: Colors.orange.shade600,
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: Text(
+                              child: const Text(
                                 'WAITING',
                                 style: TextStyle(
                                   color: Colors.white,
@@ -1729,9 +1727,9 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                             ),
                           ],
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Container(
-                          padding: EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.9),
                             borderRadius: BorderRadius.circular(10),
@@ -1765,7 +1763,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
 
   Widget _buildActions() {
     return Container(
-      padding: EdgeInsets.all(0),
+      padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -1779,7 +1777,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
             color: Colors.black.withOpacity(0.08),
             blurRadius: 15,
             spreadRadius: 2,
-            offset: Offset(0, 5),
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -1812,7 +1810,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
           ),
           // Content
           Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1820,7 +1818,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                 Row(
                   children: [
                     Container(
-                      padding: EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -1835,17 +1833,17 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           BoxShadow(
                             color: Colors.blueGrey.shade400.withOpacity(0.4),
                             blurRadius: 10,
-                            offset: Offset(0, 4),
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.settings_rounded,
                         color: Colors.white,
                         size: 28,
                       ),
                     ),
-                    SizedBox(width: 18),
+                    const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1859,7 +1857,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                               letterSpacing: 0.3,
                             ),
                           ),
-                          SizedBox(height: 4),
+                          const SizedBox(height: 4),
                           Container(
                             height: 3,
                             width: 60,
@@ -1878,10 +1876,10 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                     ),
                   ],
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 // Action buttons
                 Container(
-                  padding: EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(18),
@@ -1900,14 +1898,14 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                                 0.3,
                               ),
                               blurRadius: 10,
-                              offset: Offset(0, 4),
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
                         child: ElevatedButton.icon(
                           onPressed: _loadData,
-                          icon: Icon(Icons.refresh_rounded, size: 24),
-                          label: Text(
+                          icon: const Icon(Icons.refresh_rounded, size: 24),
+                          label: const Text(
                             'Refresh Status',
                             style: TextStyle(
                               fontSize: 18,
@@ -1918,7 +1916,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple.shade600,
                             foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               vertical: 18,
                               horizontal: 24,
                             ),
@@ -1928,7 +1926,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                           ),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       // Back to home button
                       Container(
                         width: double.infinity,
@@ -1938,14 +1936,14 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                             BoxShadow(
                               color: Colors.white.withOpacity(0.8),
                               blurRadius: 8,
-                              offset: Offset(0, 2),
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
                         child: OutlinedButton.icon(
                           onPressed: () => HomePage2.navigate(context),
-                          icon: Icon(Icons.home_rounded, size: 24),
-                          label: Text(
+                          icon: const Icon(Icons.home_rounded, size: 24),
+                          label: const Text(
                             'Back to Home',
                             style: TextStyle(
                               fontSize: 18,
@@ -1960,7 +1958,7 @@ class _PositionDetailsPageState extends State<PositionDetailsPage>
                               width: 2,
                             ),
                             backgroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
+                            padding: const EdgeInsets.symmetric(
                               vertical: 18,
                               horizontal: 24,
                             ),

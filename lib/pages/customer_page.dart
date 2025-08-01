@@ -169,7 +169,7 @@ class _CustomerPageState extends State<CustomerPage> {
           _error = e.toString();
         });
       }
-      throw e; // Re-throw to be caught by _initialize
+      rethrow; // Re-throw to be caught by _initialize
     }
   }
 
@@ -452,18 +452,18 @@ class _CustomerPageState extends State<CustomerPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Loading...'),
+          title: const Text('Loading...'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
-        body: Center(child: LoadingIndicator()),
+        body: const Center(child: LoadingIndicator()),
       );
     }
 
     if (_error != null) {
       return Scaffold(
         appBar: AppBar(
-          title: Text('Error'),
+          title: const Text('Error'),
           backgroundColor: Colors.deepPurple,
           foregroundColor: Colors.white,
         ),
@@ -481,7 +481,7 @@ class _CustomerPageState extends State<CustomerPage> {
           Builder(
             builder:
                 (context) => IconButton(
-                  icon: Icon(Icons.menu),
+                  icon: const Icon(Icons.menu),
                   onPressed: () => Scaffold.of(context).openEndDrawer(),
                 ),
           ),
@@ -495,7 +495,7 @@ class _CustomerPageState extends State<CustomerPage> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [Colors.deepPurple.shade50, Colors.white, Colors.white],
-              stops: [0.0, 0.2, 1.0],
+              stops: const [0.0, 0.2, 1.0],
             ),
           ),
           child: SafeArea(
@@ -597,8 +597,8 @@ class _CustomerPageState extends State<CustomerPage> {
             // QR Code (Collapsible)
             if (_showQR)
               Container(
-                margin: EdgeInsets.all(16),
-                padding: EdgeInsets.all(16),
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -606,7 +606,7 @@ class _CustomerPageState extends State<CustomerPage> {
                     BoxShadow(
                       color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
-                      offset: Offset(0, 4),
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
@@ -616,9 +616,9 @@ class _CustomerPageState extends State<CustomerPage> {
                       'Room Code: ${_room!.code}',
                       style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -649,8 +649,8 @@ class _CustomerPageState extends State<CustomerPage> {
 
             // Pending Amount Card
             Container(
-              margin: EdgeInsets.all(16),
-              padding: EdgeInsets.all(16),
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
@@ -658,7 +658,7 @@ class _CustomerPageState extends State<CustomerPage> {
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
                     blurRadius: 10,
-                    offset: Offset(0, 4),
+                    offset: const Offset(0, 4),
                   ),
                 ],
               ),
@@ -672,7 +672,7 @@ class _CustomerPageState extends State<CustomerPage> {
                         'Pending Payment',
                         style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
                         '৳${_totalBakiAmount.toStringAsFixed(2)}',
                         style: TextStyle(
@@ -689,8 +689,8 @@ class _CustomerPageState extends State<CustomerPage> {
                       onPressed: () {
                         // TODO: Show payment history and record payment dialog
                       },
-                      icon: Icon(Icons.payment, color: Colors.deepPurple),
-                      label: Text(
+                      icon: const Icon(Icons.payment, color: Colors.deepPurple),
+                      label: const Text(
                         'Record Payment',
                         style: TextStyle(color: Colors.deepPurple),
                       ),
@@ -709,8 +709,8 @@ class _CustomerPageState extends State<CustomerPage> {
                       height: 50,
                       child: ElevatedButton.icon(
                         onPressed: () => _navigateToPlaceOrder(),
-                        icon: Icon(Icons.shopping_cart),
-                        label: Text(
+                        icon: const Icon(Icons.shopping_cart),
+                        label: const Text(
                           'Place Order',
                           style: TextStyle(fontSize: 16),
                         ),
@@ -724,21 +724,21 @@ class _CustomerPageState extends State<CustomerPage> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: SizedBox(
                       height: 50,
                       child: ElevatedButton.icon(
                         onPressed: () => _navigateToPurchaseHistory(),
-                        icon: Icon(Icons.history),
-                        label: Text('History', style: TextStyle(fontSize: 16)),
+                        icon: const Icon(Icons.history),
+                        label: const Text('History', style: TextStyle(fontSize: 16)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: Colors.deepPurple,
                           elevation: 2,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: BorderSide(color: Colors.deepPurple),
+                            side: const BorderSide(color: Colors.deepPurple),
                           ),
                         ),
                       ),
@@ -751,7 +751,7 @@ class _CustomerPageState extends State<CustomerPage> {
             // Recent Orders List
             Expanded(
               child: Container(
-                margin: EdgeInsets.all(16),
+                margin: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
@@ -765,7 +765,7 @@ class _CustomerPageState extends State<CustomerPage> {
                 ),
                 child: Column(
                   children: [
-                    Padding(
+                    const Padding(
                       padding: EdgeInsets.all(16),
                       child: Row(
                         children: [
@@ -794,7 +794,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                       size: 64,
                                       color: Colors.grey[400],
                                     ),
-                                    SizedBox(height: 16),
+                                    const SizedBox(height: 16),
                                     Text(
                                       'No orders yet',
                                       style: TextStyle(
@@ -806,7 +806,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                 ),
                               )
                               : ListView.builder(
-                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                padding: const EdgeInsets.symmetric(horizontal: 16),
                                 itemCount: _recentOrders.length,
                                 itemBuilder: (context, index) {
                                   final order = _recentOrders[index];
@@ -815,7 +815,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                   );
 
                                   return Card(
-                                    margin: EdgeInsets.only(bottom: 12),
+                                    margin: const EdgeInsets.only(bottom: 12),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -828,7 +828,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(
-                                            SnackBar(
+                                            const SnackBar(
                                               content: Text(
                                                 'Only pending orders can be edited',
                                                 style: TextStyle(
@@ -858,11 +858,11 @@ class _CustomerPageState extends State<CustomerPage> {
                                         child: Column(
                                           children: [
                                             ListTile(
-                                              contentPadding: EdgeInsets.all(
+                                              contentPadding: const EdgeInsets.all(
                                                 16,
                                               ),
                                               leading: Container(
-                                                padding: EdgeInsets.all(8),
+                                                padding: const EdgeInsets.all(8),
                                                 decoration: BoxDecoration(
                                                   color: statusColor
                                                       .withOpacity(0.1),
@@ -875,7 +875,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                               ),
                                               title: Text(
                                                 'Order #${order.id.substring(0, 8)}',
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -883,7 +883,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  SizedBox(height: 4),
+                                                  const SizedBox(height: 4),
                                                   Text(
                                                     '${order.items.length} items',
                                                   ),
@@ -899,7 +899,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                                 ],
                                               ),
                                               trailing: Container(
-                                                padding: EdgeInsets.symmetric(
+                                                padding: const EdgeInsets.symmetric(
                                                   horizontal: 12,
                                                   vertical: 6,
                                                 ),
@@ -922,11 +922,11 @@ class _CustomerPageState extends State<CustomerPage> {
                                             if (order.isReadyForPickup ||
                                                 order.isCompleted)
                                               Container(
-                                                padding: EdgeInsets.all(16),
+                                                padding: const EdgeInsets.all(16),
                                                 decoration: BoxDecoration(
                                                   color: Colors.grey.shade50,
                                                   borderRadius:
-                                                      BorderRadius.only(
+                                                      const BorderRadius.only(
                                                         bottomLeft:
                                                             Radius.circular(12),
                                                         bottomRight:
@@ -947,7 +947,7 @@ class _CustomerPageState extends State<CustomerPage> {
                                                     ),
                                                     Text(
                                                       '৳${order.totalAmount.toStringAsFixed(2)}',
-                                                      style: TextStyle(
+                                                      style: const TextStyle(
                                                         fontSize: 16,
                                                         fontWeight:
                                                             FontWeight.bold,
@@ -1061,19 +1061,19 @@ class _CustomerPageState extends State<CustomerPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Leave Room'),
-            content: Text('Are you sure you want to leave this room?'),
+            title: const Text('Leave Room'),
+            content: const Text('Are you sure you want to leave this room?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context); // Close dialog
                   _leaveRoom();
                 },
-                child: Text('Leave', style: TextStyle(color: Colors.red)),
+                child: const Text('Leave', style: TextStyle(color: Colors.red)),
               ),
             ],
           ),

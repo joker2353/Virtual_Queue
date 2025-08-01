@@ -28,7 +28,7 @@ class ElegantNoticeWidget extends StatelessWidget {
 
     Widget noticeContent = Container(
       width: double.infinity,
-      padding: EdgeInsets.all(0),
+      padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -44,7 +44,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                     color: config.shadowColor.withOpacity(0.15),
                     blurRadius: 12,
                     spreadRadius: 2,
-                    offset: Offset(0, 4),
+                    offset: const Offset(0, 4),
                   ),
                 ]
                 : null,
@@ -78,7 +78,7 @@ class ElegantNoticeWidget extends StatelessWidget {
           ),
           // Content
           Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -87,7 +87,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                     children: [
                       if (showIcon) ...[
                         Container(
-                          padding: EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               begin: Alignment.topLeft,
@@ -99,7 +99,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                               BoxShadow(
                                 color: config.iconColor.withOpacity(0.3),
                                 blurRadius: 8,
-                                offset: Offset(0, 3),
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
@@ -109,7 +109,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                             size: 22,
                           ),
                         ),
-                        SizedBox(width: 14),
+                        const SizedBox(width: 14),
                       ],
                       if (title != null) ...[
                         Expanded(
@@ -125,7 +125,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                                   letterSpacing: 0.3,
                                 ),
                               ),
-                              SizedBox(height: 3),
+                              const SizedBox(height: 3),
                               Container(
                                 height: 2.5,
                                 width: 45,
@@ -142,12 +142,12 @@ class ElegantNoticeWidget extends StatelessWidget {
                       ],
                     ],
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 ],
                 // Content container
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.9),
                     borderRadius: BorderRadius.circular(14),
@@ -177,7 +177,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                               color: Colors.grey.shade500,
                               size: 18,
                             ),
-                            SizedBox(width: 8),
+                            const SizedBox(width: 8),
                             Text(
                               'No content available',
                               style: TextStyle(
@@ -190,7 +190,7 @@ class ElegantNoticeWidget extends StatelessWidget {
                         ),
                       ],
                       if (actionButton != null) ...[
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
                         actionButton!,
                       ],
                     ],

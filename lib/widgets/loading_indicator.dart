@@ -32,7 +32,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
     // Setup pulsating animation
     _pulseController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1500),
     );
 
     _pulseAnimation = Tween<double>(begin: 0.4, end: 0.8).animate(
@@ -112,7 +112,7 @@ class _LoadingIndicatorState extends State<LoadingIndicator>
           SizedBox(height: widget.size * 0.3),
           TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0.6, end: 1.0),
-            duration: Duration(milliseconds: 800),
+            duration: const Duration(milliseconds: 800),
             builder: (context, value, child) {
               return Opacity(
                 opacity: value,

@@ -149,7 +149,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                     color: Colors.black.withOpacity(0.1),
                     blurRadius: 25,
                     spreadRadius: 5,
-                    offset: Offset(0, 10),
+                    offset: const Offset(0, 10),
                   ),
                 ],
               ),
@@ -161,7 +161,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                     // Header with gradient
                     Container(
                       width: double.infinity,
-                      padding: EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -176,8 +176,8 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                             color: Colors.white,
                             size: 56,
                           ),
-                          SizedBox(height: 12),
-                          Text(
+                          const SizedBox(height: 12),
+                          const Text(
                             'Join a Room',
                             style: TextStyle(
                               fontSize: 24,
@@ -185,7 +185,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                               color: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 6),
+                          const SizedBox(height: 6),
                           Text(
                             _isScanning
                                 ? 'Scan QR code to join'
@@ -204,7 +204,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                     Flexible(
                       child: SingleChildScrollView(
                         child: Padding(
-                          padding: EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(24),
                           child: Form(
                             key: _formKey,
                             child: Column(
@@ -219,7 +219,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                                   Padding(
                                     padding: const EdgeInsets.only(top: 16),
                                     child: Container(
-                                      padding: EdgeInsets.symmetric(
+                                      padding: const EdgeInsets.symmetric(
                                         vertical: 12,
                                         horizontal: 16,
                                       ),
@@ -232,11 +232,11 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                                       ),
                                       child: Row(
                                         children: [
-                                          Icon(
+                                          const Icon(
                                             Icons.error_outline,
                                             color: Colors.red,
                                           ),
-                                          SizedBox(width: 10),
+                                          const SizedBox(width: 10),
                                           Expanded(
                                             child: Text(
                                               _error!,
@@ -270,7 +270,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                                               side: BorderSide(
                                                 color: Colors.grey.shade300,
                                               ),
-                                              padding: EdgeInsets.symmetric(
+                                              padding: const EdgeInsets.symmetric(
                                                 vertical: 16,
                                               ),
                                             ),
@@ -283,7 +283,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                                             ),
                                           ),
                                         ),
-                                        SizedBox(width: 16),
+                                        const SizedBox(width: 16),
                                         Expanded(
                                           child: ElevatedButton(
                                             onPressed:
@@ -298,14 +298,14 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                                                 borderRadius:
                                                     BorderRadius.circular(12),
                                               ),
-                                              padding: EdgeInsets.symmetric(
+                                              padding: const EdgeInsets.symmetric(
                                                 vertical: 16,
                                               ),
                                               elevation: 0,
                                             ),
                                             child:
                                                 _isLoading
-                                                    ? LoadingIndicator(
+                                                    ? const LoadingIndicator(
                                                       size: 24,
                                                       message: null,
                                                       primaryColor:
@@ -313,7 +313,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                                                       backgroundColor:
                                                           Colors.transparent,
                                                     )
-                                                    : Text(
+                                                    : const Text(
                                                       'Continue',
                                                       style: TextStyle(
                                                         fontSize: 16,
@@ -343,7 +343,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
   }
 
   Widget _buildScannerSection() {
-    return Container(
+    return SizedBox(
       height: 320,
       child: Column(
         children: [
@@ -405,18 +405,18 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
               ),
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ElevatedButton.icon(
             onPressed: _toggleQRScanner,
-            icon: Icon(Icons.keyboard),
-            label: Text('Enter Code Manually'),
+            icon: const Icon(Icons.keyboard),
+            label: const Text('Enter Code Manually'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blue.shade600,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
               elevation: 0,
             ),
           ),
@@ -437,7 +437,7 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
             color: Colors.grey.shade800,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextFormField(
           controller: _codeController,
           decoration: InputDecoration(
@@ -458,9 +458,9 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.blue.shade600, width: 2),
             ),
-            contentPadding: EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
           ),
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 18,
             letterSpacing: 2, // Spacing between characters
             fontWeight: FontWeight.w500,
@@ -477,25 +477,25 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
             return null;
           },
         ),
-        SizedBox(height: 20),
-        Container(
+        const SizedBox(height: 20),
+        SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: _toggleQRScanner,
-            icon: Icon(Icons.qr_code_scanner),
-            label: Text('Scan QR Code'),
+            icon: const Icon(Icons.qr_code_scanner),
+            label: const Text('Scan QR Code'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.grey.shade200,
               foregroundColor: Colors.grey.shade800,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              padding: EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               elevation: 0,
             ),
           ),
         ),
-        SizedBox(height: 16),
+        const SizedBox(height: 16),
         Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0),

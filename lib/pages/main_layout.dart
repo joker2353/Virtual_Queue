@@ -13,7 +13,7 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 1;
 
-  final List<Widget> _pages = [SavedRoomsPage(), HomePage(), CreateRoomPage()];
+  final List<Widget> _pages = [const SavedRoomsPage(), const HomePage(), const CreateRoomPage()];
 
   void _onItemTapped(int index) {
     setState(() {
@@ -34,7 +34,7 @@ class _MainLayoutState extends State<MainLayout> {
         child: Stack(
           children: [
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(25),
@@ -42,7 +42,7 @@ class _MainLayoutState extends State<MainLayout> {
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
                     blurRadius: 10,
-                    offset: Offset(0, 0),
+                    offset: const Offset(0, 0),
                   ),
                 ],
               ),
@@ -84,7 +84,7 @@ class _MainLayoutState extends State<MainLayout> {
                       BoxShadow(
                         color: Colors.deepPurple.withOpacity(0.3),
                         blurRadius: 8,
-                        offset: Offset(0, 3),
+                        offset: const Offset(0, 3),
                       ),
                     ],
                   ),
@@ -123,7 +123,7 @@ class _MainLayoutState extends State<MainLayout> {
                 color: isSelected ? Colors.deepPurple : Colors.grey,
                 size: 24,
               ),
-              SizedBox(height: 4),
+              const SizedBox(height: 4),
               Text(
                 label,
                 style: TextStyle(

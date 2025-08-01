@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import 'dart:math' as math;
 import '../models/room.dart';
 import '../models/membership.dart';
 import '../models/user_room.dart';
@@ -326,7 +325,7 @@ class RoomProvider with ChangeNotifier {
 
       if (_userId.isEmpty) {
         print('Debug - User ID is empty, waiting briefly for auth...');
-        await Future.delayed(Duration(milliseconds: 500));
+        await Future.delayed(const Duration(milliseconds: 500));
         if (_userId.isEmpty) {
           print('Debug - User ID is still empty after waiting');
           throw Exception('Please sign in again to create a room');

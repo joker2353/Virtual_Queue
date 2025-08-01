@@ -348,7 +348,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                               return DropdownMenuItem(
                                 value: item,
                                 child: Text(
-                                  '${item.name} (\$${item.price?.toStringAsFixed(2) ?? "N/A"})',
+                                  '${item.name} (\$${item.price.toStringAsFixed(2) ?? "N/A"})',
                                 ),
                               );
                             }).toList(),

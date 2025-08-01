@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/room_provider.dart';
 import 'check_position_dialog.dart';
-import 'home_page.dart';
 
 class HomePage2 extends StatelessWidget {
   const HomePage2({super.key});
@@ -44,7 +43,7 @@ class HomePage2 extends StatelessWidget {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Virtual Queue',
                           style: TextStyle(
                             fontSize: 28,
@@ -66,8 +65,8 @@ class HomePage2 extends StatelessWidget {
                         onPressed: () {
                           Navigator.pop(context);
                         },
-                        icon: Icon(Icons.dashboard, color: Colors.white),
-                        label: Text(
+                        icon: const Icon(Icons.dashboard, color: Colors.white),
+                        label: const Text(
                           'Dashboard',
                           style: TextStyle(color: Colors.white),
                         ),
@@ -112,10 +111,10 @@ class HomePage2 extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
                         // Title
-                        Text(
+                        const Text(
                           'Check Your Queue Position',
                           textAlign: TextAlign.center,
                           style: TextStyle(
@@ -126,7 +125,7 @@ class HomePage2 extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
                         // Subtitle
                         Text(
@@ -139,12 +138,12 @@ class HomePage2 extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 40),
+                        const SizedBox(height: 40),
 
                         // Main CTA Button
                         Container(
                           width: double.infinity,
-                          constraints: BoxConstraints(maxWidth: 300),
+                          constraints: const BoxConstraints(maxWidth: 300),
                           child: ElevatedButton.icon(
                             onPressed: () {
                               showDialog(
@@ -158,7 +157,7 @@ class HomePage2 extends StatelessWidget {
                                               (_) => RoomProvider(userId: ''),
                                         ),
                                       ],
-                                      child: CheckPositionDialog(),
+                                      child: const CheckPositionDialog(),
                                     ),
                               );
                             },
@@ -179,7 +178,7 @@ class HomePage2 extends StatelessWidget {
                               backgroundColor: Colors.white,
                               elevation: 8,
                               shadowColor: Colors.black.withOpacity(0.3),
-                              padding: EdgeInsets.symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 vertical: 16,
                                 horizontal: 24,
                               ),
@@ -190,7 +189,7 @@ class HomePage2 extends StatelessWidget {
                           ),
                         ),
 
-                        SizedBox(height: 30),
+                        const SizedBox(height: 30),
 
                         // Secondary features
                         Row(
@@ -214,7 +213,7 @@ class HomePage2 extends StatelessWidget {
                           ],
                         ),
 
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -246,7 +245,7 @@ class HomePage2 extends StatelessWidget {
     required String subtitle,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(15),
@@ -256,10 +255,10 @@ class HomePage2 extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, color: Colors.white.withOpacity(0.9), size: 24),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 12,

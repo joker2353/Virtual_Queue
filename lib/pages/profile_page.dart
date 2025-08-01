@@ -61,7 +61,7 @@ class _ProfilePageState extends State<ProfilePage>
     // Initialize animation controller
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 800),
     );
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -91,7 +91,7 @@ class _ProfilePageState extends State<ProfilePage>
     try {
       // In a real app, this would load from Firestore or other storage
       // For this demo, we'll just use placeholder data
-      await Future.delayed(Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 800));
 
       // Safely get room provider
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
@@ -131,7 +131,7 @@ class _ProfilePageState extends State<ProfilePage>
           final user = auth.user!;
 
           if (auth.user == null) {
-            return Center(child: Text('Not signed in.'));
+            return const Center(child: Text('Not signed in.'));
           }
 
           return Stack(
@@ -154,7 +154,7 @@ class _ProfilePageState extends State<ProfilePage>
               // Main content
               SafeArea(
                 child: SingleChildScrollView(
-                  physics: BouncingScrollPhysics(),
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     children: [
                       // App bar with back button
@@ -167,10 +167,10 @@ class _ProfilePageState extends State<ProfilePage>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              icon: Icon(Icons.arrow_back, color: Colors.white),
+                              icon: const Icon(Icons.arrow_back, color: Colors.white),
                               onPressed: () => Navigator.pop(context),
                             ),
-                            Text(
+                            const Text(
                               'My Profile',
                               style: TextStyle(
                                 fontSize: 20,
@@ -178,7 +178,7 @@ class _ProfilePageState extends State<ProfilePage>
                                 color: Colors.white,
                               ),
                             ),
-                            SizedBox(width: 48), // Balance the layout
+                            const SizedBox(width: 48), // Balance the layout
                           ],
                         ),
                       ),
@@ -189,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: _buildProfileHeader(user),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // User stats
                       FadeTransition(
@@ -197,7 +197,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: _buildStatsSection(),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // User activity
                       FadeTransition(
@@ -205,7 +205,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: _buildActivitySection(),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Contact Information Section
                       FadeTransition(
@@ -213,7 +213,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: _buildContactSection(user),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Master SKU Management Button
                       FadeTransition(
@@ -241,7 +241,7 @@ class _ProfilePageState extends State<ProfilePage>
                         ),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
 
                       // Sign out button
                       Padding(
@@ -249,7 +249,7 @@ class _ProfilePageState extends State<ProfilePage>
                         child: _buildSignOutButton(auth, context),
                       ),
 
-                      SizedBox(height: 20),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
@@ -263,7 +263,7 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildProfileHeader(user) {
     return Container(
-      padding: EdgeInsets.only(bottom: 25),
+      padding: const EdgeInsets.only(bottom: 25),
       child: Column(
         children: [
           Container(
@@ -273,7 +273,7 @@ class _ProfilePageState extends State<ProfilePage>
                 BoxShadow(
                   color: Colors.black.withOpacity(0.2),
                   blurRadius: 15,
-                  offset: Offset(0, 5),
+                  offset: const Offset(0, 5),
                 ),
               ],
             ),
@@ -284,14 +284,14 @@ class _ProfilePageState extends State<ProfilePage>
                   user.photoURL != null ? NetworkImage(user.photoURL!) : null,
               child:
                   user.photoURL == null
-                      ? Icon(Icons.person, size: 60, color: Colors.deepPurple)
+                      ? const Icon(Icons.person, size: 60, color: Colors.deepPurple)
                       : null,
             ),
           ),
-          SizedBox(height: 15),
+          const SizedBox(height: 15),
           Text(
             user.displayName ?? 'User',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -304,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage>
               ],
             ),
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           Text(
             user.email ?? '',
             style: TextStyle(
@@ -319,8 +319,8 @@ class _ProfilePageState extends State<ProfilePage>
 
   Widget _buildStatsSection() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -337,8 +337,8 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           Row(
             children: [
-              Icon(Icons.bar_chart, color: Colors.deepPurple),
-              SizedBox(width: 10),
+              const Icon(Icons.bar_chart, color: Colors.deepPurple),
+              const SizedBox(width: 10),
               Text(
                 'Your Statistics',
                 style: TextStyle(
@@ -349,9 +349,9 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           _isLoading
-              ? Container(
+              ? const SizedBox(
                 height: 150,
                 child: Center(
                   child: LoadingIndicator(
@@ -392,14 +392,14 @@ class _ProfilePageState extends State<ProfilePage>
   }
 
   Widget _buildElegantLoader() {
-    return Container(
+    return SizedBox(
       height: 150,
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Animated dots loading indicator
-            Container(
+            SizedBox(
               height: 60,
               width: 200,
               child: Row(
@@ -410,12 +410,12 @@ class _ProfilePageState extends State<ProfilePage>
                       // Use a Builder to get a new context
                       return TweenAnimationBuilder(
                         tween: Tween<double>(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 600),
+                        duration: const Duration(milliseconds: 600),
                         curve: Curves.easeInOut,
                         builder: (animContext, value, child) {
                           // Renamed to avoid confusion
                           return Container(
-                            margin: EdgeInsets.symmetric(horizontal: 6),
+                            margin: const EdgeInsets.symmetric(horizontal: 6),
                             height: 12 + (8 * value),
                             width: 12 + (8 * value),
                             decoration: BoxDecoration(
@@ -453,14 +453,14 @@ class _ProfilePageState extends State<ProfilePage>
                 }),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Animated text
             Builder(
               builder: (builderContext) {
                 // Use Builder to get a new context
                 return TweenAnimationBuilder(
                   tween: Tween<double>(begin: 0.0, end: 1.0),
-                  duration: Duration(milliseconds: 800),
+                  duration: const Duration(milliseconds: 800),
                   builder: (animContext, value, child) {
                     // Renamed to avoid confusion
                     return Opacity(
@@ -510,7 +510,7 @@ class _ProfilePageState extends State<ProfilePage>
           ),
           child: Icon(icon, color: color.shade700, size: 30),
         ),
-        SizedBox(height: 10),
+        const SizedBox(height: 10),
         Text(
           value,
           style: TextStyle(
@@ -519,7 +519,7 @@ class _ProfilePageState extends State<ProfilePage>
             color: color.shade700,
           ),
         ),
-        SizedBox(height: 5),
+        const SizedBox(height: 5),
         Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
       ],
     );
@@ -552,8 +552,8 @@ class _ProfilePageState extends State<ProfilePage>
     ];
 
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20),
-      padding: EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
@@ -570,8 +570,8 @@ class _ProfilePageState extends State<ProfilePage>
         children: [
           Row(
             children: [
-              Icon(Icons.history, color: Colors.deepPurple),
-              SizedBox(width: 10),
+              const Icon(Icons.history, color: Colors.deepPurple),
+              const SizedBox(width: 10),
               Text(
                 'Recent Activity',
                 style: TextStyle(
@@ -582,7 +582,7 @@ class _ProfilePageState extends State<ProfilePage>
               ),
             ],
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           ...activities.map((activity) => _buildActivityItem(activity)),
         ],
       ),
@@ -607,16 +607,16 @@ class _ProfilePageState extends State<ProfilePage>
               size: 25,
             ),
           ),
-          SizedBox(width: 15),
+          const SizedBox(width: 15),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   activity['title'] as String,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
-                SizedBox(height: 3),
+                const SizedBox(height: 3),
                 Text(
                   activity['action'] as String,
                   style: TextStyle(color: Colors.grey[600], fontSize: 14),
@@ -642,13 +642,13 @@ class _ProfilePageState extends State<ProfilePage>
           BoxShadow(
             color: Colors.red.withOpacity(0.3),
             blurRadius: 10,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ElevatedButton.icon(
-        icon: Icon(Icons.logout, size: 22),
-        label: Text(
+        icon: const Icon(Icons.logout, size: 22),
+        label: const Text(
           'Sign Out',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
@@ -658,7 +658,7 @@ class _ProfilePageState extends State<ProfilePage>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          padding: EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           elevation: 0,
         ),
         onPressed: () async {
@@ -669,15 +669,15 @@ class _ProfilePageState extends State<ProfilePage>
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  title: Text('Sign Out'),
-                  content: Text('Are you sure you want to sign out?'),
+                  title: const Text('Sign Out'),
+                  content: const Text('Are you sure you want to sign out?'),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(dialogContext, false),
-                      child: Text('Cancel'),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.grey[700],
                       ),
+                      child: const Text('Cancel'),
                     ),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(dialogContext, true),
@@ -686,12 +686,12 @@ class _ProfilePageState extends State<ProfilePage>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 10,
                         ),
                       ),
-                      child: Text('Sign Out'),
+                      child: const Text('Sign Out'),
                     ),
                   ],
                 ),
@@ -735,8 +735,8 @@ class _ProfilePageState extends State<ProfilePage>
     return StatefulBuilder(
       builder: (context, setState) {
         return Container(
-          margin: EdgeInsets.symmetric(horizontal: 20),
-          padding: EdgeInsets.all(20),
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(15),
@@ -751,7 +751,7 @@ class _ProfilePageState extends State<ProfilePage>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              const Row(
                 children: [
                   Icon(Icons.phone_android, color: Colors.deepPurple),
                   SizedBox(width: 10),
@@ -765,7 +765,7 @@ class _ProfilePageState extends State<ProfilePage>
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               StreamBuilder<DocumentSnapshot>(
                 stream:
                     FirebaseFirestore.instance
@@ -774,11 +774,11 @@ class _ProfilePageState extends State<ProfilePage>
                         .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return Text('Error loading contact information');
+                    return const Text('Error loading contact information');
                   }
 
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return LoadingIndicator();
+                    return const LoadingIndicator();
                   }
 
                   final data = snapshot.data?.data() as Map<String, dynamic>?;
@@ -795,7 +795,7 @@ class _ProfilePageState extends State<ProfilePage>
                         'Mobile Number',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       TextFormField(
                         controller: phoneController,
                         keyboardType: TextInputType.phone,
@@ -807,11 +807,11 @@ class _ProfilePageState extends State<ProfilePage>
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.deepPurple),
+                            borderSide: const BorderSide(color: Colors.deepPurple),
                           ),
                           suffixIcon:
                               isUpdating
-                                  ? SizedBox(
+                                  ? const SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(
@@ -821,10 +821,10 @@ class _ProfilePageState extends State<ProfilePage>
                                       ),
                                     ),
                                   )
-                                  : Icon(Icons.edit, color: Colors.deepPurple),
+                                  : const Icon(Icons.edit, color: Colors.deepPurple),
                         ),
                       ),
-                      SizedBox(height: 16),
+                      const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -838,7 +838,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        SnackBar(
+                                        const SnackBar(
                                           content: Text(
                                             'Please enter a mobile number',
                                           ),
@@ -853,7 +853,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        SnackBar(
+                                        const SnackBar(
                                           content: Text(
                                             'Please enter a valid mobile number',
                                           ),
@@ -878,7 +878,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        SnackBar(
+                                        const SnackBar(
                                           content: Text(
                                             'Mobile number updated successfully',
                                           ),
@@ -890,7 +890,7 @@ class _ProfilePageState extends State<ProfilePage>
                                       ScaffoldMessenger.of(
                                         context,
                                       ).showSnackBar(
-                                        SnackBar(
+                                        const SnackBar(
                                           content: Text(
                                             'Failed to update mobile number',
                                           ),
@@ -905,12 +905,12 @@ class _ProfilePageState extends State<ProfilePage>
                                   },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple,
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Update Mobile Number',
                             style: TextStyle(
                               fontSize: 16,

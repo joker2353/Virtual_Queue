@@ -15,7 +15,7 @@ class QRShareDialog extends StatelessWidget {
   void _copyCodeToClipboard(BuildContext context) {
     Clipboard.setData(ClipboardData(text: roomCode));
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text('Room code copied to clipboard'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.deepPurple,
@@ -54,7 +54,7 @@ class QRShareDialog extends StatelessWidget {
                     color: Colors.deepPurple.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.qr_code_rounded,
                     color: Colors.deepPurple,
                     size: 24,
@@ -65,7 +65,7 @@ class QRShareDialog extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Share Queue',
                         style: TextStyle(
                           fontSize: 20,
@@ -87,7 +87,7 @@ class QRShareDialog extends StatelessWidget {
                   icon: Icon(Icons.close, color: Colors.grey[400]),
                   style: IconButton.styleFrom(
                     backgroundColor: Colors.grey[50],
-                    padding: EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(8),
                   ),
                 ),
               ],
@@ -127,7 +127,7 @@ class QRShareDialog extends StatelessWidget {
             GestureDetector(
               onTap: () => _copyCodeToClipboard(context),
               child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 decoration: BoxDecoration(
                   color: Colors.grey[50],
                   borderRadius: BorderRadius.circular(12),
@@ -142,7 +142,7 @@ class QRShareDialog extends StatelessWidget {
                     ),
                     Text(
                       roomCode,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.deepPurple,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -150,7 +150,7 @@ class QRShareDialog extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.copy, size: 16, color: Colors.deepPurple),
+                    const Icon(Icons.copy, size: 16, color: Colors.deepPurple),
                   ],
                 ),
               ),
@@ -163,17 +163,17 @@ class QRShareDialog extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple,
                 foregroundColor: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check_circle_outline, size: 20),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Text(
                     'Done',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
