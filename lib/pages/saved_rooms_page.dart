@@ -6,6 +6,8 @@ import '../widgets/loading_indicator.dart';
 import '../models/user_room.dart';
 import 'shop_order_page.dart';
 import 'customer_page.dart';
+import 'medical_customer_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SavedRoomsPage extends StatefulWidget {
   const SavedRoomsPage({super.key});
@@ -133,14 +135,36 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
       margin: EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
+        onTap: () async {
           final auth = Provider.of<AuthProvider>(context, listen: false);
-          CustomerPage.navigate(
-            context,
-            room.roomId,
-            auth.user?.displayName ?? 'Customer',
-            auth.user?.email ?? '',
-          );
+
+          // Get room data to check category
+          final roomDoc =
+              await FirebaseFirestore.instance
+                  .collection('rooms')
+                  .doc(room.roomId)
+                  .get();
+
+          if (roomDoc.exists) {
+            final roomData = roomDoc.data()!;
+            final category = roomData['category'] ?? 'shop';
+
+            if (category == 'medical') {
+              MedicalCustomerPage.navigate(
+                context,
+                room.roomId,
+                auth.user?.displayName ?? 'Customer',
+                auth.user?.email ?? '',
+              );
+            } else {
+              CustomerPage.navigate(
+                context,
+                room.roomId,
+                auth.user?.displayName ?? 'Customer',
+                auth.user?.email ?? '',
+              );
+            }
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Container(
@@ -149,7 +173,10 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
             gradient: LinearGradient(
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
-              colors: [Colors.blue.shade50, Colors.white],
+              colors:
+                  room.category == 'medical'
+                      ? [Colors.teal.shade50, Colors.white]
+                      : [Colors.blue.shade50, Colors.white],
             ),
           ),
           padding: const EdgeInsets.all(16.0),
@@ -159,11 +186,17 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
+                  color:
+                      room.category == 'medical'
+                          ? Colors.teal.shade100
+                          : Colors.blue.shade100,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.blue.withOpacity(0.2),
+                      color: (room.category == 'medical'
+                              ? Colors.teal
+                              : Colors.blue)
+                          .withOpacity(0.2),
                       blurRadius: 5,
                       offset: Offset(0, 2),
                     ),
@@ -171,8 +204,13 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                 ),
                 child: Center(
                   child: Icon(
-                    Icons.store,
-                    color: Colors.blue.shade700,
+                    room.category == 'medical'
+                        ? Icons.local_pharmacy
+                        : Icons.store,
+                    color:
+                        room.category == 'medical'
+                            ? Colors.teal.shade700
+                            : Colors.blue.shade700,
                     size: 30,
                   ),
                 ),
@@ -192,16 +230,26 @@ class _SavedRoomsPageState extends State<SavedRoomsPage> {
                     ),
                     SizedBox(height: 6),
                     _buildStatusChip(
-                      label: 'Shop',
-                      color: Colors.blue,
-                      icon: Icons.shopping_bag,
+                      label:
+                          room.category == 'medical' ? 'Medical Shop' : 'Shop',
+                      color:
+                          room.category == 'medical'
+                              ? Colors.teal
+                              : Colors.blue,
+                      icon:
+                          room.category == 'medical'
+                              ? Icons.local_pharmacy
+                              : Icons.shopping_bag,
                     ),
                   ],
                 ),
               ),
               Icon(
                 Icons.arrow_forward_ios,
-                color: Colors.blue.shade700,
+                color:
+                    room.category == 'medical'
+                        ? Colors.teal.shade700
+                        : Colors.blue.shade700,
                 size: 18,
               ),
             ],

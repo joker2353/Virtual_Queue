@@ -10,7 +10,7 @@ class QueueNotification {
   final int userPosition;
   final String notificationType;
   final String? message;
-  
+
   QueueNotification({
     required this.roomId,
     required this.roomName,
@@ -19,7 +19,7 @@ class QueueNotification {
     required this.notificationType,
     this.message,
   });
-  
+
   // For your turn notifications
   factory QueueNotification.yourTurn({
     required String roomId,
@@ -35,7 +35,7 @@ class QueueNotification {
       message: 'It\'s your turn in $roomName!',
     );
   }
-  
+
   // For queue advancement notifications
   factory QueueNotification.queueAdvanced({
     required String roomId,
@@ -49,27 +49,29 @@ class QueueNotification {
       currentPosition: currentPosition,
       userPosition: userPosition,
       notificationType: 'queue_advanced',
-      message: 'The queue in $roomName has advanced. Current position: $currentPosition',
+      message:
+          'The queue in $roomName has advanced. Current position: $currentPosition',
     );
   }
-  
+
   // From JSON factory
-  factory QueueNotification.fromJson(Map<String, dynamic> json) => 
+  factory QueueNotification.fromJson(Map<String, dynamic> json) =>
       _$QueueNotificationFromJson(json);
-  
+
   // To JSON method
   Map<String, dynamic> toJson() => _$QueueNotificationToJson(this);
-  
+
   // Convert to FCM payload
   Map<String, dynamic> toFcmPayload() {
     return {
       'notification': {
-        'title': notificationType == 'your_turn' 
-            ? 'It\'s Your Turn!' 
-            : 'Queue Update',
+        'title':
+            notificationType == 'your_turn'
+                ? 'It\'s Your Turn!'
+                : 'Queue Update',
         'body': message,
       },
       'data': toJson(),
     };
   }
-} 
+}

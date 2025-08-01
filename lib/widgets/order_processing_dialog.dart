@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/order.dart';
 import '../providers/fcm_provider.dart';
 import 'loading_indicator.dart';
+import '../providers/debt_provider.dart';
 
 class OrderProcessingDialog extends StatefulWidget {
   final Order order;
@@ -21,6 +22,8 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
   final _bakiAmountController = TextEditingController();
   bool _isProcessing = false;
   String? _error;
+  double bakiAmount = 0.0;
+  List<OrderItem> _processedItems = [];
 
   @override
   void initState() {
@@ -54,7 +57,6 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
           .doc(widget.order.id);
 
       double finalAmount = widget.order.totalAmount;
-      double bakiAmount = 0.0;
 
       if (markAsCompleted) {
         // Calculate baki amount based on unpaid amount
@@ -72,23 +74,19 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 : (markAsReady ? 'ready_for_pickup' : 'processing'),
         totalAmount: finalAmount,
         updatedAt: DateTime.now(),
-        metadata:
-            markAsCompleted
-                ? {...widget.order.metadata ?? {}, 'bakiAmount': bakiAmount}
-                : widget.order.metadata,
+        metadata: {
+          ...widget.order.metadata ?? {},
+          'processedItems': _processedItems,
+          'bakiAmount': bakiAmount,
+        },
       );
 
       await orderRef.update(updatedOrder.toMap());
 
-      // If there's a baki amount, update the customer's pending amount
+      // If there's a baki amount, update the customer's debt using the new debt system
       if (markAsCompleted && bakiAmount > 0) {
-        final customerRef = firestore.FirebaseFirestore.instance
-            .collection('customers')
-            .doc(widget.order.customerContact);
-
-        await customerRef.set({
-          'pendingAmount': firestore.FieldValue.increment(bakiAmount),
-        }, SetOptions(merge: true));
+        final debtProvider = Provider.of<DebtProvider>(context, listen: false);
+        await debtProvider.addDebtFromOrder(widget.order, bakiAmount);
       }
 
       // Get room name for notification
@@ -252,7 +250,6 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                 ),
               ],
             ] else ...[
-              // Show completion UI when order is ready for pickup
               Text(
                 'Total Amount: ৳${widget.order.totalAmount.toStringAsFixed(2)}',
                 style: TextStyle(
@@ -270,7 +267,6 @@ class _OrderProcessingDialogState extends State<OrderProcessingDialog> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  helperText: 'Enter amount that customer did not pay',
                 ),
                 keyboardType: TextInputType.number,
               ),

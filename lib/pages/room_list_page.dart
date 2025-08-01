@@ -11,6 +11,7 @@ import 'create_room_dialog.dart';
 import 'shop_dashboard_page.dart';
 import 'shop_order_page.dart';
 import 'creator_dashboard_page.dart';
+import 'medical_dashboard_page.dart';
 
 class RoomListPage extends StatefulWidget {
   const RoomListPage({Key? key}) : super(key: key);
@@ -71,6 +72,10 @@ class _RoomListPageState extends State<RoomListPage> {
                   DropdownMenuItem(value: 'all', child: Text('All Rooms')),
                   DropdownMenuItem(value: 'queue', child: Text('Queues')),
                   DropdownMenuItem(value: 'shop', child: Text('Shops')),
+                  DropdownMenuItem(
+                    value: 'medical',
+                    child: Text('Medical Shops'),
+                  ),
                 ],
                 onChanged: (value) {
                   if (value != null) {
@@ -174,6 +179,13 @@ class _RoomListPageState extends State<RoomListPage> {
               context,
               MaterialPageRoute(
                 builder: (context) => ShopDashboardPage(roomId: room.id),
+              ),
+            );
+          } else if (room.category == 'medical') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MedicalDashboardPage(roomId: room.id),
               ),
             );
           } else {

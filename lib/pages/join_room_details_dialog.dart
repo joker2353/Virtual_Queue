@@ -222,7 +222,6 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                     return null;
                                   },
                                 ),
-
                                 if (_error != null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 20),
@@ -257,7 +256,6 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                       ),
                                     ),
                                   ),
-
                                 SizedBox(height: 30),
                                 Row(
                                   children: [

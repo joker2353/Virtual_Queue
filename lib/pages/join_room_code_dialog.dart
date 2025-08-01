@@ -371,12 +371,19 @@ class _JoinRoomCodeDialogState extends State<JoinRoomCodeDialog>
                         for (final barcode in barcodes) {
                           if (barcode.rawValue != null) {
                             final code = barcode.rawValue!;
-                            developer.log('Barcode found! $code');
+                            // Remove URL scheme if present
+                            final roomCode = code.replaceAll(
+                              'virtualqueue://',
+                              '',
+                            );
+                            developer.log('Barcode found! $roomCode');
                             _scannerController.stop();
                             setState(() {
-                              _codeController.text = code;
+                              _codeController.text = roomCode;
                               _isScanning = false;
                             });
+                            // Auto verify and proceed
+                            _verifyRoomCode();
                           }
                         }
                       },

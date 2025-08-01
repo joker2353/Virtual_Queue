@@ -7,6 +7,7 @@ import '../models/user_room.dart';
 import 'create_room_dialog.dart';
 import 'creator_dashboard_page.dart';
 import 'shop_dashboard_page.dart';
+import 'medical_dashboard_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/room.dart';
 
@@ -137,6 +138,14 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                       builder: (context) => ShopDashboardPage(roomId: roomId),
                     ),
                   );
+                } else if (roomData.category == 'medical') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => MedicalDashboardPage(roomId: roomId),
+                    ),
+                  );
                 } else {
                   CreatorDashboardPage.navigate(context, roomId);
                 }
@@ -231,6 +240,14 @@ class _CreateRoomPageState extends State<CreateRoomPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => ShopDashboardPage(roomId: room.roomId),
+                ),
+              );
+            } else if (roomData.category == 'medical') {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => MedicalDashboardPage(roomId: room.roomId),
                 ),
               );
             } else {

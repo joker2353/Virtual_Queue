@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
+import 'package:provider/provider.dart';
 import '../models/room.dart';
 import '../models/order.dart';
+import '../models/menu_item.dart';
+import '../models/master_sku.dart';
+import '../providers/master_sku_provider.dart';
+import '../providers/inventory_provider.dart';
 import '../widgets/loading_indicator.dart';
+import '../widgets/cart_item_card.dart';
 
 class ShopOrderPage extends StatefulWidget {
   final String roomId;
@@ -89,11 +95,22 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
 
   void _addItem() {
     if (_formKey.currentState!.validate()) {
+      final quantity = int.tryParse(_itemQuantityController.text.trim());
+      if (quantity == null || quantity <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid quantity'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
       setState(() {
         _items.add(
           OrderItem(
             name: _itemNameController.text,
-            quantity: _itemQuantityController.text.trim(),
+            quantity: quantity,
             notes: _itemNotesController.text.trim(),
             isAvailable: true,
           ),
@@ -107,7 +124,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
 
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Item added successfully'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
@@ -125,14 +142,16 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
   void _editItem(int index) {
     final item = _items[index];
     final nameController = TextEditingController(text: item.name);
-    final quantityController = TextEditingController(text: item.quantity);
+    final quantityController = TextEditingController(
+      text: item.quantity.toString(),
+    );
     final notesController = TextEditingController(text: item.notes ?? '');
 
     showDialog(
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Edit Item'),
+            title: const Text('Edit Item'),
             content: Form(
               key: GlobalKey<FormState>(),
               child: Column(
@@ -140,37 +159,9 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                 children: [
                   TextFormField(
                     controller: nameController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Item Name',
-                      labelStyle: TextStyle(
-                        color: Colors.deepPurple.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple.shade200,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple.shade200,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple,
-                          width: 2,
-                        ),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.shopping_bag,
-                        color: Colors.deepPurple.shade400,
-                      ),
-                      filled: true,
-                      fillColor: Colors.deepPurple.shade50.withOpacity(0.3),
+                      border: OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -179,85 +170,32 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: quantityController,
-                    decoration: InputDecoration(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
                       labelText: 'Quantity',
-                      labelStyle: TextStyle(
-                        color: Colors.deepPurple.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple.shade200,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple.shade200,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple,
-                          width: 2,
-                        ),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.scale,
-                        color: Colors.deepPurple.shade400,
-                      ),
-                      filled: true,
-                      fillColor: Colors.deepPurple.shade50.withOpacity(0.3),
-                      hintText: 'Enter quantity with unit',
+                      border: OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter quantity';
                       }
+                      final quantity = int.tryParse(value);
+                      if (quantity == null || quantity <= 0) {
+                        return 'Please enter a valid quantity';
+                      }
                       return null;
                     },
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: notesController,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Notes (Optional)',
-                      labelStyle: TextStyle(
-                        color: Colors.deepPurple.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple.shade200,
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple.shade200,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: Colors.deepPurple,
-                          width: 2,
-                        ),
-                      ),
-                      prefixIcon: Icon(
-                        Icons.note_outlined,
-                        color: Colors.deepPurple.shade400,
-                      ),
-                      filled: true,
-                      fillColor: Colors.deepPurple.shade50.withOpacity(0.3),
+                      border: OutlineInputBorder(),
                     ),
-                    maxLines: 2,
                   ),
                 ],
               ),
@@ -265,36 +203,31 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: Text('Cancel'),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
                 onPressed: () {
+                  final quantity = int.tryParse(quantityController.text);
+                  if (quantity == null || quantity <= 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter a valid quantity'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
                   setState(() {
-                    _items[index] = OrderItem(
+                    _items[index] = item.copyWith(
                       name: nameController.text,
-                      quantity: quantityController.text.trim(),
-                      notes: notesController.text.trim(),
-                      isAvailable: true,
+                      quantity: quantity,
+                      notes: notesController.text,
                     );
                   });
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Item updated successfully'),
-                      backgroundColor: Colors.green,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text('Save Changes'),
+                child: const Text('Update'),
               ),
             ],
           ),
@@ -774,7 +707,7 @@ class _ShopOrderPageState extends State<ShopOrderPage> {
                                         ),
                                         child: Center(
                                           child: Text(
-                                            item.quantity,
+                                            item.quantity.toString(),
                                             style: TextStyle(
                                               color: Colors.deepPurple.shade700,
                                               fontWeight: FontWeight.w600,

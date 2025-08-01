@@ -4,11 +4,13 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'dart:async';
 import '../models/room.dart';
 import '../models/order.dart';
+import '../models/customer_debt.dart';
 import '../widgets/loading_indicator.dart';
 import 'shop_order_page.dart';
 import 'purchase_history_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/cache_provider.dart';
+import '../providers/debt_provider.dart';
 import 'edit_order_page.dart';
 import '../widgets/qr_share_dialog.dart';
 
@@ -50,16 +52,56 @@ class CustomerPage extends StatefulWidget {
 class _CustomerPageState extends State<CustomerPage> {
   Room? _room;
   List<Order> _recentOrders = [];
-  double _pendingAmount = 0;
+  CustomerDebt? _customerDebt;
   bool _isLoading = true;
   String? _error;
   bool _showQR = false;
   StreamSubscription? _ordersSubscription;
-  StreamSubscription? _customerDataSubscription;
+  StreamSubscription<firestore.DocumentSnapshot>? _debtSubscription;
+  late DebtProvider _debtProvider;
+  double _totalBakiAmount = 0.0; // Add this field
+
+  double _getBakiAmount(Order order) {
+    return (order.metadata?['bakiAmount'] as num?)?.toDouble() ?? 0;
+  }
+
+  Future<void> _calculateTotalBakiAmount() async {
+    try {
+      // Query all completed orders for this customer in this room
+      final ordersQuery =
+          await firestore.FirebaseFirestore.instance
+              .collection('orders')
+              .where('customerContact', isEqualTo: widget.customerContact)
+              .where('roomId', isEqualTo: widget.roomId)
+              .where('status', isEqualTo: 'completed')
+              .get();
+
+      double totalBaki = 0.0;
+      for (var doc in ordersQuery.docs) {
+        try {
+          final order = Order.fromMap(doc.id, doc.data());
+          final bakiAmount = _getBakiAmount(order);
+          totalBaki += bakiAmount;
+        } catch (e) {
+          print('Error parsing order ${doc.id}: $e');
+          continue;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _totalBakiAmount = totalBaki;
+        });
+      }
+    } catch (e) {
+      print('Error calculating total baki amount: $e');
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _debtProvider = Provider.of<DebtProvider>(context, listen: false);
     _initialize();
   }
 
@@ -67,7 +109,7 @@ class _CustomerPageState extends State<CustomerPage> {
   void dispose() {
     print('Disposing CustomerPage - cleaning up listeners');
     _ordersSubscription?.cancel();
-    _customerDataSubscription?.cancel();
+    _debtSubscription?.cancel();
     super.dispose();
   }
 
@@ -79,8 +121,11 @@ class _CustomerPageState extends State<CustomerPage> {
       // First load the room data
       await _loadRoom();
 
+      // Calculate total baki amount
+      await _calculateTotalBakiAmount();
+
       // Then set up the listeners
-      _setupCustomerDataListener();
+      _setupDebtListener();
       _setupOrdersListener();
 
       // Update loading state after everything is set up
@@ -128,26 +173,157 @@ class _CustomerPageState extends State<CustomerPage> {
     }
   }
 
-  void _setupCustomerDataListener() {
+  Future<String?> _getPhoneNumberFromEmail(String email) async {
     try {
-      print('Setting up customer data listener for: ${widget.customerContact}');
+      final userQuery =
+          await firestore.FirebaseFirestore.instance
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
 
-      _customerDataSubscription = firestore.FirebaseFirestore.instance
-          .collection('customers')
-          .doc(widget.customerContact)
+      if (userQuery.docs.isNotEmpty) {
+        return userQuery.docs.first.data()['contactNumber'] as String?;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting phone number from email: $e');
+      return null;
+    }
+  }
+
+  String _normalizePhoneNumber(String phoneNumber) {
+    return phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+  }
+
+  Future<void> _setupDebtListener() async {
+    try {
+      print('Setting up debt listener for: ${widget.customerContact}');
+
+      String contactToUse = widget.customerContact;
+      bool isEmail = widget.customerContact.contains('@');
+
+      // If the contact is an email, try to get the phone number
+      if (isEmail) {
+        print('Contact is an email, fetching phone number...');
+        final phoneNumber = await _getPhoneNumberFromEmail(
+          widget.customerContact,
+        );
+        if (phoneNumber != null) {
+          print(
+            'Found phone number: $phoneNumber for email: ${widget.customerContact}',
+          );
+          contactToUse = phoneNumber;
+        } else {
+          print('No phone number found for email: ${widget.customerContact}');
+        }
+      }
+
+      // Normalize the phone number if it's not an email
+      if (!contactToUse.contains('@')) {
+        final normalizedPhone = _normalizePhoneNumber(contactToUse);
+        print('Normalized phone number: $normalizedPhone from: $contactToUse');
+        contactToUse = normalizedPhone;
+      }
+
+      final debtId = '${widget.roomId}_$contactToUse';
+      print('Using debt ID: $debtId');
+
+      // First try to get the current debt state
+      final initialDebt = await _debtProvider.getCustomerDebt(
+        widget.roomId,
+        contactToUse,
+      );
+      if (initialDebt != null) {
+        print('Found initial debt: ${initialDebt.currentDebt}');
+        if (mounted) {
+          setState(() {
+            _customerDebt = initialDebt;
+          });
+        }
+      }
+
+      // Set up real-time listener
+      _debtSubscription = firestore.FirebaseFirestore.instance
+          .collection('customer_debts')
+          .doc(debtId)
           .snapshots()
           .listen(
-            (snapshot) {
-              print('Received customer data update');
+            (snapshot) async {
+              print('Received debt data update for ID: $debtId');
               if (mounted) {
-                setState(() {
-                  _pendingAmount =
-                      (snapshot.data()?['pendingAmount'] ?? 0).toDouble();
-                });
+                if (snapshot.exists) {
+                  print('Debt document exists, fetching history...');
+                  // Get debt history and payment history
+                  final debtHistoryQuery =
+                      await snapshot.reference
+                          .collection('debt_history')
+                          .orderBy('timestamp', descending: true)
+                          .limit(10)
+                          .get();
+
+                  final paymentHistoryQuery =
+                      await snapshot.reference
+                          .collection('payment_history')
+                          .orderBy('timestamp', descending: true)
+                          .limit(10)
+                          .get();
+
+                  final debt = CustomerDebt.fromMap(
+                    snapshot.id,
+                    snapshot.data()!,
+                  ).copyWith(
+                    debtHistory:
+                        debtHistoryQuery.docs
+                            .map((doc) => DebtHistory.fromMap(doc.data()))
+                            .toList(),
+                    paymentHistory:
+                        paymentHistoryQuery.docs
+                            .map(
+                              (doc) =>
+                                  PaymentHistory.fromMap(doc.id, doc.data()),
+                            )
+                            .toList(),
+                  );
+
+                  print('Current debt amount: ${debt.currentDebt}');
+                  setState(() {
+                    _customerDebt = debt;
+                  });
+                } else {
+                  print('No debt document found for ID: $debtId');
+                  // If no debt found with phone number and original contact was email,
+                  // try looking up with email as fallback
+                  if (isEmail && contactToUse != widget.customerContact) {
+                    print('Trying fallback to email-based debt ID...');
+                    final emailDebtId =
+                        '${widget.roomId}_${widget.customerContact}';
+                    final emailDebtDoc =
+                        await firestore.FirebaseFirestore.instance
+                            .collection('customer_debts')
+                            .doc(emailDebtId)
+                            .get();
+
+                    if (emailDebtDoc.exists) {
+                      print('Found old email-based debt, migrating...');
+                      // Let DebtProvider handle the migration
+                      await _debtProvider.getCustomerDebt(
+                        widget.roomId,
+                        widget.customerContact,
+                      );
+                      // The migration will trigger a new snapshot with the phone-based ID
+                      return;
+                    }
+                  }
+
+                  setState(() {
+                    _customerDebt = null;
+                  });
+                }
               }
             },
             onError: (error) {
-              print('Error in customer data listener: $error');
+              print('Error in debt listener: $error');
               if (mounted) {
                 setState(() {
                   _error = error.toString();
@@ -157,7 +333,7 @@ class _CustomerPageState extends State<CustomerPage> {
             },
           );
     } catch (e) {
-      print('Error setting up customer data listener: $e');
+      print('Error setting up debt listener: $e');
       if (mounted) {
         setState(() {
           _error = e.toString();
@@ -449,7 +625,7 @@ class _CustomerPageState extends State<CustomerPage> {
                         border: Border.all(color: Colors.grey[200]!, width: 1),
                       ),
                       child: QrImageView(
-                        data: "virtualqueue://${_room!.code}",
+                        data: _room!.code,
                         version: QrVersions.auto,
                         size: 150,
                         backgroundColor: Colors.white,
@@ -498,32 +674,27 @@ class _CustomerPageState extends State<CustomerPage> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        '৳${_pendingAmount.toStringAsFixed(2)}',
+                        '৳${_totalBakiAmount.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: _pendingAmount > 0 ? Colors.red : Colors.green,
+                          color:
+                              _totalBakiAmount > 0 ? Colors.red : Colors.green,
                         ),
                       ),
                     ],
                   ),
-                  Container(
-                    padding: EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color:
-                          _pendingAmount > 0
-                              ? Colors.red.withOpacity(0.1)
-                              : Colors.green.withOpacity(0.1),
-                      shape: BoxShape.circle,
+                  if (_totalBakiAmount > 0)
+                    TextButton.icon(
+                      onPressed: () {
+                        // TODO: Show payment history and record payment dialog
+                      },
+                      icon: Icon(Icons.payment, color: Colors.deepPurple),
+                      label: Text(
+                        'Record Payment',
+                        style: TextStyle(color: Colors.deepPurple),
+                      ),
                     ),
-                    child: Icon(
-                      _pendingAmount > 0
-                          ? Icons.account_balance_wallet
-                          : Icons.check_circle,
-                      color: _pendingAmount > 0 ? Colors.red : Colors.green,
-                      size: 24,
-                    ),
-                  ),
                 ],
               ),
             ),

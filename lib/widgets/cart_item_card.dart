@@ -5,7 +5,7 @@ class CartItemCard extends StatelessWidget {
   final OrderItem item;
   final TextEditingController notesController;
   final VoidCallback onRemove;
-  final Function(String) onQuantityChanged;
+  final Function(int) onQuantityChanged;
   final Function(String) onNotesChanged;
 
   const CartItemCard({
@@ -20,42 +20,50 @@ class CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: EdgeInsets.all(12),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    item.name,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.remove_circle_outline),
+                  icon: const Icon(Icons.remove_circle_outline),
                   color: Colors.red,
                   onPressed: onRemove,
                   tooltip: 'Remove item',
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Text('Quantity: '),
-                SizedBox(width: 8),
-                Container(
+                const Text('Quantity: '),
+                const SizedBox(width: 8),
+                SizedBox(
                   width: 60,
                   child: TextFormField(
-                    initialValue: item.quantity,
+                    initialValue: item.quantity.toString(),
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       isDense: true,
-                      contentPadding: EdgeInsets.symmetric(
+                      contentPadding: const EdgeInsets.symmetric(
                         horizontal: 8,
                         vertical: 8,
                       ),
@@ -63,18 +71,30 @@ class CartItemCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    onChanged: onQuantityChanged,
+                    onChanged: (value) {
+                      final newQuantity = int.tryParse(value);
+                      if (newQuantity != null && newQuantity > 0) {
+                        onQuantityChanged(newQuantity);
+                      }
+                    },
                   ),
                 ),
+                if (item.unitPrice != null) ...[
+                  const SizedBox(width: 16),
+                  Text(
+                    'Price: \$${(item.unitPrice! * item.quantity).toStringAsFixed(2)}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ],
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             TextField(
               controller: notesController,
               decoration: InputDecoration(
                 hintText: 'Add notes (optional)',
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(
+                contentPadding: const EdgeInsets.symmetric(
                   horizontal: 8,
                   vertical: 8,
                 ),

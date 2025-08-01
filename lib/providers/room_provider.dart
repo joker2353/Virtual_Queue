@@ -86,7 +86,7 @@ class RoomProvider with ChangeNotifier {
               (room) =>
                   room.isJoined &&
                   room.status == 'active' &&
-                  room.category == 'shop',
+                  (room.category == 'shop' || room.category == 'medical'),
             )
             .toList();
     print('DEBUG: shopRooms count: ${rooms.length}');
@@ -375,6 +375,12 @@ class RoomProvider with ChangeNotifier {
       if (category == 'shop') {
         roomData['shopSettings'] = {
           'acceptOrders': true,
+          'allowCashPayment': true,
+          'notifyOnNewOrder': true,
+        };
+      } else if (category == 'medical') {
+        roomData['shopSettings'] = {
+          'acceptPrescriptions': true,
           'allowCashPayment': true,
           'notifyOnNewOrder': true,
         };

@@ -61,11 +61,17 @@ class _CheckPositionDialogState extends State<CheckPositionDialog>
   void _onQRCodeScanned(BarcodeCapture capture) {
     final String? code = capture.barcodes.first.rawValue;
     if (code != null && code.isNotEmpty) {
+      // Remove URL scheme if present
+      final roomCode = code.replaceAll('virtualqueue://', '');
       setState(() {
-        _roomCodeController.text = code;
+        _roomCodeController.text = roomCode;
         _showQRScanner = false;
       });
       HapticFeedback.lightImpact();
+      // Auto check position if phone number is filled
+      if (_phoneController.text.isNotEmpty) {
+        _checkPosition();
+      }
     }
   }
 

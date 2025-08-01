@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/loading_indicator.dart';
+import 'package:provider/provider.dart';
+import '../providers/debt_provider.dart';
+import '../models/customer_debt.dart';
 
 class CustomerListPage extends StatefulWidget {
   final String roomId;
@@ -18,10 +21,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
   String? _error;
   final TextEditingController _searchController = TextEditingController();
   List<Map<String, dynamic>> _filteredCustomers = [];
+  late DebtProvider _debtProvider;
 
   @override
   void initState() {
     super.initState();
+    _debtProvider = Provider.of<DebtProvider>(context, listen: false);
     _loadCustomers();
   }
 
@@ -33,68 +38,80 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   Future<void> _loadCustomers() async {
     try {
+      print('Loading customers for room: ${widget.roomId}');
+
+      // Get all customers for this room
       final customersQuery =
           await firestore.FirebaseFirestore.instance
               .collection('customers')
               .where('roomId', isEqualTo: widget.roomId)
               .get();
 
+      print('Found ${customersQuery.docs.length} customers');
       final List<Map<String, dynamic>> customers = [];
+
+      // Process each customer
       for (var doc in customersQuery.docs) {
         final data = doc.data();
-        final contact = doc.id;
+        final phoneNumber = doc.id; // Customer ID is the phone number
+        print('Processing customer: ${data['name']}, Phone: $phoneNumber');
+
+        // Get debt using composite key (roomId_phoneNumber)
+        double pendingAmount = 0.0;
+        final debtId = '${widget.roomId}_$phoneNumber';
+        print('Fetching debt for ID: $debtId');
 
         try {
-          // Get the latest order for this customer without complex ordering
+          final debtDoc =
+              await firestore.FirebaseFirestore.instance
+                  .collection('customer_debts')
+                  .doc(debtId)
+                  .get();
+
+          if (debtDoc.exists) {
+            final debtData = debtDoc.data()!;
+            pendingAmount = (debtData['currentDebt'] as num).toDouble();
+            print('Found debt amount: $pendingAmount');
+          } else {
+            print('No debt record found');
+          }
+        } catch (debtError) {
+          print('Error fetching debt: $debtError');
+        }
+
+        // Get latest order date
+        DateTime? lastOrderDate;
+        try {
           final latestOrder =
               await firestore.FirebaseFirestore.instance
                   .collection('orders')
                   .where('roomId', isEqualTo: widget.roomId)
-                  .where('customerContact', isEqualTo: contact)
+                  .where('customerContact', isEqualTo: phoneNumber)
+                  .orderBy('createdAt', descending: true)
+                  .limit(1)
                   .get();
 
-          DateTime? lastOrderDate;
-
           if (latestOrder.docs.isNotEmpty) {
-            // Sort in memory instead of using Firestore ordering
-            final sortedOrders =
-                latestOrder.docs
-                    .map(
-                      (doc) => {
-                        'data': doc.data(),
-                        'createdAt':
-                            (doc.data()['createdAt'] as firestore.Timestamp)
-                                .toDate(),
-                      },
-                    )
-                    .toList()
-                  ..sort(
-                    (a, b) => (b['createdAt'] as DateTime).compareTo(
-                      a['createdAt'] as DateTime,
-                    ),
-                  );
-
-            if (sortedOrders.isNotEmpty) {
-              lastOrderDate = sortedOrders.first['createdAt'] as DateTime;
-            }
+            lastOrderDate =
+                (latestOrder.docs.first.data()['createdAt']
+                        as firestore.Timestamp)
+                    .toDate();
           }
-
-          customers.add({
-            'contact': contact,
-            'name': data['name'] ?? 'Unknown',
-            'pendingAmount': (data['pendingAmount'] ?? 0).toDouble(),
-            'lastOrderDate': lastOrderDate,
-          });
         } catch (orderError) {
-          print('Error loading orders for customer $contact: $orderError');
-          // Add customer even if we can't load their orders
-          customers.add({
-            'contact': contact,
-            'name': data['name'] ?? 'Unknown',
-            'pendingAmount': (data['pendingAmount'] ?? 0).toDouble(),
-            'lastOrderDate': null,
-          });
+          print('Error fetching latest order: $orderError');
         }
+
+        final customerData = {
+          'id': doc.id,
+          'name': data['name'] ?? 'Unknown',
+          'phoneNumber': phoneNumber,
+          'email': data['email'],
+          'pendingAmount': pendingAmount,
+          'lastOrderDate': lastOrderDate,
+        };
+
+        print('Adding customer data: $customerData');
+        customers.add(customerData);
       }
 
       // Sort customers by pending amount (highest first)
@@ -131,10 +148,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
         _filteredCustomers =
             _customers.where((customer) {
               final name = customer['name'].toString().toLowerCase();
-              final contact = customer['contact'].toString().toLowerCase();
+              final contact = customer['phoneNumber'].toString().toLowerCase();
+              final email = (customer['email'] ?? '').toString().toLowerCase();
               final searchLower = query.toLowerCase();
               return name.contains(searchLower) ||
-                  contact.contains(searchLower);
+                  contact.contains(searchLower) ||
+                  email.contains(searchLower);
             }).toList();
       }
     });
@@ -159,6 +178,159 @@ class _CustomerListPageState extends State<CustomerListPage> {
   String _formatDate(DateTime? date) {
     if (date == null) return 'No orders yet';
     return '${date.day}/${date.month}/${date.year}';
+  }
+
+  void _showCustomerDetails(Map<String, dynamic> customer) async {
+    print('Showing details for customer: ${customer['name']}');
+    final debtId = '${widget.roomId}_${customer['phoneNumber']}';
+
+    try {
+      // Get full debt details including history
+      final debtDoc =
+          await firestore.FirebaseFirestore.instance
+              .collection('customer_debts')
+              .doc(debtId)
+              .get();
+
+      List<DebtHistory> debtHistory = [];
+      List<PaymentHistory> paymentHistory = [];
+
+      if (debtDoc.exists) {
+        // Get debt history
+        final debtHistoryQuery =
+            await debtDoc.reference
+                .collection('debt_history')
+                .orderBy('timestamp', descending: true)
+                .limit(5)
+                .get();
+
+        debtHistory =
+            debtHistoryQuery.docs
+                .map((doc) => DebtHistory.fromMap(doc.data()))
+                .toList();
+
+        // Get payment history
+        final paymentHistoryQuery =
+            await debtDoc.reference
+                .collection('payment_history')
+                .orderBy('timestamp', descending: true)
+                .limit(5)
+                .get();
+
+        paymentHistory =
+            paymentHistoryQuery.docs
+                .map((doc) => PaymentHistory.fromMap(doc.id, doc.data()))
+                .toList();
+      }
+
+      if (!mounted) return;
+
+      showDialog(
+        context: context,
+        builder:
+            (context) => AlertDialog(
+              title: Text(customer['name']),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Phone: ${customer['phoneNumber']}',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    ),
+                    if (customer['email'] != null)
+                      Padding(
+                        padding: EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Email: ${customer['email']}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Total Baki: ৳${customer['pendingAmount'].toStringAsFixed(2)}',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color:
+                            customer['pendingAmount'] > 0
+                                ? Colors.red
+                                : Colors.green,
+                      ),
+                    ),
+                    if (customer['lastOrderDate'] != null) ...[
+                      SizedBox(height: 8),
+                      Text(
+                        'Last Order: ${_formatDate(customer['lastOrderDate'])}',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                    if (debtHistory.isNotEmpty) ...[
+                      SizedBox(height: 16),
+                      Text(
+                        'Recent Debts:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      ...debtHistory.map(
+                        (debt) => ListTile(
+                          dense: true,
+                          title: Text(debt.description),
+                          subtitle: Text(_formatDate(debt.timestamp)),
+                          trailing: Text(
+                            '৳${debt.amount.toStringAsFixed(2)}',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (paymentHistory.isNotEmpty) ...[
+                      SizedBox(height: 16),
+                      Text(
+                        'Recent Payments:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      ...paymentHistory.map(
+                        (payment) => ListTile(
+                          dense: true,
+                          title: Text('Payment (${payment.paymentMethod})'),
+                          subtitle: Text(_formatDate(payment.timestamp)),
+                          trailing: Text(
+                            '৳${payment.amount.toStringAsFixed(2)}',
+                            style: TextStyle(color: Colors.green),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Close'),
+                ),
+              ],
+            ),
+      );
+    } catch (e) {
+      print('Error showing customer details: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading customer details'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -207,223 +379,102 @@ class _CustomerListPageState extends State<CustomerListPage> {
         title: Text('Customer List'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        elevation: 0,
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.deepPurple, Colors.deepPurple.shade50],
-            stops: const [0.0, 0.3],
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: TextField(
+              controller: _searchController,
+              onChanged: _filterCustomers,
+              decoration: InputDecoration(
+                hintText: 'Search by name or phone',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            // Search Bar
-            Container(
-              margin: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: TextField(
-                controller: _searchController,
-                onChanged: _filterCustomers,
-                decoration: InputDecoration(
-                  hintText: 'Search by name or contact',
-                  prefixIcon: Icon(Icons.search, color: Colors.deepPurple),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
+
+          // Stats
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    'Total Customers',
+                    _customers.length.toString(),
+                    Icons.people,
                   ),
                 ),
-              ),
-            ),
-
-            // Customer Stats
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Customers',
-                      _customers.length.toString(),
-                      Icons.people,
-                    ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: _buildStatCard(
+                    'Total Baki',
+                    '৳${_customers.fold(0.0, (sum, customer) => sum + (customer['pendingAmount'] as double)).toStringAsFixed(2)}',
+                    Icons.account_balance_wallet,
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Total Pending',
-                      '৳${_customers.fold(0.0, (sum, customer) => sum + (customer['pendingAmount'] as double)).toStringAsFixed(2)}',
-                      Icons.account_balance_wallet,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Customers List
-            Expanded(
-              child: Container(
-                margin: EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
                 ),
-                child:
-                    _filteredCustomers.isEmpty
-                        ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.people_outline,
-                                size: 64,
-                                color: Colors.grey[400],
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No customers found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
+              ],
+            ),
+          ),
+
+          // Customer List
+          Expanded(
+            child: ListView.builder(
+              padding: EdgeInsets.all(8),
+              itemCount: _filteredCustomers.length,
+              itemBuilder: (context, index) {
+                final customer = _filteredCustomers[index];
+                final hasPendingAmount =
+                    (customer['pendingAmount'] as double) > 0;
+
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor:
+                          hasPendingAmount
+                              ? Colors.red.shade50
+                              : Colors.green.shade50,
+                      child: Icon(
+                        Icons.person,
+                        color: hasPendingAmount ? Colors.red : Colors.green,
+                      ),
+                    ),
+                    title: Text(
+                      customer['name'],
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(customer['phoneNumber']),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Baki',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
                           ),
-                        )
-                        : ListView.builder(
-                          padding: EdgeInsets.all(8),
-                          itemCount: _filteredCustomers.length,
-                          itemBuilder: (context, index) {
-                            final customer = _filteredCustomers[index];
-                            final hasPendingAmount =
-                                (customer['pendingAmount'] as double) > 0;
-
-                            return Card(
-                              margin: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: ListTile(
-                                contentPadding: EdgeInsets.all(16),
-                                leading: CircleAvatar(
-                                  backgroundColor:
-                                      hasPendingAmount
-                                          ? Colors.red.shade50
-                                          : Colors.green.shade50,
-                                  child: Icon(
-                                    Icons.person,
-                                    color:
-                                        hasPendingAmount
-                                            ? Colors.red
-                                            : Colors.green,
-                                  ),
-                                ),
-                                title: Text(
-                                  customer['name'] ?? 'Unknown',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      customer['contact'],
-                                      style: TextStyle(color: Colors.grey[600]),
-                                    ),
-                                    SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.calendar_today,
-                                          size: 14,
-                                          color: Colors.grey[600],
-                                        ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Last Order: ${_formatDate(customer['lastOrderDate'])}',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      children: [
-                                        Text(
-                                          'Pending',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                        Text(
-                                          '৳${customer['pendingAmount'].toStringAsFixed(2)}',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            color:
-                                                hasPendingAmount
-                                                    ? Colors.red
-                                                    : Colors.green,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    SizedBox(width: 16),
-                                    IconButton(
-                                      icon: Icon(Icons.phone),
-                                      color: Colors.deepPurple,
-                                      onPressed:
-                                          () => _callCustomer(
-                                            customer['contact'],
-                                          ),
-                                      tooltip: 'Call customer',
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
                         ),
-              ),
+                        Text(
+                          '৳${customer['pendingAmount'].toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: hasPendingAmount ? Colors.red : Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    onTap: () => _showCustomerDetails(customer),
+                  ),
+                );
+              },
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -442,33 +493,22 @@ class _CustomerListPageState extends State<CustomerListPage> {
           ),
         ],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.deepPurple.shade50,
-              shape: BoxShape.circle,
+          Icon(icon, color: Colors.deepPurple, size: 32),
+          SizedBox(height: 8),
+          Text(title, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color:
+                  title.contains('Baki') && value != '৳0.00'
+                      ? Colors.red
+                      : Colors.deepPurple,
             ),
-            child: Icon(icon, color: Colors.deepPurple, size: 24),
-          ),
-          SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              ),
-              Text(
-                value,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  color: Colors.deepPurple,
-                ),
-              ),
-            ],
           ),
         ],
       ),

@@ -4,13 +4,16 @@ import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'dart:async';
 import '../providers/room_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/debt_provider.dart';
 import '../models/room.dart';
 import '../models/order.dart';
+import '../models/customer_debt.dart';
 import '../widgets/loading_indicator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'join_requests_page.dart';
 import 'customer_list_page.dart'; // New page for customer list
 import 'order_history_page.dart';
+import 'inventory_management_page.dart'; // Add this import
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -42,18 +45,23 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
   bool _isLoading = true;
   String? _error;
   StreamSubscription? _ordersSubscription;
+  StreamSubscription? _debtsSubscription;
   bool _showQR = false;
   double _totalSales = 0;
+  double _totalPendingDebts = 0;
+  late DebtProvider _debtProvider;
 
   @override
   void initState() {
     super.initState();
+    _debtProvider = Provider.of<DebtProvider>(context, listen: false);
     _initialize();
   }
 
   @override
   void dispose() {
     _ordersSubscription?.cancel();
+    _debtsSubscription?.cancel();
     super.dispose();
   }
 
@@ -63,9 +71,10 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
       // First load the room data
       await _loadRoom();
 
-      // Then set up the orders listener
+      // Then set up the listeners
       if (_room != null) {
         _setupOrdersListener();
+        _setupDebtsListener();
       }
     } catch (e) {
       print('Error initializing shop dashboard: $e');
@@ -224,6 +233,47 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
     }
   }
 
+  void _setupDebtsListener() {
+    try {
+      print('Setting up debts listener for room: ${widget.roomId}');
+
+      // Listen to all debts for this room
+      _debtsSubscription = firestore.FirebaseFirestore.instance
+          .collection('customer_debts')
+          .where('roomId', isEqualTo: widget.roomId)
+          .snapshots()
+          .listen(
+            (snapshot) {
+              if (mounted) {
+                double totalPendingDebts = 0;
+                for (var doc in snapshot.docs) {
+                  totalPendingDebts +=
+                      (doc.data()['currentDebt'] ?? 0).toDouble();
+                }
+                setState(() {
+                  _totalPendingDebts = totalPendingDebts;
+                });
+              }
+            },
+            onError: (error) {
+              print('Error in debts listener: $error');
+              if (mounted) {
+                setState(() {
+                  _error = error.toString();
+                });
+              }
+            },
+          );
+    } catch (e) {
+      print('Error setting up debts listener: $e');
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
   Future<void> _refreshOrders() async {
     print('Manually refreshing orders');
     // Clear cache before refreshing
@@ -353,6 +403,23 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                         },
                       ),
                       _buildDrawerItem(
+                        icon: Icons.inventory_2_rounded,
+                        title: 'Inventory',
+                        subtitle: 'Manage shop items',
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => InventoryManagementPage(
+                                    roomId: widget.roomId,
+                                  ),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDrawerItem(
                         icon: Icons.history_rounded,
                         title: 'Order History',
                         subtitle: 'View past orders',
@@ -432,7 +499,7 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                         border: Border.all(color: Colors.grey[200]!, width: 1),
                       ),
                       child: QrImageView(
-                        data: "virtualqueue://${_room!.code}",
+                        data: _room!.code,
                         version: QrVersions.auto,
                         size: 200,
                         backgroundColor: Colors.white,
@@ -471,8 +538,8 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                   Expanded(
                     flex: 1,
                     child: _buildStatCard(
-                      'Pending',
-                      '৳${_calculateTotalPending().toStringAsFixed(0)}',
+                      'Total Baki',
+                      '৳${_totalPendingDebts.toStringAsFixed(0)}',
                       Icons.account_balance_wallet,
                     ),
                   ),
@@ -505,6 +572,23 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                               builder:
                                   (context) =>
                                       CustomerListPage(roomId: widget.roomId),
+                            ),
+                          ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: _buildActionButton(
+                      icon: Icons.inventory,
+                      label: 'Inventory',
+                      onPressed:
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => InventoryManagementPage(
+                                    roomId: widget.roomId,
+                                  ),
                             ),
                           ),
                     ),
@@ -735,16 +819,6 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
         setState(() {});
       }
     });
-  }
-
-  double _calculateTotalPending() {
-    double totalPending = 0;
-    for (var order in _activeOrders) {
-      if (order.status == 'pending') {
-        totalPending += order.totalAmount;
-      }
-    }
-    return totalPending;
   }
 
   Widget _buildStatCard(String label, String value, IconData icon) {

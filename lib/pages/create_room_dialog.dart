@@ -219,23 +219,44 @@ class _CreateRoomDialogState extends State<CreateRoomDialog>
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: Colors.grey.shade200),
                           ),
-                          child: Row(
+                          child: Column(
                             children: [
-                              Expanded(
-                                child: _buildCategoryOption(
-                                  'queue',
-                                  Icons.people,
-                                  'Queue',
-                                  'Create a virtual queue for customers',
-                                ),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildCategoryOption(
+                                      'queue',
+                                      Icons.people,
+                                      'Queue',
+                                      'Create a virtual queue for customers',
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildCategoryOption(
+                                      'shop',
+                                      Icons.store,
+                                      'Shop',
+                                      'Create a shop for taking orders',
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Expanded(
-                                child: _buildCategoryOption(
-                                  'shop',
-                                  Icons.store,
-                                  'Shop',
-                                  'Create a shop for taking orders',
-                                ),
+                              SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildCategoryOption(
+                                      'medical',
+                                      Icons.local_pharmacy,
+                                      'Medical Shop',
+                                      'Create a medical shop for prescriptions',
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: SizedBox(),
+                                  ), // Empty space for balance
+                                ],
                               ),
                             ],
                           ),

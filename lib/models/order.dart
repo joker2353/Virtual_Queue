@@ -111,10 +111,13 @@ class Order {
 
 class OrderItem {
   final String name;
-  final String quantity;
+  final int quantity; // Changed from String to int
   final String? notes;
   final bool isAvailable;
   final bool isChecked;
+  final String? masterSkuId; // Reference to MasterSKU
+  final double? unitPrice; // Price per unit at time of order
+  final String? category; // Category from MasterSKU
 
   OrderItem({
     required this.name,
@@ -122,6 +125,9 @@ class OrderItem {
     this.notes,
     required this.isAvailable,
     this.isChecked = false,
+    this.masterSkuId,
+    this.unitPrice,
+    this.category,
   });
 
   Map<String, dynamic> toMap() {
@@ -131,26 +137,40 @@ class OrderItem {
       'notes': notes,
       'isAvailable': isAvailable,
       'isChecked': isChecked,
+      'masterSkuId': masterSkuId,
+      'unitPrice': unitPrice,
+      'category': category,
     };
   }
 
   factory OrderItem.fromMap(Map<String, dynamic> map) {
-    final quantity = map['quantity'];
+    final rawQuantity = map['quantity'];
+    final int quantity =
+        rawQuantity is String
+            ? int.tryParse(rawQuantity) ?? 1
+            : (rawQuantity as int? ?? 1);
+
     return OrderItem(
       name: map['name'] as String,
-      quantity: quantity is int ? quantity.toString() : quantity as String,
+      quantity: quantity,
       notes: map['notes'] as String?,
       isAvailable: map['isAvailable'] as bool? ?? true,
       isChecked: map['isChecked'] as bool? ?? false,
+      masterSkuId: map['masterSkuId'] as String?,
+      unitPrice: (map['unitPrice'] as num?)?.toDouble(),
+      category: map['category'] as String?,
     );
   }
 
   OrderItem copyWith({
     String? name,
-    String? quantity,
+    int? quantity,
     String? notes,
     bool? isAvailable,
     bool? isChecked,
+    String? masterSkuId,
+    double? unitPrice,
+    String? category,
   }) {
     return OrderItem(
       name: name ?? this.name,
@@ -158,6 +178,12 @@ class OrderItem {
       notes: notes ?? this.notes,
       isAvailable: isAvailable ?? this.isAvailable,
       isChecked: isChecked ?? this.isChecked,
+      masterSkuId: masterSkuId ?? this.masterSkuId,
+      unitPrice: unitPrice ?? this.unitPrice,
+      category: category ?? this.category,
     );
   }
+
+  // Calculate total price for this item
+  double get totalPrice => (unitPrice ?? 0.0) * quantity;
 }

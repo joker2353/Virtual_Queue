@@ -103,7 +103,7 @@ class QRShareDialog extends StatelessWidget {
                 border: Border.all(color: Colors.grey[200]!, width: 1),
               ),
               child: QrImageView(
-                data: "virtualqueue://${roomCode}", // Using custom URL scheme
+                data: roomCode,
                 version: QrVersions.auto,
                 size: 220,
                 backgroundColor: Colors.white,
