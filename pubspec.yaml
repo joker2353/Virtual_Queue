@@ -35,12 +35,17 @@ dependencies:
   firebase_auth: ^4.15.3
   cloud_firestore: ^4.13.6
   firebase_storage: ^11.6.0
+  gallery_saver_plus: ^3.2.0  
+  svg_flutter: ^0.0.1
+  flutter_svg: ^2.0.9
   provider: ^6.1.1
+  emoji_picker_flutter: ^3.1.0
   firebase_messaging: ^14.7.9
   json_annotation: ^4.8.1
   shared_preferences: ^2.2.2
   http: ^1.1.2
   google_sign_in: ^6.1.4
+  cached_network_image: ^3.4.1
   uuid: ^4.5.1
   qr_flutter: ^4.1.0
   mobile_scanner: ^3.5.7

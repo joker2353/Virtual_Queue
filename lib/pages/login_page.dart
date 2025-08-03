@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/chats/chat_user.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/loading_indicator.dart';
 import 'main_layout.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import '../widgets/virtual_queue_logo.dart';
+
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});

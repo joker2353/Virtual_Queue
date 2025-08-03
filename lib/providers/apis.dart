@@ -11,84 +11,10 @@ import 'package:http/http.dart';
 import '../main.dart';
 import '../models/chats/chat_user.dart';
 import '../models/chats/message.dart';
-
+late ChatUser appUser;
 class APIs{
-  //static late ChatUser me;
-  //for authentication
-  static FirebaseAuth auth = FirebaseAuth.instance;
-  //for accessing cujrrent user
-  static FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-  //for accessing firebase stroage
-  static FirebaseStorage storage = FirebaseStorage.instance;
-// //to return current user
-   //static User get user => auth.currentUser!;
-//for checkjing jif user exist or not j?
 
 
- // for accessing firebase messaging (push Notification)
- static FirebaseMessaging fMessaging = FirebaseMessaging.instance;
-// for getting firebase messaging token
-static Future<void> getFirebaseMessaingToken() async{
- await fMessaging.requestPermission();
- await fMessaging.getAPNSToken().then((t) {
-  if( t != null){
-    appUser.pushToken = t;
-    log('Push Token: $t');
-  }
- });
-
-} 
-
-//for sending push notification
- static Future<void> sendPushNotification(ChatUser chatUser, String msg) async {
-    try {
-      final body = {
-        "message": {
-          "token": chatUser.pushToken,
-          "notification": {
-            "title": appUser.name, 
-            "body": msg,
-            "android_channel_id": 'chats',
-          },        
-        "data": {
-            "some_data" : "User ID: ${appUser.id!}",
-          },
-        }
-      };
-
-      // Firebase Project > Project Settings > General Tab > Project ID
-      const projectID = 'wechat-a4729';
-
-      // get firebase admin token
-      final bearerToken = await NotificationAccessToken.getToken;
-
-      log('bearerToken: $bearerToken');
-
-      // handle null token
-      if (bearerToken == null) return;
-
-      var res = await post(
-        Uri.parse(
-            'https://fcm.googleapis.com/v1/projects/$projectID/messages:send'),
-        headers: {
-          HttpHeaders.contentTypeHeader: 'application/json',
-          HttpHeaders.authorizationHeader: 'Bearer $bearerToken'
-        },
-        body: jsonEncode(body),
-      );
-
-      log('Response status: ${res.statusCode}');
-      log('Response body: ${res.body}');
-    } catch (e) {
-      log('\nsendPushNotificationE: $e');
-    }
-  }
-
-//for checking if user exists or not
-  static Future<bool> userExists() async{
-    return (await firestore.collection('users').doc(appUser.email).get()).exists;
-  }
 
   // for adding an chat user for our conversation
   static Future<bool> addChatUser(String email) async{
@@ -110,21 +36,6 @@ static Future<void> getFirebaseMessaingToken() async{
     }else{
       return false;
     }
-  }
-//for getting current user info
-static Future<void> getSelfInfo() async{
-    await firestore.collection('users').doc(appUser.email).get().then((user) async {
-      if(user.exists){
-        appUser = ChatUser.fromJson(user.data()!);
-        await getFirebaseMessaingToken();
-
-        //for setting user status to active
-        await APIs.updateActiveStatus(true);
-        //getFirebaseMessaingToken();
-      }else {
-        await createUser().then((value) => getSelfInfo());
-      }
-    });
   }
 
   static Future<void> getInstructorInfo(String email) async{
