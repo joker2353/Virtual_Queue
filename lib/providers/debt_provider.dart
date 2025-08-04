@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/customer_debt.dart';
 import '../models/order.dart' as app_models;
+import '../models/prescription_order.dart';
 
 class DebtProvider with ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -237,6 +238,84 @@ class DebtProvider with ChangeNotifier {
       await getCustomerDebt(order.roomId, normalizedPhone);
     } catch (e) {
       print('Error adding debt from order: $e');
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Add new debt from prescription order
+  Future<void> addDebtFromPrescriptionOrder(
+    PrescriptionOrder order,
+    double debtAmount,
+  ) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      String phoneNumber = order.customerContact;
+      String? email;
+
+      // If the customerContact is an email, try to get the phone number
+      if (order.customerContact.contains('@')) {
+        email = order.customerContact;
+        final phone = await _getPhoneNumberFromEmail(email);
+        if (phone != null) {
+          phoneNumber = phone;
+        } else {
+          // If no phone number found for email, throw error
+          throw Exception(
+            'No phone number found for email: $email. Please update user profile with phone number.',
+          );
+        }
+      }
+
+      // Normalize the phone number
+      final normalizedPhone = _normalizePhoneNumber(phoneNumber);
+      final debtId = '${order.roomId}_$normalizedPhone';
+
+      final debtRef = _firestore.collection('customer_debts').doc(debtId);
+      final debtDoc = await debtRef.get();
+
+      // Start a batch write
+      final batch = _firestore.batch();
+
+      if (debtDoc.exists) {
+        // Update existing debt
+        final currentDebt = (debtDoc.data()?['currentDebt'] as num).toDouble();
+        batch.update(debtRef, {
+          'currentDebt': currentDebt + debtAmount,
+          'lastUpdated': FieldValue.serverTimestamp(),
+          'customerEmail': email, // Update email if available
+        });
+      } else {
+        // Create new debt record
+        batch.set(debtRef, {
+          'roomId': order.roomId,
+          'customerContact': normalizedPhone,
+          'customerEmail': email,
+          'currentDebt': debtAmount,
+          'lastUpdated': FieldValue.serverTimestamp(),
+        });
+      }
+
+      // Add debt history entry
+      final historyRef = debtRef.collection('debt_history').doc();
+      batch.set(historyRef, {
+        'orderId': order.id,
+        'amount': debtAmount,
+        'timestamp': FieldValue.serverTimestamp(),
+        'description': 'Prescription order debt: ${order.customerName}',
+        'orderType': 'prescription',
+      });
+
+      await batch.commit();
+
+      // Refresh the debt data
+      await getCustomerDebt(order.roomId, normalizedPhone);
+    } catch (e) {
+      print('Error adding debt from prescription order: $e');
       _error = e.toString();
     } finally {
       _isLoading = false;

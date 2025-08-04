@@ -20,6 +20,7 @@ import 'dart:io';
 import 'providers/cache_provider.dart';
 import 'pages/main_layout.dart';
 import 'providers/debt_provider.dart';
+import 'providers/chat_provider.dart';
 
 // Define notification channel for Android
 const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -244,6 +245,7 @@ class VirtualQueueApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => FCMProvider()),
         ChangeNotifierProvider(create: (_) => MasterSKUProvider()),
         ChangeNotifierProvider(create: (_) => InventoryProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProxyProvider<AuthProvider, RoomProvider>(
           create: (context) => RoomProvider(userId: ''),
           update: (context, auth, previous) {
@@ -253,6 +255,7 @@ class VirtualQueueApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (_) => CacheProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -298,6 +301,7 @@ class MyAppWithProviders extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => DebtProvider()),
         ChangeNotifierProvider(create: (_) => FCMProvider()),
         ChangeNotifierProvider(create: (_) => InventoryProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProxyProvider<AuthProvider, RoomProvider>(
           create: (context) => RoomProvider(userId: ''),
           update: (context, auth, previous) {

@@ -219,7 +219,7 @@ class _MasterSKUPageState extends State<MasterSKUPage> {
                           controller: priceController,
                           decoration: const InputDecoration(
                             labelText: 'Price (Optional)',
-                            prefixText: '\$',
+                            prefixText: '৳',
                           ),
                           keyboardType: TextInputType.number,
                         ),
@@ -531,7 +531,11 @@ class _MasterSKUPageState extends State<MasterSKUPage> {
                             ),
                             DataCell(Text(sku.category)),
                             DataCell(
-                              Text(sku.price?.toStringAsFixed(2) ?? '-'),
+                              Text(
+                                sku.price != null
+                                    ? '৳${sku.price!.toStringAsFixed(2)}'
+                                    : '-',
+                              ),
                             ),
                             DataCell(
                               Row(

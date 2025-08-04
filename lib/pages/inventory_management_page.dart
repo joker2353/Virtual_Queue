@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:data_table_2/data_table_2.dart';
 import '../models/menu_item.dart';
 import '../models/master_sku.dart';
 import '../providers/inventory_provider.dart';
@@ -18,12 +17,15 @@ class InventoryManagementPage extends StatefulWidget {
       _InventoryManagementPageState();
 }
 
-class _InventoryManagementPageState extends State<InventoryManagementPage> {
+class _InventoryManagementPageState extends State<InventoryManagementPage>
+    with TickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _showLowStockOnly = false;
   bool _showOutOfStockOnly = false;
   bool _showPriceOverridesOnly = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
@@ -32,15 +34,28 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
     final inventoryProvider = context.read<InventoryProvider>();
     inventoryProvider.setUserId(authProvider.user?.uid ?? '');
 
+    // Initialize animations
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
     // Check for expired price overrides
     Future.microtask(
       () => inventoryProvider.checkAndResetExpiredPriceOverrides(),
     );
+
+    // Start animation
+    _animationController.forward();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -191,81 +206,122 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
     final inventoryProvider = context.watch<InventoryProvider>();
 
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Inventory Management'),
+        title: Row(
+          children: [
+            Icon(Icons.inventory_2, color: Colors.white),
+            SizedBox(width: 12),
+            Text(
+              'Inventory Management',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.deepPurple.shade600,
+        elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => _showAddFromMasterSKUDialog(context),
-            tooltip: 'Add from Master SKU',
+          Container(
+            margin: EdgeInsets.only(right: 16),
+            child: ElevatedButton.icon(
+              onPressed: () => _showAddFromMasterSKUDialog(context),
+              icon: Icon(Icons.add, color: Colors.white),
+              label: Text('Add Item', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade600,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Search and Filter Section
-          Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Search Bar
-                TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: 'Search Items',
-                    hintText: 'Enter item name or description',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon:
-                        _searchQuery.isNotEmpty
-                            ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                            )
-                            : null,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).primaryColor.withOpacity(0.2),
-                      ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          children: [
+            // Enhanced Search and Filter Section
+            Container(
+              margin: EdgeInsets.all(16),
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 10,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Search Bar
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).primaryColor.withOpacity(0.2),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        labelText: 'Search Items',
+                        hintText: 'Enter item name or description...',
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.deepPurple.shade600,
+                        ),
+                        suffixIcon:
+                            _searchQuery.isNotEmpty
+                                ? IconButton(
+                                  icon: Icon(
+                                    Icons.clear,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                )
+                                : null,
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
                       ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        color: Theme.of(context).primaryColor,
-                      ),
+                      onChanged:
+                          (value) => setState(() => _searchQuery = value),
                     ),
                   ),
-                  onChanged: (value) => setState(() => _searchQuery = value),
-                ),
-                const SizedBox(height: 12),
-                // Filter Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
+                  SizedBox(height: 16),
+
+                  // Filter Chips with improved design
+                  Text(
+                    'Quick Filters:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
-                      FilterChip(
-                        label: const Text('Low Stock'),
+                      _buildFilterChip(
+                        label: 'Low Stock',
+                        icon: Icons.warning_amber,
                         selected: _showLowStockOnly,
+                        color: Colors.orange,
                         onSelected:
                             (selected) => setState(() {
                               _showLowStockOnly = selected;
@@ -274,22 +330,12 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
                                 _showPriceOverridesOnly = false;
                               }
                             }),
-                        selectedColor: Theme.of(
-                          context,
-                        ).primaryColor.withOpacity(0.2),
-                        checkmarkColor: Theme.of(context).primaryColor,
-                        labelStyle: TextStyle(
-                          color:
-                              _showLowStockOnly
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.black87,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: const Text('Out of Stock'),
+                      _buildFilterChip(
+                        label: 'Out of Stock',
+                        icon: Icons.cancel_outlined,
                         selected: _showOutOfStockOnly,
+                        color: Colors.red,
                         onSelected:
                             (selected) => setState(() {
                               _showOutOfStockOnly = selected;
@@ -298,18 +344,12 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
                                 _showPriceOverridesOnly = false;
                               }
                             }),
-                        selectedColor: Colors.red.withOpacity(0.2),
-                        checkmarkColor: Colors.red,
-                        labelStyle: TextStyle(
-                          color:
-                              _showOutOfStockOnly ? Colors.red : Colors.black87,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: const Text('Price Overrides'),
+                      _buildFilterChip(
+                        label: 'Price Overrides',
+                        icon: Icons.attach_money,
                         selected: _showPriceOverridesOnly,
+                        color: Colors.purple,
                         onSelected:
                             (selected) => setState(() {
                               _showPriceOverridesOnly = selected;
@@ -318,327 +358,501 @@ class _InventoryManagementPageState extends State<InventoryManagementPage> {
                                 _showOutOfStockOnly = false;
                               }
                             }),
-                        selectedColor: Colors.orange.withOpacity(0.2),
-                        checkmarkColor: Colors.orange,
-                        labelStyle: TextStyle(
-                          color:
-                              _showPriceOverridesOnly
-                                  ? Colors.orange
-                                  : Colors.black87,
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
                       ),
                     ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          // Data Table
-          Expanded(
-            child: StreamBuilder<List<MenuItem>>(
-              stream:
-                  _showOutOfStockOnly
-                      ? inventoryProvider.streamOutOfStockItems()
-                      : _showLowStockOnly
-                      ? inventoryProvider.streamLowStockItems()
-                      : inventoryProvider.streamAvailableItems(widget.roomId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: LoadingIndicator());
-                }
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red.shade300,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading inventory',
-                          style: TextStyle(color: Colors.red.shade300),
-                        ),
-                        const SizedBox(height: 8),
-                        ElevatedButton(
-                          onPressed: () => setState(() {}),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+            // Inventory Cards
+            Expanded(
+              child: StreamBuilder<List<MenuItem>>(
+                stream:
+                    _showOutOfStockOnly
+                        ? inventoryProvider.streamOutOfStockItems()
+                        : _showLowStockOnly
+                        ? inventoryProvider.streamLowStockItems()
+                        : inventoryProvider.streamAvailableItems(widget.roomId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: LoadingIndicator());
+                  }
 
-                final items = snapshot.data ?? [];
-                final filteredItems =
-                    items
-                        .where(
-                          (item) =>
-                              (_searchQuery.isEmpty ||
-                                  item.name.toLowerCase().contains(
-                                    _searchQuery.toLowerCase(),
-                                  ) ||
-                                  item.description.toLowerCase().contains(
-                                    _searchQuery.toLowerCase(),
-                                  )) &&
-                              (!_showPriceOverridesOnly ||
-                                  item.hasPriceOverride),
-                        )
-                        .toList();
-
-                if (filteredItems.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 64,
-                          color: Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No items found',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey.shade600,
+                  if (snapshot.hasError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.red.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.error_outline,
+                              size: 48,
+                              color: Colors.red.shade400,
+                            ),
                           ),
-                        ),
-                        if (_searchQuery.isNotEmpty ||
-                            _showLowStockOnly ||
-                            _showOutOfStockOnly ||
-                            _showPriceOverridesOnly)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              'Try adjusting your filters',
+                          SizedBox(height: 16),
+                          Text(
+                            'Error loading inventory',
+                            style: TextStyle(
+                              color: Colors.red.shade600,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          ElevatedButton.icon(
+                            onPressed: () => setState(() {}),
+                            icon: Icon(Icons.refresh),
+                            label: Text('Retry'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red.shade600,
+                              foregroundColor: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final items = snapshot.data ?? [];
+                  final filteredItems =
+                      items
+                          .where(
+                            (item) =>
+                                (_searchQuery.isEmpty ||
+                                    item.name.toLowerCase().contains(
+                                      _searchQuery.toLowerCase(),
+                                    ) ||
+                                    item.description.toLowerCase().contains(
+                                      _searchQuery.toLowerCase(),
+                                    )) &&
+                                (!_showPriceOverridesOnly ||
+                                    item.hasPriceOverride),
+                          )
+                          .toList();
+
+                  if (filteredItems.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(24),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.inventory_2_outlined,
+                              size: 64,
+                              color: Colors.grey.shade400,
+                            ),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No items found',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          if (_searchQuery.isNotEmpty ||
+                              _showLowStockOnly ||
+                              _showOutOfStockOnly ||
+                              _showPriceOverridesOnly)
+                            Text(
+                              'Try adjusting your filters or search terms',
                               style: TextStyle(
                                 fontSize: 14,
                                 color: Colors.grey.shade500,
                               ),
                             ),
-                          ),
-                      ],
-                    ),
-                  );
-                }
+                        ],
+                      ),
+                    );
+                  }
 
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
+                  return ListView.builder(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: filteredItems.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredItems[index];
+                      return _buildInventoryCard(item);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip({
+    required String label,
+    required IconData icon,
+    required bool selected,
+    required Color color,
+    required Function(bool) onSelected,
+  }) {
+    return FilterChip(
+      label: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: selected ? Colors.white : color),
+          SizedBox(width: 6),
+          Text(label),
+        ],
+      ),
+      selected: selected,
+      onSelected: onSelected,
+      selectedColor: color,
+      checkmarkColor: Colors.white,
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : Colors.grey.shade700,
+        fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: selected ? color : Colors.grey.shade300,
+          width: selected ? 2 : 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInventoryCard(MenuItem item) {
+    final hasOverride = item.hasPriceOverride;
+    final isOverrideExpired = item.isPriceOverrideExpired;
+    final isOutOfStock = item.isOutOfStock;
+    final isLowStock = item.isLowStock;
+
+    return Container(
+      margin: EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with name and status
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      if (item.description.isNotEmpty)
+                        Text(
+                          item.description,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+                // Status indicator
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color:
+                        isOutOfStock
+                            ? Colors.red.shade100
+                            : isLowStock
+                            ? Colors.orange.shade100
+                            : Colors.green.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    isOutOfStock
+                        ? 'Out of Stock'
+                        : isLowStock
+                        ? 'Low Stock'
+                        : 'In Stock',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color:
+                          isOutOfStock
+                              ? Colors.red.shade700
+                              : isLowStock
+                              ? Colors.orange.shade700
+                              : Colors.green.shade700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 16),
+
+            // Stock and Price Information
+            Row(
+              children: [
+                // Stock Information
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue.shade200),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.inventory_2,
+                              size: 16,
+                              color: Colors.blue.shade700,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Stock',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.blue.shade700,
+                              ),
                             ),
                           ],
                         ),
-                        child: DataTable(
-                          headingRowHeight: 48,
-                          dataRowHeight: 56,
-                          horizontalMargin: 16,
-                          columnSpacing: 24,
-                          headingRowColor: MaterialStateProperty.all(
-                            Theme.of(context).primaryColor.withOpacity(0.05),
-                          ),
-                          headingTextStyle: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          columns: const [
-                            DataColumn(label: Text('Name')),
-                            DataColumn(label: Text('Stock'), numeric: true),
-                            DataColumn(label: Text('Min Stock'), numeric: true),
-                            DataColumn(label: Text('Price'), numeric: true),
-                            DataColumn(label: Text('Actions')),
+                        SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Text(
+                              '${item.currentStock ?? 0}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    isOutOfStock
+                                        ? Colors.red.shade600
+                                        : isLowStock
+                                        ? Colors.orange.shade600
+                                        : Colors.blue.shade700,
+                              ),
+                            ),
+                            if (item.minimumStock != null) ...[
+                              SizedBox(width: 8),
+                              Text(
+                                '/ ${item.minimumStock} min',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
                           ],
-                          rows:
-                              filteredItems.map((item) {
-                                final hasOverride = item.hasPriceOverride;
-                                final isOverrideExpired =
-                                    item.isPriceOverrideExpired;
-
-                                return DataRow(
-                                  cells: [
-                                    DataCell(
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Text(
-                                            item.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          if (item.description.isNotEmpty)
-                                            Text(
-                                              item.description,
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                    DataCell(
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '${item.currentStock ?? 0}',
-                                            style: TextStyle(
-                                              color:
-                                                  item.isOutOfStock
-                                                      ? Colors.red
-                                                      : item.isLowStock
-                                                      ? Colors.orange
-                                                      : null,
-                                              fontWeight:
-                                                  item.isOutOfStock ||
-                                                          item.isLowStock
-                                                      ? FontWeight.bold
-                                                      : null,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.history),
-                                            iconSize: 18,
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            onPressed:
-                                                () => _showStockHistoryDialog(
-                                                  item,
-                                                ),
-                                            tooltip: 'Stock History',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    DataCell(
-                                      Text('${item.minimumStock ?? '-'}'),
-                                    ),
-                                    DataCell(
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.end,
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.end,
-                                            children: [
-                                              Text(
-                                                '\$${item.price.toStringAsFixed(2)}',
-                                                style: TextStyle(
-                                                  color:
-                                                      hasOverride
-                                                          ? isOverrideExpired
-                                                              ? Colors.red
-                                                              : Colors.orange
-                                                          : null,
-                                                  fontWeight:
-                                                      hasOverride
-                                                          ? FontWeight.bold
-                                                          : null,
-                                                  decoration:
-                                                      isOverrideExpired
-                                                          ? TextDecoration
-                                                              .lineThrough
-                                                          : null,
-                                                ),
-                                              ),
-                                              if (hasOverride &&
-                                                  item.originalPrice != null)
-                                                Text(
-                                                  '\$${item.originalPrice!.toStringAsFixed(2)}',
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color: Colors.grey.shade600,
-                                                    decoration:
-                                                        isOverrideExpired
-                                                            ? null
-                                                            : TextDecoration
-                                                                .lineThrough,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.history),
-                                            iconSize: 18,
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                            onPressed:
-                                                () => _showPriceHistoryDialog(
-                                                  item,
-                                                ),
-                                            tooltip: 'Price History',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    DataCell(
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            onPressed:
-                                                () => _showUpdateStockDialog(
-                                                  item,
-                                                ),
-                                            tooltip: 'Update Stock',
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.attach_money,
-                                            ),
-                                            onPressed:
-                                                () => _showUpdatePriceDialog(
-                                                  item,
-                                                ),
-                                            tooltip: 'Update Price',
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              }).toList(),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 12),
+
+                // Price Information
+                Expanded(
+                  child: Container(
+                    padding: EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color:
+                          hasOverride
+                              ? Colors.purple.shade50
+                              : Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color:
+                            hasOverride
+                                ? Colors.purple.shade200
+                                : Colors.green.shade200,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.attach_money,
+                              size: 16,
+                              color:
+                                  hasOverride
+                                      ? Colors.purple.shade700
+                                      : Colors.green.shade700,
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Price',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color:
+                                    hasOverride
+                                        ? Colors.purple.shade700
+                                        : Colors.green.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '৳${item.price.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color:
+                                    hasOverride
+                                        ? isOverrideExpired
+                                            ? Colors.red.shade600
+                                            : Colors.purple.shade700
+                                        : Colors.green.shade700,
+                                decoration:
+                                    isOverrideExpired
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                              ),
+                            ),
+                            if (hasOverride && item.originalPrice != null)
+                              Text(
+                                'Original: ৳${item.originalPrice!.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                  decoration:
+                                      isOverrideExpired
+                                          ? null
+                                          : TextDecoration.lineThrough,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            SizedBox(height: 16),
+
+            // Action Buttons
+            Row(
+              children: [
+                // Stock History Button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showStockHistoryDialog(item),
+                    icon: Icon(Icons.history, size: 16),
+                    label: Text('Stock History'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.blue.shade700,
+                      side: BorderSide(color: Colors.blue.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
                     ),
                   ),
-                );
-              },
+                ),
+
+                SizedBox(width: 8),
+
+                // Price History Button
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _showPriceHistoryDialog(item),
+                    icon: Icon(Icons.trending_up, size: 16),
+                    label: Text('Price History'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.green.shade700,
+                      side: BorderSide(color: Colors.green.shade300),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 8),
+
+                // Update Stock Button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showUpdateStockDialog(item),
+                    icon: Icon(Icons.edit, size: 16),
+                    label: Text('Update Stock'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange.shade600,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+
+                SizedBox(width: 8),
+
+                // Update Price Button
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showUpdatePriceDialog(item),
+                    icon: Icon(Icons.attach_money, size: 16),
+                    label: Text('Update Price'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple.shade600,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -802,7 +1016,7 @@ class _AddFromMasterSKUDialogState extends State<AddFromMasterSKUDialog> {
                         trailing:
                             sku.price != null
                                 ? Text(
-                                  '\$${sku.price!.toStringAsFixed(2)}',
+                                  '৳${sku.price!.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -925,7 +1139,7 @@ class _StockAndPriceDialogState extends State<StockAndPriceDialog> {
                 subtitle: Text(
                   widget.sku.price == null
                       ? 'No base price set'
-                      : 'Base price: \$${widget.sku.price!.toStringAsFixed(2)}',
+                      : 'Base price: ৳${widget.sku.price!.toStringAsFixed(2)}',
                 ),
               ),
               if (_overridePrice) ...[
@@ -934,7 +1148,7 @@ class _StockAndPriceDialogState extends State<StockAndPriceDialog> {
                   decoration: const InputDecoration(
                     labelText: 'Override Price',
                     hintText: 'Enter new price',
-                    prefixText: '\$',
+                    prefixText: '৳',
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -1190,14 +1404,14 @@ class PriceHistoryDialog extends StatelessWidget {
                             title: Row(
                               children: [
                                 Text(
-                                  '\$${adjustment.oldPrice.toStringAsFixed(2)}',
+                                  '৳${adjustment.oldPrice.toStringAsFixed(2)}',
                                   style: const TextStyle(
                                     decoration: TextDecoration.lineThrough,
                                   ),
                                 ),
                                 const Icon(Icons.arrow_forward, size: 16),
                                 Text(
-                                  '\$${adjustment.newPrice.toStringAsFixed(2)}',
+                                  '৳${adjustment.newPrice.toStringAsFixed(2)}',
                                   style: TextStyle(
                                     color:
                                         isIncrease
@@ -1454,7 +1668,7 @@ class _UpdatePriceDialogState extends State<UpdatePriceDialog> {
               if (widget.originalPrice != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Original Price: \$${widget.originalPrice!.toStringAsFixed(2)}',
+                  'Original Price: ৳${widget.originalPrice!.toStringAsFixed(2)}',
                   style: TextStyle(color: Colors.grey.shade600),
                 ),
               ],
@@ -1464,7 +1678,7 @@ class _UpdatePriceDialogState extends State<UpdatePriceDialog> {
                 decoration: const InputDecoration(
                   labelText: 'New Price',
                   hintText: 'Enter new price',
-                  prefixText: '\$',
+                  prefixText: '৳',
                 ),
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/room_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/fcm_provider.dart';
 import '../widgets/loading_indicator.dart';
 import '../utils/navigation_helper.dart';
+import '../models/room.dart';
 
 class JoinRoomDetailsDialog extends StatefulWidget {
   final String roomCode;
@@ -27,8 +29,10 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
   String _name = '';
   String _contact = '';
   String _address = '';
+  String _deliveryAddress = '';
   bool _isLoading = false;
   String? _error;
+  Room? _room;
 
   // Animation controller
   late AnimationController _animationController;
@@ -56,12 +60,36 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
 
     // Start animations
     _animationController.forward();
+
+    // Load room details to check if it's a shop
+    _loadRoomDetails();
   }
 
   @override
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadRoomDetails() async {
+    try {
+      // Find room by code to get room details
+      final roomQuery =
+          await FirebaseFirestore.instance
+              .collection('rooms')
+              .where('code', isEqualTo: widget.roomCode)
+              .limit(1)
+              .get();
+
+      if (roomQuery.docs.isNotEmpty) {
+        final roomDoc = roomQuery.docs.first;
+        setState(() {
+          _room = Room.fromMap(roomDoc.id, roomDoc.data());
+        });
+      }
+    } catch (e) {
+      print('Error loading room details: $e');
+    }
   }
 
   Future<void> _joinRoom() async {
@@ -79,9 +107,23 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
     try {
       final roomProvider = Provider.of<RoomProvider>(context, listen: false);
 
+      // Prepare form data
+      final formData = {
+        'name': _name,
+        'contact': _contact,
+        'address': _address,
+      };
+
+      // Add delivery address if it's a shop and delivery is enabled
+      String? deliveryAddress;
+      if (_room?.isShop == true && _room?.deliveryEnabled == true) {
+        deliveryAddress = _deliveryAddress;
+      }
+
       await roomProvider.joinRoom(
         roomCode: widget.roomCode,
-        formData: {'name': _name, 'contact': _contact, 'address': _address},
+        formData: formData,
+        deliveryAddress: deliveryAddress,
       );
 
       Navigator.of(context).pop(true); // Success
@@ -222,6 +264,24 @@ class _JoinRoomDetailsDialogState extends State<JoinRoomDetailsDialog>
                                     return null;
                                   },
                                 ),
+                                // Delivery address field for shop rooms
+                                if (_room?.isShop == true &&
+                                    _room?.deliveryEnabled == true) ...[
+                                  SizedBox(height: 20),
+                                  _buildInputField(
+                                    label: 'Delivery Address',
+                                    hint:
+                                        'Enter your delivery address (optional)',
+                                    icon: Icons.delivery_dining,
+                                    onSaved:
+                                        (value) =>
+                                            _deliveryAddress = value ?? '',
+                                    validator: (value) {
+                                      // Delivery address is optional
+                                      return null;
+                                    },
+                                  ),
+                                ],
                                 if (_error != null)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 20),

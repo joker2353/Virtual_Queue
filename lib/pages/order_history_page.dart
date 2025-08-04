@@ -189,31 +189,67 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                       fontStyle: FontStyle.italic,
                                     ),
                                   ),
+                                if (item.totalPrice > 0)
+                                  Text(
+                                    '৳${item.totalPrice.toStringAsFixed(2)}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.deepPurple,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                               ],
                             ),
                           ),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      item.isAvailable
+                                          ? Colors.green.shade50
+                                          : Colors.red.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
                                   item.isAvailable
-                                      ? Colors.green.shade50
-                                      : Colors.red.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              item.isAvailable ? 'Available' : 'Unavailable',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color:
-                                    item.isAvailable
-                                        ? Colors.green.shade700
-                                        : Colors.red.shade700,
+                                      ? 'Available'
+                                      : 'Unavailable',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        item.isAvailable
+                                            ? Colors.green.shade700
+                                            : Colors.red.shade700,
+                                  ),
+                                ),
                               ),
-                            ),
+                              if (item.inventoryValidated)
+                                Container(
+                                  margin: EdgeInsets.only(top: 4),
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'Validated',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Colors.blue.shade700,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ],
                       ),
@@ -233,6 +269,50 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       ),
                     ],
                   ),
+                  if (order.subtotalAmount > 0 &&
+                      order.subtotalAmount != order.totalAmount) ...[
+                    SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Subtotal:',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
+                          '৳${order.subtotalAmount.toStringAsFixed(2)}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (order.deliveryFee > 0) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Delivery Fee:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            '৳${order.deliveryFee.toStringAsFixed(2)}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                   if ((order.metadata?['bakiAmount'] ?? 0) > 0) ...[
                     SizedBox(height: 8),
                     Row(

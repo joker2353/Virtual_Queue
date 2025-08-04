@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../models/order.dart';
+import '../models/prescription_order.dart';
 
 class CacheProvider extends ChangeNotifier {
   // Cache for orders by room
@@ -13,6 +14,15 @@ class CacheProvider extends ChangeNotifier {
   // Cache for completed orders
   final Map<String, List<Order>> _completedOrdersCache = {};
   final Map<String, DateTime> _completedOrdersLastFetch = {};
+
+  // Cache for prescription orders
+  final Map<String, List<PrescriptionOrder>> _prescriptionOrdersCache = {};
+  final Map<String, DateTime> _prescriptionOrdersLastFetch = {};
+
+  // Cache for completed prescription orders
+  final Map<String, List<PrescriptionOrder>> _completedPrescriptionOrdersCache =
+      {};
+  final Map<String, DateTime> _completedPrescriptionOrdersLastFetch = {};
 
   // Cache expiration duration (5 minutes)
   static const cacheDuration = Duration(minutes: 5);
@@ -102,6 +112,66 @@ class CacheProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Get prescription orders from cache
+  List<PrescriptionOrder>? getPrescriptionOrders(String roomId) {
+    final lastFetch = _prescriptionOrdersLastFetch[roomId];
+    if (lastFetch == null) return null;
+
+    if (DateTime.now().difference(lastFetch) > cacheDuration) {
+      // Cache expired
+      _prescriptionOrdersCache.remove(roomId);
+      _prescriptionOrdersLastFetch.remove(roomId);
+      return null;
+    }
+
+    return _prescriptionOrdersCache[roomId];
+  }
+
+  // Store prescription orders in cache
+  void cachePrescriptionOrders(String roomId, List<PrescriptionOrder> orders) {
+    _prescriptionOrdersCache[roomId] = orders;
+    _prescriptionOrdersLastFetch[roomId] = DateTime.now();
+    notifyListeners();
+  }
+
+  // Get completed prescription orders from cache
+  List<PrescriptionOrder>? getCompletedPrescriptionOrders(String roomId) {
+    final lastFetch = _completedPrescriptionOrdersLastFetch[roomId];
+    if (lastFetch == null) return null;
+
+    if (DateTime.now().difference(lastFetch) > cacheDuration) {
+      // Cache expired
+      _completedPrescriptionOrdersCache.remove(roomId);
+      _completedPrescriptionOrdersLastFetch.remove(roomId);
+      return null;
+    }
+
+    return _completedPrescriptionOrdersCache[roomId];
+  }
+
+  // Store completed prescription orders in cache
+  void cacheCompletedPrescriptionOrders(
+    String roomId,
+    List<PrescriptionOrder> orders,
+  ) {
+    _completedPrescriptionOrdersCache[roomId] = orders;
+    _completedPrescriptionOrdersLastFetch[roomId] = DateTime.now();
+    notifyListeners();
+  }
+
+  // Clear prescription orders cache
+  void clearPrescriptionOrdersCache(String roomId) {
+    _prescriptionOrdersCache.remove(roomId);
+    _prescriptionOrdersLastFetch.remove(roomId);
+    notifyListeners();
+  }
+
+  void clearCompletedPrescriptionOrdersCache(String roomId) {
+    _completedPrescriptionOrdersCache.remove(roomId);
+    _completedPrescriptionOrdersLastFetch.remove(roomId);
+    notifyListeners();
+  }
+
   // Clear all cache
   void clearAllCache() {
     _roomOrdersCache.clear();
@@ -110,6 +180,10 @@ class CacheProvider extends ChangeNotifier {
     _customerOrdersLastFetch.clear();
     _completedOrdersCache.clear();
     _completedOrdersLastFetch.clear();
+    _prescriptionOrdersCache.clear();
+    _prescriptionOrdersLastFetch.clear();
+    _completedPrescriptionOrdersCache.clear();
+    _completedPrescriptionOrdersLastFetch.clear();
     notifyListeners();
   }
 }

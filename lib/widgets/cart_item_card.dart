@@ -82,7 +82,7 @@ class CartItemCard extends StatelessWidget {
                 if (item.unitPrice != null) ...[
                   const SizedBox(width: 16),
                   Text(
-                    'Price: \$${(item.unitPrice! * item.quantity).toStringAsFixed(2)}',
+                    'Price: ৳${(item.unitPrice! * item.quantity).toStringAsFixed(2)}',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],

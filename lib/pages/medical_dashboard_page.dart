@@ -2,21 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart' as firestore;
 import 'dart:async';
-import '../providers/room_provider.dart';
-import '../providers/auth_provider.dart';
+import '../providers/debt_provider.dart';
 import '../models/room.dart';
 import '../models/prescription_order.dart';
 import '../widgets/loading_indicator.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'join_requests_page.dart';
 import 'customer_list_page.dart';
-import 'order_history_page.dart';
-import 'package:qr_flutter/qr_flutter.dart';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/services.dart';
-import '../providers/cache_provider.dart';
+import 'medical_order_history_page.dart';
 import '../widgets/qr_share_dialog.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'inbox_page.dart';
 
 class MedicalDashboardPage extends StatefulWidget {
   final String roomId;
@@ -42,13 +37,17 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
   bool _isLoading = true;
   String? _error;
   StreamSubscription? _ordersSubscription;
+  StreamSubscription? _debtsSubscription;
   bool _showQR = false;
   double _totalSales = 0;
+  double _totalPendingDebts = 0;
   FlutterSoundPlayer? _audioPlayer;
+  late DebtProvider _debtProvider;
 
   @override
   void initState() {
     super.initState();
+    _debtProvider = Provider.of<DebtProvider>(context, listen: false);
     _audioPlayer = FlutterSoundPlayer();
     _audioPlayer!.openPlayer().then((_) {
       print('Audio player initialized');
@@ -60,6 +59,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
   @override
   void dispose() {
     _ordersSubscription?.cancel();
+    _debtsSubscription?.cancel();
     _audioPlayer?.closePlayer();
     super.dispose();
   }
@@ -70,6 +70,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
       await _loadRoom();
       if (_room != null) {
         _setupOrdersListener();
+        _setupDebtsListener();
       }
     } catch (e) {
       print('Error initializing medical dashboard: $e');
@@ -201,15 +202,50 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
     }
   }
 
+  void _setupDebtsListener() {
+    try {
+      print('Setting up debts listener for medical room: ${widget.roomId}');
+
+      // Listen to all debts for this room
+      _debtsSubscription = firestore.FirebaseFirestore.instance
+          .collection('customer_debts')
+          .where('roomId', isEqualTo: widget.roomId)
+          .snapshots()
+          .listen(
+            (snapshot) {
+              if (mounted) {
+                double totalPendingDebts = 0;
+                for (var doc in snapshot.docs) {
+                  totalPendingDebts +=
+                      (doc.data()['currentDebt'] ?? 0).toDouble();
+                }
+                setState(() {
+                  _totalPendingDebts = totalPendingDebts;
+                });
+              }
+            },
+            onError: (error) {
+              print('Error in debts listener: $error');
+              if (mounted) {
+                setState(() {
+                  _error = error.toString();
+                });
+              }
+            },
+          );
+    } catch (e) {
+      print('Error setting up debts listener: $e');
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
   Future<void> _refreshOrders() async {
     print('Manually refreshing prescription orders');
     await _initialize();
-  }
-
-  void _toggleQRCode() {
-    setState(() {
-      _showQR = !_showQR;
-    });
   }
 
   Future<void> _updateOrderStatus(
@@ -251,7 +287,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
       context: context,
       builder:
           (context) => AlertDialog(
-            title: Text('Update Order Amount'),
+            title: Text('Set Order Amount'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -261,10 +297,19 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                   controller: amountController,
                   decoration: InputDecoration(
                     labelText: 'Total Amount',
-                    prefixText: '₹ ',
+                    prefixText: '৳ ',
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.numberWithOptions(decimal: true),
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'This will mark the order as ready for pickup. Baki amount will be set during order completion.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ],
             ),
@@ -275,14 +320,16 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  final amount = double.tryParse(amountController.text);
-                  if (amount != null && amount > 0) {
+                  final totalAmount = double.tryParse(amountController.text);
+
+                  if (totalAmount != null && totalAmount > 0) {
                     try {
+                      // Update order amount and mark as ready for pickup
                       await firestore.FirebaseFirestore.instance
                           .collection('prescription_orders')
                           .doc(order.id)
                           .update({
-                            'totalAmount': amount,
+                            'totalAmount': totalAmount,
                             'status': 'ready_for_pickup',
                             'updatedAt': firestore.Timestamp.now(),
                           });
@@ -290,7 +337,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('Order amount updated successfully'),
+                          content: Text('Order amount set successfully'),
                           backgroundColor: Colors.green,
                           behavior: SnackBarBehavior.floating,
                         ),
@@ -315,9 +362,127 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                     );
                   }
                 },
-                child: Text('Update'),
+                child: Text('Set Amount'),
               ),
             ],
+          ),
+    );
+  }
+
+  Future<void> _completeOrder(PrescriptionOrder order) async {
+    final TextEditingController paidAmountController = TextEditingController();
+    bool isDebt = false;
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  title: Text('Complete Order'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Customer: ${order.customerName}'),
+                      Text(
+                        'Total Amount: ৳${order.totalAmount.toStringAsFixed(2)}',
+                      ),
+                      SizedBox(height: 16),
+                      TextField(
+                        controller: paidAmountController,
+                        decoration: InputDecoration(
+                          labelText: 'Paid Amount',
+                          prefixText: '৳ ',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Checkbox(
+                            value: isDebt,
+                            onChanged: (value) {
+                              setDialogState(() {
+                                isDebt = value ?? false;
+                              });
+                            },
+                          ),
+                          Text('Customer will pay later (Baki)'),
+                        ],
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final paidAmount =
+                            double.tryParse(paidAmountController.text) ?? 0.0;
+
+                        if (paidAmount >= 0 &&
+                            paidAmount <= order.totalAmount) {
+                          try {
+                            // Update order status to completed
+                            await firestore.FirebaseFirestore.instance
+                                .collection('prescription_orders')
+                                .doc(order.id)
+                                .update({
+                                  'status': 'completed',
+                                  'updatedAt': firestore.Timestamp.now(),
+                                });
+
+                            // Handle debt if applicable
+                            if (isDebt || paidAmount < order.totalAmount) {
+                              final debtAmount = order.totalAmount - paidAmount;
+                              if (debtAmount > 0) {
+                                await _debtProvider
+                                    .addDebtFromPrescriptionOrder(
+                                      order,
+                                      debtAmount,
+                                    );
+                              }
+                            }
+
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Order completed successfully'),
+                                backgroundColor: Colors.green,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          } catch (e) {
+                            print('Error completing order: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error completing order'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                          }
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Paid amount cannot exceed total amount',
+                              ),
+                              backgroundColor: Colors.orange,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
+                      child: Text('Complete Order'),
+                    ),
+                  ],
+                ),
           ),
     );
   }
@@ -354,7 +519,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                   Text('Customer: ${order.customerName}'),
                   Text('Contact: ${order.customerContact}'),
                   Text('Status: ${order.status.toUpperCase()}'),
-                  Text('Amount: ₹${order.totalAmount.toStringAsFixed(2)}'),
+                  Text('Amount: ৳${order.totalAmount.toStringAsFixed(2)}'),
                   SizedBox(height: 16),
 
                   // Audio instructions section
@@ -486,9 +651,9 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                         ElevatedButton(
                           onPressed: () {
                             Navigator.pop(context);
-                            _updateOrderStatus(order, 'completed');
+                            _completeOrder(order);
                           },
-                          child: Text('Mark Completed'),
+                          child: Text('Complete Order'),
                         ),
                     ],
                   ),
@@ -563,12 +728,51 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    'Total Sales: ₹${_totalSales.toStringAsFixed(2)}',
+                    'Total Sales: ৳${_totalSales.toStringAsFixed(2)}',
+                    style: TextStyle(color: Colors.white, fontSize: 14),
+                  ),
+                  Text(
+                    'Total Baki: ৳${_totalPendingDebts.toStringAsFixed(2)}',
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                 ],
               ),
             ),
+            ListTile(
+              leading: Icon(Icons.qr_code),
+              title: Text('Share QR Code'),
+              subtitle: Text('Let customers join via QR'),
+              onTap: () {
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder:
+                      (context) => QRShareDialog(
+                        roomCode: _room!.code,
+                        roomName: _room!.name,
+                      ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.history),
+              title: Text('Order History'),
+              subtitle: Text('View completed orders'),
+              onTap: () {
+                Navigator.pop(context);
+                MedicalOrderHistoryPage.navigate(context, widget.roomId);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.inbox),
+              title: Text('Inbox'),
+              subtitle: Text('Customer messages'),
+              onTap: () {
+                Navigator.pop(context);
+                InboxPage.navigate(context, widget.roomId);
+              },
+            ),
+            Divider(),
             ListTile(
               leading: Icon(Icons.people),
               title: Text('Join Requests'),
@@ -598,32 +802,11 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
               },
             ),
             ListTile(
-              leading: Icon(Icons.history),
-              title: Text('Order History'),
+              leading: Icon(Icons.account_balance_wallet),
+              title: Text('Debt Management'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder:
-                        (context) => OrderHistoryPage(roomId: widget.roomId),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.qr_code),
-              title: Text('Show QR Code'),
-              onTap: () {
-                Navigator.pop(context);
-                showDialog(
-                  context: context,
-                  builder:
-                      (context) => QRShareDialog(
-                        roomCode: _room!.code,
-                        roomName: _room!.name,
-                      ),
-                );
+                _showDebtManagementDialog();
               },
             ),
           ],
@@ -681,11 +864,39 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                               ),
                             ),
                             Text(
-                              '₹${_totalSales.toStringAsFixed(0)}',
+                              '৳${_totalSales.toStringAsFixed(0)}',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.green.shade800,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Card(
+                      color: Colors.orange.shade50,
+                      child: Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Total Baki',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.orange.shade700,
+                              ),
+                            ),
+                            Text(
+                              '৳${_totalPendingDebts.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.orange.shade800,
                               ),
                             ),
                           ],
@@ -757,7 +968,7 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
                                     Text('Has audio instructions'),
                                   if (order.totalAmount > 0)
                                     Text(
-                                      'Amount: ₹${order.totalAmount.toStringAsFixed(2)}',
+                                      'Amount: ৳${order.totalAmount.toStringAsFixed(2)}',
                                     ),
                                 ],
                               ),
@@ -771,6 +982,57 @@ class _MedicalDashboardPageState extends State<MedicalDashboardPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showDebtManagementDialog() {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text('Debt Management'),
+            content: Container(
+              width: double.maxFinite,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Total Pending Debts: ৳${_totalPendingDebts.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.orange.shade700,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'This feature allows you to manage customer debts. When customers pay later (baki), the amount is tracked here.',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // TODO: Navigate to detailed debt management page
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Debt management feature coming soon!'),
+                          backgroundColor: Colors.blue,
+                        ),
+                      );
+                    },
+                    child: Text('View All Debts'),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ],
+          ),
     );
   }
 

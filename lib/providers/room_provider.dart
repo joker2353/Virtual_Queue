@@ -447,6 +447,7 @@ class RoomProvider with ChangeNotifier {
     required String roomCode,
     required Map<String, dynamic> formData,
     bool autoApprove = false,
+    String? deliveryAddress,
   }) async {
     try {
       // Get current user's display name from Firebase Auth
@@ -545,6 +546,7 @@ class RoomProvider with ChangeNotifier {
           currentPosition: room.currentPosition,
           memberCount: room.memberCount,
           joinedAt: DateTime.now(),
+          deliveryAddress: deliveryAddress,
         );
         print(
           'DEBUG: joinRoom - Created UserRoom with category: ${userRoom.category}',
@@ -1931,6 +1933,57 @@ class RoomProvider with ChangeNotifier {
     } catch (e) {
       print('Error getting previous valid position: $e');
       return null;
+    }
+  }
+
+  // Update delivery address for a user in a specific room
+  Future<void> updateDeliveryAddress({
+    required String roomId,
+    required String address,
+  }) async {
+    try {
+      if (!_isAuthenticated()) {
+        throw Exception('Please sign in to update delivery address');
+      }
+
+      // Update the user_rooms document
+      final userRoomRef = _firestore.collection('user_rooms').doc(_userId);
+
+      await _firestore.runTransaction((transaction) async {
+        final userRoomDoc = await transaction.get(userRoomRef);
+
+        if (userRoomDoc.exists) {
+          final data = userRoomDoc.data()!;
+          final joinedRooms = List<Map<String, dynamic>>.from(
+            data['joined'] ?? [],
+          );
+
+          // Find and update the specific room's delivery address
+          for (int i = 0; i < joinedRooms.length; i++) {
+            if (joinedRooms[i]['roomId'] == roomId) {
+              joinedRooms[i]['deliveryAddress'] = address;
+              break;
+            }
+          }
+
+          transaction.update(userRoomRef, {'joined': joinedRooms});
+        }
+      });
+
+      // Update local state
+      final updatedUserRooms =
+          _userRooms.map((userRoom) {
+            if (userRoom.roomId == roomId) {
+              return userRoom.copyWith(deliveryAddress: address);
+            }
+            return userRoom;
+          }).toList();
+
+      _userRooms = updatedUserRooms;
+      notifyListeners();
+    } catch (e) {
+      _handleError(e);
+      throw Exception('Failed to update delivery address: $e');
     }
   }
 

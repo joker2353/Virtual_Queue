@@ -18,6 +18,8 @@ class Room {
   final RoomSettings settings;
   final String category; // 'queue' or 'shop'
   final Map<String, dynamic>? shopSettings; // Shop-specific settings
+  final bool deliveryEnabled; // Whether delivery is enabled for this room
+  final double deliveryFee; // Delivery fee amount
 
   Room({
     required this.id,
@@ -36,6 +38,8 @@ class Room {
     required this.settings,
     required this.category,
     this.shopSettings,
+    required this.deliveryEnabled,
+    required this.deliveryFee,
   });
 
   bool get isShop => category == 'shop';
@@ -59,6 +63,8 @@ class Room {
       'settings': settings.toMap(),
       'category': category,
       'shopSettings': shopSettings,
+      'deliveryEnabled': deliveryEnabled,
+      'deliveryFee': deliveryFee,
     };
   }
 
@@ -96,6 +102,8 @@ class Room {
       ),
       category: map['category'] ?? 'queue',
       shopSettings: map['shopSettings'] as Map<String, dynamic>?,
+      deliveryEnabled: map['deliveryEnabled'] ?? true,
+      deliveryFee: (map['deliveryFee'] as num?)?.toDouble() ?? 50.0,
     );
   }
 
@@ -116,6 +124,8 @@ class Room {
     RoomSettings? settings,
     String? category,
     Map<String, dynamic>? shopSettings,
+    bool? deliveryEnabled,
+    double? deliveryFee,
   }) {
     return Room(
       id: id ?? this.id,
@@ -134,6 +144,8 @@ class Room {
       settings: settings ?? this.settings,
       category: category ?? this.category,
       shopSettings: shopSettings ?? this.shopSettings,
+      deliveryEnabled: deliveryEnabled ?? this.deliveryEnabled,
+      deliveryFee: deliveryFee ?? this.deliveryFee,
     );
   }
 }

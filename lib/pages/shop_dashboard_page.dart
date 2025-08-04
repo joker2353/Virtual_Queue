@@ -20,6 +20,7 @@ import 'package:flutter/services.dart';
 import '../widgets/order_processing_dialog.dart';
 import '../providers/cache_provider.dart';
 import '../widgets/qr_share_dialog.dart';
+import 'inbox_page.dart';
 
 class ShopDashboardPage extends StatefulWidget {
   final String roomId;
@@ -400,6 +401,15 @@ class _ShopDashboardPageState extends State<ShopDashboardPage> {
                         onTap: () {
                           Navigator.pop(context);
                           _showQRDialog();
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.inbox_rounded,
+                        title: 'Inbox',
+                        subtitle: 'Customer messages',
+                        onTap: () {
+                          Navigator.pop(context);
+                          InboxPage.navigate(context, widget.roomId);
                         },
                       ),
                       _buildDrawerItem(

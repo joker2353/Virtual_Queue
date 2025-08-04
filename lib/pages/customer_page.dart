@@ -5,14 +5,18 @@ import 'dart:async';
 import '../models/room.dart';
 import '../models/order.dart';
 import '../models/customer_debt.dart';
+import '../models/user_room.dart';
 import '../widgets/loading_indicator.dart';
 import 'shop_order_page.dart';
 import 'purchase_history_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/cache_provider.dart';
 import '../providers/debt_provider.dart';
+import '../providers/room_provider.dart';
 import 'edit_order_page.dart';
 import '../widgets/qr_share_dialog.dart';
+import '../widgets/address_update_dialog.dart';
+import 'chat_page.dart';
 
 class CustomerPage extends StatefulWidget {
   final String roomId;
@@ -559,6 +563,24 @@ class _CustomerPageState extends State<CustomerPage> {
                         },
                       ),
                       _buildDrawerItem(
+                        icon: Icons.chat_bubble_rounded,
+                        title: 'Chat Now',
+                        subtitle: 'Message the shop owner',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _openChatWithShopOwner();
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.location_on_rounded,
+                        title: 'Update Address',
+                        subtitle: 'Change delivery address',
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showAddressUpdateDialog();
+                        },
+                      ),
+                      _buildDrawerItem(
                         icon: Icons.exit_to_app_rounded,
                         title: 'Leave Shop',
                         subtitle: 'Remove from saved shops',
@@ -1096,6 +1118,85 @@ class _CustomerPageState extends State<CustomerPage> {
               existingOrder: order,
             ),
       ),
+    );
+  }
+
+  void _openChatWithShopOwner() {
+    // Get the shop owner's ID from the room
+    final shopOwnerId = _room?.creatorId;
+    final shopOwnerName = _room?.name ?? 'Shop Owner';
+
+    if (shopOwnerId != null) {
+      ChatPage.navigate(
+        context,
+        receiverId: shopOwnerId,
+        receiverName: shopOwnerName,
+        roomId: widget.roomId,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to start chat. Shop owner information not available.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  void _showAddressUpdateDialog() {
+    // Get current delivery address from user room
+    final roomProvider = Provider.of<RoomProvider>(context, listen: false);
+    final userRoom = roomProvider.userRooms.firstWhere(
+      (room) => room.roomId == widget.roomId,
+      orElse:
+          () => UserRoom(
+            roomId: widget.roomId,
+            name: _room?.name ?? '',
+            type: 'joined',
+            status: 'active',
+            category: _room?.category ?? 'shop',
+            position: 0,
+            currentPosition: 0,
+            memberCount: 0,
+            joinedAt: DateTime.now(),
+            deliveryAddress: null,
+          ),
+    );
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AddressUpdateDialog(
+            currentAddress: userRoom.deliveryAddress,
+            onAddressUpdated: (newAddress) async {
+              try {
+                await roomProvider.updateDeliveryAddress(
+                  roomId: widget.roomId,
+                  address: newAddress,
+                );
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Delivery address updated successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update address: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+          ),
     );
   }
 

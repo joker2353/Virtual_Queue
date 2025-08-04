@@ -7,9 +7,11 @@ import '../models/prescription_order.dart';
 import '../widgets/loading_indicator.dart';
 import 'package:provider/provider.dart';
 import '../providers/cache_provider.dart';
+import '../providers/debt_provider.dart';
 import '../widgets/qr_share_dialog.dart';
 import 'prescription_upload_page.dart';
 import 'saved_prescriptions_page.dart';
+import 'chat_page.dart';
 
 class MedicalCustomerPage extends StatefulWidget {
   final String roomId;
@@ -53,10 +55,14 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
   String? _error;
   bool _showQR = false;
   StreamSubscription? _ordersSubscription;
+  StreamSubscription? _debtsSubscription;
+  double _totalDebt = 0;
+  late DebtProvider _debtProvider;
 
   @override
   void initState() {
     super.initState();
+    _debtProvider = Provider.of<DebtProvider>(context, listen: false);
     _initialize();
   }
 
@@ -64,6 +70,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
   void dispose() {
     print('Disposing MedicalCustomerPage - cleaning up listeners');
     _ordersSubscription?.cancel();
+    _debtsSubscription?.cancel();
     super.dispose();
   }
 
@@ -74,6 +81,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
 
       await _loadRoom();
       _setupOrdersListener();
+      await _setupDebtsListener();
 
       if (mounted) {
         setState(() {
@@ -204,6 +212,95 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
     }
   }
 
+  // Helper method to normalize phone number (same as debt provider)
+  String _normalizePhoneNumber(String phoneNumber) {
+    // Remove all non-digit characters
+    return phoneNumber.replaceAll(RegExp(r'[^\d]'), '');
+  }
+
+  // Helper method to get phone number from email (same as debt provider)
+  Future<String?> _getPhoneNumberFromEmail(String email) async {
+    try {
+      final userQuery =
+          firestore.FirebaseFirestore.instance
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .limit(1)
+              .get();
+
+      final querySnapshot = await userQuery;
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.data()['contactNumber'] as String?;
+      }
+      return null;
+    } catch (e) {
+      print('Error getting phone number from email: $e');
+      return null;
+    }
+  }
+
+  Future<void> _setupDebtsListener() async {
+    try {
+      print(
+        'Setting up debts listener for customer: ${widget.customerContact}',
+      );
+
+      String customerContact = widget.customerContact;
+
+      // If the customerContact is an email, try to get the phone number
+      if (widget.customerContact.contains('@')) {
+        final phone = await _getPhoneNumberFromEmail(widget.customerContact);
+        if (phone != null) {
+          customerContact = phone;
+          print('Found phone number for email: $phone');
+        } else {
+          print('No phone number found for email: ${widget.customerContact}');
+          // If no phone number found, we'll still try to query with email
+        }
+      }
+
+      // Normalize the customer contact to match how debt provider stores it
+      final normalizedContact = _normalizePhoneNumber(customerContact);
+      print('Normalized contact for debt query: $normalizedContact');
+
+      // Listen to customer debt for this specific room and customer
+      _debtsSubscription = firestore.FirebaseFirestore.instance
+          .collection('customer_debts')
+          .where('roomId', isEqualTo: widget.roomId)
+          .where('customerContact', isEqualTo: normalizedContact)
+          .snapshots()
+          .listen(
+            (snapshot) {
+              if (mounted) {
+                double totalDebt = 0;
+                for (var doc in snapshot.docs) {
+                  totalDebt += (doc.data()['currentDebt'] ?? 0).toDouble();
+                }
+                setState(() {
+                  _totalDebt = totalDebt;
+                });
+                print('Updated total debt: $_totalDebt');
+              }
+            },
+            onError: (error) {
+              print('Error in debts listener: $error');
+              if (mounted) {
+                setState(() {
+                  _error = error.toString();
+                });
+              }
+            },
+          );
+    } catch (e) {
+      print('Error setting up debts listener: $e');
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    }
+  }
+
   Future<void> _refreshOrders() async {
     print('Manually refreshing prescription orders');
     await _initialize();
@@ -267,6 +364,10 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
         centerTitle: true,
         actions: [
           IconButton(onPressed: _showQRDialog, icon: Icon(Icons.qr_code)),
+          IconButton(
+            onPressed: _openChatWithShopOwner,
+            icon: Icon(Icons.chat_bubble),
+          ),
         ],
       ),
       body: RefreshIndicator(
@@ -311,11 +412,75 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                         'Customer: ${widget.customerName}',
                         style: TextStyle(color: Colors.white, fontSize: 16),
                       ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Total Debt: ৳${_totalDebt.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
 
                 SizedBox(height: 24),
+
+                // Debt summary card
+                if (_totalDebt > 0)
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.orange.shade200),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.account_balance_wallet,
+                            color: Colors.orange.shade700,
+                            size: 24,
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Total Baki Amount',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.orange.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                '৳${_totalDebt.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.orange.shade800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                if (_totalDebt > 0) SizedBox(height: 16),
 
                 // Order prescription buttons
                 Row(
@@ -515,7 +680,7 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
                                       ),
                                     if (order.totalAmount > 0)
                                       Text(
-                                        'Amount: ₹${order.totalAmount.toStringAsFixed(2)}',
+                                        'Amount: ৳${order.totalAmount.toStringAsFixed(2)}',
                                         style: TextStyle(
                                           color: Colors.green.shade600,
                                           fontWeight: FontWeight.bold,
@@ -674,5 +839,29 @@ class _MedicalCustomerPageState extends State<MedicalCustomerPage> {
             ],
           ),
     );
+  }
+
+  void _openChatWithShopOwner() {
+    // Get the shop owner's ID from the room
+    final shopOwnerId = _room?.creatorId;
+    final shopOwnerName = _room?.name ?? 'Medical Shop Owner';
+
+    if (shopOwnerId != null) {
+      ChatPage.navigate(
+        context,
+        receiverId: shopOwnerId,
+        receiverName: shopOwnerName,
+        roomId: widget.roomId,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Unable to start chat. Shop owner information not available.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

@@ -348,7 +348,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
                               return DropdownMenuItem(
                                 value: item,
                                 child: Text(
-                                  '${item.name} (\$${item.price?.toStringAsFixed(2) ?? "N/A"})',
+                                  '${item.name} (৳${item.price?.toStringAsFixed(2) ?? "N/A"})',
                                 ),
                               );
                             }).toList(),
@@ -452,7 +452,7 @@ class _EditOrderPageState extends State<EditOrderPage> {
             children: [
               if (_items.isNotEmpty) ...[
                 Text(
-                  'Total: \$${_items.fold<double>(0, (sum, item) => sum + (item.unitPrice ?? 0) * item.quantity).toStringAsFixed(2)}',
+                  'Total: ৳${_items.fold<double>(0, (sum, item) => sum + (item.unitPrice ?? 0) * item.quantity).toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

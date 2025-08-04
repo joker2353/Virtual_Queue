@@ -10,6 +10,7 @@ class UserRoom {
   final int currentPosition;
   final int memberCount;
   final DateTime joinedAt;
+  final String? deliveryAddress; // Customer's delivery address
 
   UserRoom({
     required this.roomId,
@@ -21,6 +22,7 @@ class UserRoom {
     required this.currentPosition,
     required this.memberCount,
     required this.joinedAt,
+    this.deliveryAddress,
   });
 
   bool get isCreated => type == 'created';
@@ -76,6 +78,7 @@ class UserRoom {
       'currentPosition': currentPosition,
       'memberCount': memberCount,
       'joinedAt': Timestamp.fromDate(joinedAt),
+      'deliveryAddress': deliveryAddress,
     };
   }
 
@@ -97,6 +100,7 @@ class UserRoom {
       currentPosition: map['currentPosition']?.toInt() ?? 0,
       memberCount: map['memberCount']?.toInt() ?? 0,
       joinedAt: parseTimestamp(map['joinedAt']),
+      deliveryAddress: map['deliveryAddress'] as String?,
     );
   }
 
@@ -110,6 +114,7 @@ class UserRoom {
     int? currentPosition,
     int? memberCount,
     DateTime? joinedAt,
+    String? deliveryAddress,
   }) {
     return UserRoom(
       roomId: roomId ?? this.roomId,
@@ -121,6 +126,7 @@ class UserRoom {
       currentPosition: currentPosition ?? this.currentPosition,
       memberCount: memberCount ?? this.memberCount,
       joinedAt: joinedAt ?? this.joinedAt,
+      deliveryAddress: deliveryAddress ?? this.deliveryAddress,
     );
   }
 }
