@@ -14,7 +14,10 @@ import '../models/chats/message.dart';
 late ChatUser appUser;
 class APIs{
 
-
+//for checking if user exists or not
+  static Future<bool> userExists() async{
+    return (await firestore.collection('users').doc(appUser.email).get()).exists;
+  }
 
   // for adding an chat user for our conversation
   static Future<bool> addChatUser(String email) async{
@@ -36,6 +39,21 @@ class APIs{
     }else{
       return false;
     }
+  }
+//for getting current user info
+static Future<void> getSelfInfo() async{
+    await firestore.collection('users').doc(appUser.email).get().then((user) async {
+      if(user.exists){
+        appUser = ChatUser.fromJson(user.data()!);
+        await getFirebaseMessaingToken();
+
+        //for setting user status to active
+        await APIs.updateActiveStatus(true);
+        //getFirebaseMessaingToken();
+      }else {
+        await createUser().then((value) => getSelfInfo());
+      }
+    });
   }
 
   static Future<void> getInstructorInfo(String email) async{
@@ -196,23 +214,7 @@ class APIs{
     .limit(1).snapshots();
   }
 
-  //send chat image
-  static Future<void> sendChatImage(ChatUser chatUser,File file) async {
-    
-    final ext = file.path.split('.').last;
-    final ref = storage.ref().child('images//${getConversationID(chatUser.email)}/${DateTime.now().microsecondsSinceEpoch}.$ext');
-    await ref
-        .putFile(file,SettableMetadata(contentType: 'image/$ext'))
-        .then((po) {
-          log('Data Transferred: ${po.bytesTransferred / 1000}kb');
-        });
-
-     final imageUrl = await ref.getDownloadURL();
-
-    await APIs.sendMessage(chatUser, imageUrl, Type.image);
-  }
-
-  //delete message
+  
   static Future<void> deleteMessage(Message message) async{
    await firestore.collection('chats/${getConversationID(message.receiver)}/messages/')
     .doc(message.sent).delete();
